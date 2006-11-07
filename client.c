@@ -1,87 +1,85 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <glib.h>
 
-#include "xmlrpc.h"
+#include "xmlrpc-client.h"
+
 #include "bench.h"
 
-// call impl
-int impl_testMethod(char* str, int val)
-{
-  return 4;
-}
+/* XML-RPC methods proxy implementation */
 
-// call proxy
-int xr_testMethod(xr_call* call)
+int testMethod(xr_client_conn* conn, char* str, int val)
 {
-  char* str;
-  int val;
-  
-  int retval = impl_testMethod(str, val);
-  xr_call_set_retval(call, xr_value_int_new(retval));
-}
-
-int xr_call_server(char* buf_req, int len_req, char** buf_res, int* len_res)
-{
-  xr_call* call = xr_call_new(NULL);
-  xr_call_unserialize_request(call, buf_req, len_req);
-  if (!strcmp(call->method, "testMethod"))
-    xr_testMethod(call);
-  else
-    xr_call_set_errval(call, 100, "Unknown method!");
-  xr_call_serialize_response(call, buf_res, len_res);
-  xr_call_free(call);
-}
-
-int xr_call_client(xr_call* call)
-{
-  char* buf_req;
-  int len_req;
-  char* buf_res;
-  int len_res;
-
-  xr_call_serialize_request(call, &buf_req, &len_req);
-  printf("---- REQ ----\n%s", buf_req);
-  xr_call_server(buf_req, len_req, &buf_res, &len_res); //XXX: send/receive
-  printf("---- RES ----\n%s", buf_res);
-  xr_call_unserialize_response(call, buf_req, len_req);
-}
-
-int testMethod(char* str, int val)
-{
-  start_timer(3);
+  int retval = -1;
   xr_call* call = xr_call_new(__func__);
-  xr_call_add_param(call, xr_value_blob_new(str, strlen(str)));
+//  xr_call_add_param(call, xr_value_blob_new(str, strlen(str)));
   xr_call_add_param(call, xr_value_string_new(str));
   xr_call_add_param(call, xr_value_int_new(val));
-  stop_timer(3);
-  xr_call_client(call);
+  xr_client_call(conn, call);
+  if (call->retval)
+    retval = call->retval->int_val;
   xr_call_free(call);
+  return retval;
 }
+
+/* test(conn) */
+
+void test(xr_client_conn* conn)
+{
+  testMethod(conn, "test_p1", 6);
+}
+
+/* main() */
+
+static char* opt_uri = "127.0.0.1:443";
+//static char* opt_uri = "127.0.0.1:80";
 
 static GOptionEntry entries[] = 
 {
-//  { "", '\0', 0, G_OPTION_ARG_STRING, &, "", "" },
-//  { "", '\0', 0, G_OPTION_ARG_NONE, &, "", 0 },
+  { "uri", 'u', 0, G_OPTION_ARG_STRING, &opt_uri, "URI of the resource.", "URI" },
   { NULL }
 };
 
 int main(int ac, char* av[])
 {
-  GOptionContext* ctx = g_option_context_new("- XML-RPC Spike Server.");
+  GOptionContext* ctx = g_option_context_new("- XML-RPC SSL Spike Client.");
   g_option_context_add_main_entries(ctx, entries, NULL);
   g_option_context_parse(ctx, &ac, &av, NULL);
   g_option_context_set_help_enabled(ctx, TRUE);
 
   reset_timers();
+
+  start_timer(9);
+  init_ssl();
+  stop_timer(9);
+
+  // connect
   start_timer(0);
-  testMethod("test_p1", 6);
+  xr_client_conn* conn = xr_client_new();
+  if (xr_client_open(conn, opt_uri))
+  {
+    printf("Can't open connection.\n");
+    xr_client_free(conn);
+    exit(1);
+  }
+
+  // test
+  for (int i=0; i<100; i++)
+  {
+    continue_timer(1);
+    test(conn);
+    stop_timer(1);
+  }
+
+  // disconnect
+  xr_client_close(conn);
+  xr_client_free(conn);
   stop_timer(0);
-  start_timer(1);
-  sleep(1);
-  stop_timer(1);
-  print_timer(0, "testMethod");
-  print_timer(1, "1s");
-  print_timer(3, "testMethod(setup)");
+
+  // print results
+  print_timer(0, "connect(), test(), close()");
+  print_timer(1, "test()");
+  print_timer(9, "init()");
   return 0;
 }

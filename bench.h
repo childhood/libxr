@@ -71,7 +71,7 @@ static __inline__ void print_timer(int t, char* msg)
   double d2 = get_timer(t)/c;
   get_time_str(d1,buf1);
   get_time_str(d2,buf2);
-  printf("** timer: %-30s : %-15s : %-15s per cycle (%u cycles)\n", msg?msg:"", c?buf1:"---", c?buf2:"---", c);
+  printf("** timer: %-30s : %-15s : %-15s : %d cps (%u cycles)\n", msg?msg:"", c?buf1:"---", c?buf2:"---", c?(int)(1/d2):0, c);
 }
 
 #undef CNT

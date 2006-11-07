@@ -1,9 +1,9 @@
-#ifndef __XR_H__
-#define __XR_H__
+#ifndef __XMLRPC_VALUE_H__
+#define __XMLRPC_VALUE_H__
 
 #include <glib.h>
 
-/** @file XR Header
+/** @file xmlrpc_value Header
  */
 
 enum {
@@ -50,23 +50,5 @@ xr_value* xr_value_blob_new(char* val, int len);
 void xr_value_struct_set_member(xr_value* str, char* name, xr_value* val);
 void xr_value_array_append(xr_value* arr, xr_value* val);
 void xr_value_free(xr_value* val);
-
-struct _xr_call
-{
-  char* method;
-  GSList* params;
-  xr_value* retval;
-  xr_value* errval;
-};
-
-xr_call* xr_call_new();
-void xr_call_add_param(xr_call* call, xr_value* val);
-void xr_call_set_retval(xr_call* call, xr_value* val);
-void xr_call_set_errval(xr_call* call, int code, char* msg);
-int xr_call_serialize_request(xr_call* call, char** buf, int* len);
-int xr_call_serialize_response(xr_call* call, char** buf, int* len);
-int xr_call_unserialize_request(xr_call* call, char* buf, int len);
-int xr_call_unserialize_response(xr_call* call, char* buf, int len);
-void xr_call_free(xr_call* call);
 
 #endif

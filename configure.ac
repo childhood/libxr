@@ -8,6 +8,7 @@ AM_MAINTAINER_MODE
 
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_RANLIB
 
 # Checks for pkg-config packages
 GLIB_REQUIRED="glib-2.0 >= 2.6.0"
