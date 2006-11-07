@@ -50,16 +50,6 @@ xr_client_conn* xr_client_new()
   return conn;
 }
 
-#define HANDLE_ERR() { \
-  if (ERR_peek_error() == 0) \
-  { \
-    fprintf(stderr, "errno=%d ", errno); \
-    perror("error"); \
-  } \
-  else \
-    ERR_print_errors_fp(stderr); }
-
-
 int xr_client_open(xr_client_conn* conn, char* uri)
 {
   g_assert(conn != NULL);
@@ -67,7 +57,7 @@ int xr_client_open(xr_client_conn* conn, char* uri)
   g_assert(!conn->is_open);
 
   // parse URI format: http://host:8080/RES
-  conn->secure = 0;
+  conn->secure = 1;
   conn->resource = "/CUA";
   conn->host = "127.0.0.1";
   if (conn->secure)
