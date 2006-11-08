@@ -16,6 +16,6 @@ int xr_client_close(xr_client_conn* conn);
 int xr_client_call(xr_client_conn* conn, xr_call* call);
 void xr_client_free(xr_client_conn* conn);
 
-void init_ssl();
+void xr_client_init();
 
 #endif

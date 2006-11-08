@@ -29,7 +29,7 @@ struct _xr_client_conn
   int is_open;
 };
 
-void init_ssl()
+void xr_client_init()
 {
   SSL_library_init();
   ERR_load_crypto_strings();

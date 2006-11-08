@@ -32,7 +32,7 @@ void test(xr_client_conn* conn)
 
 /* main() */
 
-static char* opt_uri = "127.0.0.1:443";
+static char* opt_uri = "127.0.0.1:444";
 //static char* opt_uri = "127.0.0.1:80";
 
 static GOptionEntry entries[] = 
@@ -51,7 +51,7 @@ int main(int ac, char* av[])
   reset_timers();
 
   start_timer(9);
-  init_ssl();
+  xr_client_init();
   stop_timer(9);
 
   // connect
