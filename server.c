@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
+#include <unistd.h>
 #include <glib.h>
 
 #include "xmlrpc-server.h"
 
 /* servlet implementation stubs */
 
+#if 0
 typedef struct _testServlet testServlet;
 
 struct _testServlet
@@ -55,6 +58,22 @@ static int testServlet_testMethod_xr(testServlet* obj, xr_call* call)
   xr_call_set_retval(call, xr_value_int_new(retval));
 }
 
+int xr_server_servlet_call(xr_server* server, xr_servlet* servlet, xr_call* call)
+{
+  // check if servlet was called and init new servlet (based on resource)
+  // call servlet method
+  // 
+}
+
+int xr_server_servlet_init(xr_server* server, xr_servlet* servlet)
+{
+}
+
+int xr_server_servlet_free(xr_server* server, xr_servlet* servlet)
+{
+}
+#endif
+
 /* generic stuff */
 
 
@@ -70,6 +89,13 @@ static GOptionEntry entries[] =
   { NULL }
 };
 
+static xr_server* server = NULL;
+
+static void _stop(int signum)
+{
+  xr_server_stop(server);
+}
+
 int main(int ac, char* av[])
 {
   GOptionContext* ctx = g_option_context_new("- XML-RPC SSL Spike Server.");
@@ -77,5 +103,23 @@ int main(int ac, char* av[])
   g_option_context_parse(ctx, &ac, &av, NULL);
   g_option_context_set_help_enabled(ctx, TRUE);
 
-  return 0;
+  if (!g_thread_supported())
+    g_thread_init(NULL);
+
+  signal(SIGINT, _stop);
+
+  xr_server_init();
+  
+  server = xr_server_new("megi.pem", "*:444");
+  if (server == NULL)
+  {
+    printf("error: can't initialize server\n");
+    exit(1);
+  }
+
+  xr_server_run(server);
+
+  xr_server_free(server);
+
+  return 1;
 }
