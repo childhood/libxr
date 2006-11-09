@@ -1,2 +1,5 @@
-implement server
-implement URI parsing in xmlrpc-client
+- servlet registration
+- servlet generetaor
+- servlet creation/destruction (lifetime)
+- implement URI parsing in xmlrpc-client
+
