@@ -198,7 +198,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
   xr_call_free_buffer(request_buffer);
 
   // read response
-#define READ_STEP 64
+#define READ_STEP 256
   char response_header[1025];
   int response_header_length = 0;
   char* response_buffer_preread;

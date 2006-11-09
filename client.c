@@ -27,7 +27,8 @@ int testMethod(xr_client_conn* conn, char* str, int val)
 
 void test(xr_client_conn* conn)
 {
-  testMethod(conn, "test_p1", 6);
+  for (int i=0; i<10; i++)
+    testMethod(conn, "test_p1", 6);
 }
 
 /* main() */
@@ -65,7 +66,7 @@ int main(int ac, char* av[])
   }
 
   // test
-  for (int i=0; i<100; i++)
+  for (int i=0; i<1; i++)
   {
     continue_timer(1);
     test(conn);
