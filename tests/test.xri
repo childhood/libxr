@@ -1,0 +1,27 @@
+//
+// XML-RPC Interface Definition File
+//
+
+// this may be returned instead of normal value
+struct error
+{
+  int faultCode;
+  string faultString;
+};
+
+struct all
+{
+  int     vint;
+  boolean vbool;
+  string  vstring;
+  double  vdouble;
+  time    vtime;
+  blob    vblob;
+  int[]   varray;
+  any     vany;
+  any[]   vanyarray;
+};
+
+int r(int t);
+int br();
+
