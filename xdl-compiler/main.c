@@ -1,15 +1,12 @@
-/*
- * this file implements genie commands multiplexing
- */
-
 #include <glib.h>
-#include "xri.h"
 
-static gchar* xri_file = NULL;
+#include "xdl.h"
+
+static gchar* xdl_file = NULL;
 
 static GOptionEntry entries[] = 
 {
-  { "xri", 'i', 0, G_OPTION_ARG_STRING, &xri_file, "Interface description file.", "FILE" },
+  { "xdl", 'i', 0, G_OPTION_ARG_STRING, &xdl_file, "Interface description file.", "FILE" },
   { NULL }
 };
 
@@ -20,14 +17,14 @@ int main(int ac, char* av[])
   g_option_context_parse(ctx, &ac, &av, NULL);
   g_option_context_set_help_enabled(ctx, TRUE);
 
-  if (xri_file == NULL)
+  if (xdl_file == NULL)
   {
-    printf("You must specify XRI source file.\n");
+    printf("You must specify xdl source file.\n");
     return 1;
   }
   
   struct parser_context* c = pctx_new();
-  xri_load(c, xri_file);
+  xdl_load(c, xdl_file);
   gen_c(c, "out.c");
 
   return 0;

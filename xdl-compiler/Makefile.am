@@ -1,4 +1,4 @@
-EXTRA_DIST = xri.h
+EXTRA_DIST = xdl.h
 
 AM_CFLAGS = \
 	-I$(top_srcdir)/src \
@@ -10,4 +10,4 @@ LDADD = $(XR_LIBS)
 
 bin_PROGRAMS = xdl-compiler
 
-xdl_compiler_SOURCES = main.c xri.c parser.y scanner.l
+xdl_compiler_SOURCES = main.c xdl.c parser.y scanner.l

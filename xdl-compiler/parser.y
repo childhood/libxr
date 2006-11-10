@@ -4,11 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "xri.h"
+#include "xdl.h"
 #include "parser.h"
 
-#define yyin xri_in
-#define yylex_destroy xri_lex_destroy
+#define yyin xdl_in
+#define yylex_destroy xdl_lex_destroy
 
 int yylex (YYSTYPE *yylval_param, YYLTYPE *yylloc_param, struct parser_context *ctx);
 static void yyerror(YYLTYPE *locp, struct parser_context *ctx, const char *msg);
@@ -21,7 +21,7 @@ static void yyerror(YYLTYPE *locp, struct parser_context *ctx, const char *msg);
 %parse-param {struct parser_context *ctx}
 %lex-param {struct parser_context *ctx}
 %error-verbose
-%name-prefix="xri_"
+%name-prefix="xdl_"
 
 %union {
   int num;
@@ -183,7 +183,7 @@ static void yyerror(YYLTYPE *locp, struct parser_context *ctx, const char *msg)
 extern FILE* yyin;
 extern int yylex_destroy(void);
 
-int xri_load(struct parser_context *ctx, const char* path)
+int xdl_load(struct parser_context *ctx, const char* path)
 {
   yylex_destroy();
 

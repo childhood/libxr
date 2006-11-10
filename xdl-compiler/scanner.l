@@ -1,6 +1,6 @@
 %{
 
-#include "xri.h"
+#include "xdl.h"
 #include "parser.h"
 
 #define YY_DECL int yylex (YYSTYPE *yylval_param, YYLTYPE *yylloc_param, struct parser_context *ctx)
@@ -13,7 +13,7 @@
 %option bison-locations
 %option noyywrap
 %option nounput
-%option prefix="xri_" outfile="lex.yy.c"
+%option prefix="xdl_" outfile="lex.yy.c"
 
 %x IN_COMMENT
 

@@ -1,5 +1,5 @@
-#ifndef __MPKG_MODEL_H__
-#define __MPKG_MODEL_H__
+#ifndef __XDL_MODEL_H__
+#define __XDL_MODEL_H__
 
 #include <glib.h>
 
@@ -41,7 +41,7 @@ struct method
   GSList* params;
 };
 
-int xri_load(struct parser_context *ctx, const char* path);
+int xdl_load(struct parser_context *ctx, const char* path);
 struct type* find_type(struct parser_context *ctx, const char* name);
 struct parser_context* pctx_new();
 void gen_c(struct parser_context *ctx, const char* name);

@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include "xri.h"
+
+#include "xdl.h"
 
 struct type t_int = { .type = T_INT, .name = "int" };
 struct type t_bool = { .type = T_BOOL, .name = "boolean" };
