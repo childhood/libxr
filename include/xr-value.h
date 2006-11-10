@@ -1,5 +1,5 @@
-#ifndef __XMLRPC_VALUE_H__
-#define __XMLRPC_VALUE_H__
+#ifndef __XR_VALUE_H__
+#define __XR_VALUE_H__
 
 #include <glib.h>
 

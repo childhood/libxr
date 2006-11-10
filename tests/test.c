@@ -2,7 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "xmlrpc-call.h"
+#include "xr-call.h"
 
 #include "bench.h"
 

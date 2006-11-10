@@ -16,7 +16,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "xmlrpc-client.h"
+#include "xr-client.h"
 //#define DEBUG
 
 struct _xr_client_conn

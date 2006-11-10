@@ -16,7 +16,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "xmlrpc-server.h"
+#include "xr-server.h"
 //#define DEBUG
 
 struct _xr_servlet_method_desc

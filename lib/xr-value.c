@@ -1,5 +1,6 @@
 #include <string.h>
-#include "xmlrpc-value.h"
+
+#include "xr-value.h"
 
 xr_value* xr_value_struct_new()
 {

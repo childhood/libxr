@@ -1,12 +1,12 @@
-#ifndef __XMLRPC_SERVER_H__
-#define __XMLRPC_SERVER_H__
+#ifndef __XR_SERVER_H__
+#define __XR_SERVER_H__
 
 #include <glib.h>
 
 /** @file xmlrpc_server Header
  */
 
-#include "xmlrpc-call.h"
+#include "xr-call.h"
 
 void xr_server_init();
 

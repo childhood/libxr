@@ -1,7 +1,7 @@
 #include <string.h>
 
-#include "xml.h"
-#include "xmlrpc-call.h"
+#include "xml-priv.h"
+#include "xr-call.h"
 
 xr_call* xr_call_new(char* method)
 {

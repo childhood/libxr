@@ -4,7 +4,7 @@
 #include <string.h>
 #include <glib.h>
 
-#include "xmlrpc-client.h"
+#include "xr-client.h"
 
 #include "bench.h"
 

@@ -1,5 +1,5 @@
 AC_PREREQ(2.57)
-AC_INIT([xr], 1.0, [ondrej.jirman@zonio.net], xr)
+AC_INIT([libxr], 1.0, [ondrej.jirman@zonio.net], libxr)
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_CONFIG_HEADER([config.h])
 AC_CANONICAL_SYSTEM
@@ -8,7 +8,11 @@ AM_MAINTAINER_MODE
 
 # Checks for programs.
 AC_PROG_CC
-AC_PROG_RANLIB
+AC_PROG_LIBTOOL
+
+# for xdl
+AM_PROG_LEX
+AC_PROG_YACC
 
 # Checks for pkg-config packages
 GLIB_REQUIRED="glib-2.0 >= 2.6.0"
@@ -25,4 +29,8 @@ AC_HEADER_STDC
 # Output
 AC_OUTPUT([
 	Makefile
+	include/Makefile
+	lib/Makefile
+	xdl-compiler/Makefile
+	tests/Makefile
 ])

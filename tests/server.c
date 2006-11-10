@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <glib.h>
 
-#include "xmlrpc-server.h"
+#include "xr-server.h"
 
 /* servlet implementation stubs */
 

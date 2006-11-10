@@ -1,9 +1,9 @@
-#ifndef __XMLRPC_CLIENT_H__
-#define __XMLRPC_CLIENT_H__
+#ifndef __XR_CLIENT_H__
+#define __XR_CLIENT_H__
 
 #include <glib.h>
 
-#include "xmlrpc-call.h"
+#include "xr-call.h"
 
 /** @file xmlrpc_client Header
  */
