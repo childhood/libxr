@@ -1,5 +1,8 @@
 EXTRA_DIST = \
-  bench.h
+  bench.h \
+  bench.sh \
+  test.xri \
+  server.pem
 
 AM_CFLAGS= \
   -std=gnu99 \
@@ -10,7 +13,7 @@ AM_CFLAGS= \
 
 LDADD = $(XR_LIBS) $(top_builddir)/lib/libxr.la
 
-bin_PROGRAMS = \
+noinst_PROGRAMS = \
   server \
   client \
   test
