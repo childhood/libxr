@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <strings.h>
@@ -58,7 +59,7 @@ int xr_client_open(xr_client_conn* conn, char* uri)
 
   // parse URI format: http://host:8080/RES
   conn->secure = 1;
-  conn->resource = "/CUA";
+  conn->resource = "/CLIENT";
   conn->host = "127.0.0.1";
   if (conn->secure)
   {
@@ -83,6 +84,14 @@ int xr_client_open(xr_client_conn* conn, char* uri)
     BIO_free_all(conn->bio);
     return -1;
   }
+  
+  int flag = 1;
+  int sock = -1;
+  BIO_get_fd(conn->bio, &sock);
+  if (sock >= 0)
+    setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(flag));
+  else
+    fprintf(stderr, "Error disabling Nagle.\n");
 
   if (conn->secure)
   {

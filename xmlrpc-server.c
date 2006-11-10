@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <strings.h>
@@ -206,6 +207,12 @@ static int _xr_server_servlet_run(xr_servlet* servlet, xr_server* server)
   g_assert(server != NULL);
   g_assert(servlet != NULL);
 
+  if (server->secure)
+  {
+    if (BIO_do_handshake(servlet->bio) <= 0)
+      goto end;
+  }
+
   char buf[256];
   servlet->running = 1;
   while (servlet->running)
@@ -215,7 +222,6 @@ static int _xr_server_servlet_run(xr_servlet* servlet, xr_server* server)
   }
 
  end:
-  BIO_ssl_shutdown(servlet->bio);
   BIO_free_all(servlet->bio);
   g_free(servlet);
 }
@@ -233,12 +239,13 @@ xr_server* xr_server_new(const char* certfile, const char* port)
   GError* err = NULL;
 
   xr_server* server = g_new0(xr_server, 1);
+  server->secure = !!certfile;
 
   server->ctx = SSL_CTX_new(SSLv3_server_method());
   if (server->ctx == NULL)
     goto err1;
 
-  if (certfile)
+  if (server->secure)
   {
     if (!SSL_CTX_use_certificate_file(server->ctx, certfile, SSL_FILETYPE_PEM))
       goto err2;
@@ -248,19 +255,40 @@ xr_server* xr_server_new(const char* certfile, const char* port)
       goto err2;
   }
 
-  server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, 200, TRUE, &err);
+  server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, 100, TRUE, &err);
   if (err)
     goto err2;
 
   server->bio_in = BIO_new_accept((char*)port);
   if (server->bio_in == NULL)
     goto err3;
+#ifdef DEBUG
+  BIO_set_callback(server->bio_in, BIO_debug_callback);
+#endif
 
-  server->bio_ssl = BIO_new_ssl(server->ctx, 0);
-  BIO_set_accept_bios(server->bio_in, server->bio_ssl);
+  if (server->secure)
+  {
+    SSL* ssl;
+    server->bio_ssl = BIO_new_ssl(server->ctx, 0);
+#ifdef DEBUG
+    BIO_set_callback(server->bio_ssl, BIO_debug_callback);
+#endif
+    BIO_get_ssl(server->bio_ssl, &ssl);
+    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
+    BIO_set_accept_bios(server->bio_in, server->bio_ssl);
+  }
 
   if (BIO_do_accept(server->bio_in) <= 0)
     goto err4;
+
+  // disable John Nagle's algo
+  int flag = 1;
+  int sock = -1;
+  BIO_get_fd(server->bio_in, &sock);
+  if (sock >= 0)
+    setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(flag));
+  else
+    fprintf(stderr, "Error disabling Nagle.\n");
 
   return server;
  err4:
@@ -279,7 +307,6 @@ void xr_server_free(xr_server* server)
   g_assert(server != NULL);
   g_thread_pool_free(server->pool, TRUE, FALSE);
   BIO_free_all(server->bio_in);
-  BIO_free_all(server->bio_ssl);
   SSL_CTX_free(server->ctx);
   g_free(server);
 }

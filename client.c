@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <string.h>
 #include <glib.h>
 
@@ -23,14 +24,6 @@ int testMethod(xr_client_conn* conn, char* str, int val)
   return retval;
 }
 
-/* test(conn) */
-
-void test(xr_client_conn* conn)
-{
-  for (int i=0; i<10; i++)
-    testMethod(conn, "test_p1", 6);
-}
-
 /* main() */
 
 static char* opt_uri = "127.0.0.1:444";
@@ -49,6 +42,8 @@ int main(int ac, char* av[])
   g_option_context_parse(ctx, &ac, &av, NULL);
   g_option_context_set_help_enabled(ctx, TRUE);
 
+  signal(SIGPIPE, SIG_IGN);
+
   reset_timers();
 
   start_timer(9);
@@ -66,10 +61,10 @@ int main(int ac, char* av[])
   }
 
   // test
-  for (int i=0; i<1; i++)
+  for (int i=0; i<1000; i++)
   {
     continue_timer(1);
-    test(conn);
+    testMethod(conn, "test_p1", 6);
     stop_timer(1);
   }
 

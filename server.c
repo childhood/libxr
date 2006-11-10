@@ -110,7 +110,8 @@ int main(int ac, char* av[])
 
   xr_server_init();
   
-  server = xr_server_new("megi.pem", "*:444");
+//  server = xr_server_new("megi.pem", "*:444");
+  server = xr_server_new(NULL, "*:444");
   if (server == NULL)
   {
     printf("error: can't initialize server\n");
