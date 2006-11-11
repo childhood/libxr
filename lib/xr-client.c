@@ -17,7 +17,7 @@
 #include <openssl/err.h>
 
 #include "xr-client.h"
-#define DEBUG
+//#define DEBUG
 
 struct _xr_client_conn
 {
@@ -325,4 +325,5 @@ void xr_client_free(xr_client_conn* conn)
   if (conn->is_open)
     xr_client_close(conn);
   SSL_CTX_free(conn->ctx);
+  g_free(conn);
 }
