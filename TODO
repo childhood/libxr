@@ -1,3 +1,8 @@
+- client codegen:
+  check errors in demarchalers
+  check errors in value unserialize
+  doubles in lists? -- too long to fit into i->data
+
 - servlet registration
 - servlet generetaor
 - servlet creation/destruction (lifetime)
