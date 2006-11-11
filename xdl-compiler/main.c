@@ -81,14 +81,17 @@ int main(int ac, char* av[])
   EL(0, "#define __%s_Common_H__", xdl->name);
   NL;
 
+  EL(0, "#include <xr-value.h>");
+  NL;
+
   for (j=xdl->types; j; j=j->next)
   {
     xdl_typedef* t = j->data;
 
     if (t->type == TD_STRUCT)
     {
-      EL(0, "typedef struct _%s %s;", t->name, t->name);
-      EL(0, "struct _%s", t->name);
+      EL(0, "typedef struct _%s %s;", t->cname, t->cname);
+      EL(0, "struct _%s", t->cname);
       EL(0, "{");
       for (k=t->struct_members; k; k=k->next)
       {
@@ -118,36 +121,33 @@ int main(int ac, char* av[])
     xdl_typedef* t = j->data;
     if (t->type == TD_STRUCT)
     {
-      EL(0, "xr_value* __%s_to_xr_value(%s val);", t->name, t->ctype);
-      EL(0, "int __xr_value_to_%s(xr_value* xrv, %s* val);", t->name, t->ctype);
+      EL(0, "static __inline__ xr_value* %s(%s val)", t->demarch_name, t->ctype);
+      EL(0, "{");
+      //XXX: impleemnt
+      EL(0, "}");
+      NL;
+      EL(0, "static __inline__ int %s(xr_value* xrv, %s* val)", t->march_name, t->ctype);
+      EL(0, "{");
+      //XXX: impleemnt
+      EL(0, "}");
+      NL;
+    }
+    else if (t->type == TD_ARRAY)
+    {
+      EL(0, "static __inline__ xr_value* %s(%s val)", t->demarch_name, t->ctype);
+      EL(0, "{");
+      //XXX: impleemnt
+      EL(0, "}");
+      NL;
+      EL(0, "static __inline__ int %s(xr_value* xrv, %s* val)", t->march_name, t->ctype);
+      EL(0, "{");
+      //XXX: impleemnt
+      EL(0, "}");
       NL;
     }
   }
 
   EL(0, "#endif");
-
-  OPEN("%s/%sCommon.xrm.c", out_dir, xdl->name);
-
-  EL(0, "#include \"%sCommon.xrm.h\"", xdl->name);
-  NL;
-
-  for (j=xdl->types; j; j=j->next)
-  {
-    xdl_typedef* t = j->data;
-    if (t->type == TD_STRUCT)
-    {
-      EL(0, "xr_value* __%s_to_xr_value(%s val)", t->name, t->ctype);
-      EL(0, "{");
-      //XXX: impleemnt
-      EL(0, "}");
-      NL;
-      EL(0, "int __xr_value_to_%s(xr_value* xrv, %s* val)", t->name, t->ctype);
-      EL(0, "{");
-      //XXX: impleemnt
-      EL(0, "}");
-      NL;
-    }
-  }
 
   /* client/servlet implementations for specific interfaces */
 
@@ -161,7 +161,6 @@ int main(int ac, char* av[])
     EL(0, "#define __%s_%s_H__", xdl->name, s->name);
     NL;
 
-//    EL(0, "#include <xr-value.h>");
     EL(0, "#include <xr-client.h>");
     EL(0, "#include \"%sCommon.h\"", xdl->name);
     NL;
@@ -172,8 +171,8 @@ int main(int ac, char* av[])
   
       if (t->type == TD_STRUCT)
       {
-        EL(0, "typedef struct _%s %s;", t->name, t->name);
-        EL(0, "struct _%s", t->name);
+        EL(0, "typedef struct _%s %s;", t->cname, t->cname);
+        EL(0, "struct _%s", t->cname);
         EL(0, "{");
         for (k=t->struct_members; k; k=k->next)
         {
@@ -200,6 +199,49 @@ int main(int ac, char* av[])
     NL;
 
     EL(0, "#endif");
+
+    OPEN("%s/%s%s.xrc.c", out_dir, xdl->name, s->name);
+
+    EL(0, "#include \"%s%s.h\"", xdl->name, s->name);
+//    EL(0, "#include \"%sCommon.xrm.h\"", xdl->name);
+    EL(0, "#include \"%s%s.xrm.h\"", xdl->name, s->name);
+    NL;
+
+    for (j=s->methods; j; j=j->next)
+    {
+      xdl_method* m = j->data;
+
+      E(0, "%s %s%s_%s(xr_client_conn* conn", m->return_type->ctype, xdl->name, s->name, m->name);
+      for (k=m->params; k; k=k->next)
+      {
+        xdl_method_param* p = k->data;
+        E(0, ", %s %s", p->type->ctype, p->name);
+      }
+      EL(0, ")");
+      EL(0, "{");
+      EL(1, "%s retval = %s;", m->return_type->ctype, m->return_type->cnull);
+      EL(1, "g_assert(conn != NULL);");
+      for (k=m->params; k; k=k->next)
+      {
+        xdl_method_param* p = k->data;
+        if (!strcmp(p->type->cnull, "NULL"))
+          EL(1, "g_assert(%s != NULL);", p->name);
+      }
+      EL(1, "xr_call* call = xr_call_new(\"%s\");", m->name);
+      for (k=m->params; k; k=k->next)
+      {
+        xdl_method_param* p = k->data;
+        EL(1, "xr_call_add_param(call, %s(%s));", p->type->march_name, p->name);
+      }
+      EL(1, "xr_client_call(conn, call);");
+      EL(1, "if (call->retval)");
+      EL(2, "%s(call->retval, &retval);", m->return_type->demarch_name);
+      EL(0, "  err:");
+      EL(1, "xr_call_free(call);");
+      EL(1, "return retval;");
+      EL(0, "}");
+      NL;
+    }
   }
   
   fclose(f);

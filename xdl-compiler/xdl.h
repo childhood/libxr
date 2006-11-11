@@ -28,9 +28,13 @@ struct _xdl_typedef
 {
   int type;                /* typedef node type */
   char* name;              /* name of the type (for use in XDL) */
+  char* cname;             /* name of the type (for use in XDL) */
   char* ctype;             /* C type name */
   char* cnull;             /* null value in C for this type */
   xdl_servlet* servlet;    /* servlet owning this type */
+
+  char* march_name;
+  char* demarch_name;
 
   GSList* struct_members;  /* struct memners list */
   xdl_typedef* item_type; /* array item type */
@@ -77,10 +81,15 @@ struct _xdl_model
 };
 
 xdl_model* xdl_new();
+
 int xdl_load(xdl_model *ctx, const char* path);
+
+xdl_typedef* xdl_typedef_new(int type, char* name, char* cname, char* ctype, char* cnull, char* dem_name, char* mar_name);
+xdl_typedef* xdl_typedef_new_array(xdl_model *xdl, xdl_servlet *servlet, xdl_typedef* item);
+xdl_typedef* xdl_typedef_new_struct(xdl_model *xdl, xdl_servlet *servlet, char* name);
+
 xdl_typedef* xdl_typedef_find(xdl_model *xdl, xdl_servlet *servlet, const char* name);
-xdl_typedef* xdl_typedef_new(int type, char* name, char* ctype, char* cnull);
-xdl_typedef* xdl_typedef_find_array(xdl_model *xdl, xdl_typedef* item);
+
 void xdl_process(xdl_model *ctx);
 
 #endif

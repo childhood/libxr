@@ -28,11 +28,26 @@ struct User
 
 servlet Client
 {
-    struct Bob
+    struct Date
     {
-      int test;
+      int day;
+      int month;
+      int year;
+      int weekday;
     }
-    Bob getBob();
+    struct Time
+    {
+      int hour;
+      int minute;
+    }
+    struct DateTime
+    {
+      Date date;
+      Time time;
+    }
+
+    DateTime getTime();
+    
     User getUserData(string name);
     boolean setUserData(User data);
 }
@@ -40,4 +55,7 @@ servlet Client
 servlet Server
 {
     boolean auth(string username, string password);
+    array<boolean> getList();
+    array<array<boolean>> getListList();
+    boolean setList(array<User> list);
 }

@@ -104,7 +104,7 @@ struct_decl
         printf("Redefining already defined type %s\n", $2);
         exit(1);
       }
-      $$ = xdl_typedef_new(TD_STRUCT, $2, NULL, "NULL");
+      $$ = xdl_typedef_new_struct(xdl, cur_servlet, $2);
       $$->struct_members = $4;
     }
   ;
@@ -165,14 +165,7 @@ servlet_body_decl
 type
   : "array" "<" type ">"
     {
-      $$ = xdl_typedef_find_array(xdl, $3);
-      if ($$ == NULL)
-      {
-        $$ = g_new0(typeof(*$$), 1);
-        $$->type = TD_ARRAY;
-        $$->ctype = "GSList*";
-        $$->item_type = $3;
-      }
+      $$ = xdl_typedef_new_array(xdl, cur_servlet, $3);
     }
   | IDENTIFIER
     {
