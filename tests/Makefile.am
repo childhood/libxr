@@ -15,12 +15,15 @@ AM_CFLAGS= \
   -D_REENTRANT \
   -D_GNU_SOURCE
 
+AM_LDFLAGS = -static
+
 LDADD = $(XR_LIBS) $(top_builddir)/lib/libxr.la
 
 noinst_PROGRAMS = \
   server \
-  client \
-  test
+  client
+
+#  test
 
 test_SOURCES = \
   test.c
@@ -29,7 +32,8 @@ server_SOURCES = \
   server.c
 
 client_SOURCES = \
-  client.c
+  client.c \
+  EEEClient.xrc.c
 
 #CLEANFILES = create.c
 #EXTRA_DIST += create.pgc

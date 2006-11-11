@@ -2,20 +2,39 @@
 
 #include "xr-value.h"
 
-xr_value* xr_value_struct_new()
+struct _xr_value
 {
-  xr_value* v = g_new0(xr_value, 1);
-  v->type = XRV_STRUCT;
-  return v;
+  int type;                      /**< Type of the value. */
+
+  // values
+  char* str_val;
+  int int_val;
+  double dbl_val;
+  xr_blob* blob_val;
+
+  // array
+  GSList* children;       /**< Members or array items list. */
+
+  // struct member fields
+  char* member_name;             /**< Struct member name. */
+  xr_value* member_value; /**< Struct member value. */
+};
+
+xr_blob* xr_blob_new(char* buf, int len)
+{
+  xr_blob* b = g_new0(xr_blob, 1);
+  b->buf = buf;
+  b->len = len;
+  return b;
 }
 
-xr_value* xr_value_array_new()
+void xr_blob_free(xr_blob* b)
 {
-  xr_value* v = g_new0(xr_value, 1);
-  v->type = XRV_ARRAY;
-  return v;
+  g_free(b->buf);
+  g_free(b);
 }
 
+/* base types */
 xr_value* xr_value_string_new(char* val)
 {
   g_assert(val != NULL);
@@ -58,13 +77,136 @@ xr_value* xr_value_time_new(char* val)
   return v;
 }
 
-xr_value* xr_value_blob_new(char* val, int len)
+xr_value* xr_value_blob_new(xr_blob* val)
 {
   g_assert(val != NULL);
   xr_value* v = g_new0(xr_value, 1);
   v->type = XRV_BLOB;
-  v->str_val = val;
-  v->buf_len = len;
+  v->blob_val = val;
+  return v;
+}
+
+int xr_value_to_int(xr_value* val, int* nval)
+{
+  g_assert(val != NULL);
+  g_assert(nval != NULL);
+  if (val->type != XRV_INT)
+    return -1;
+  *nval = val->int_val;
+  return 0;
+}
+
+int xr_value_to_string(xr_value* val, char** nval)
+{
+  g_assert(val != NULL);
+  g_assert(nval != NULL);
+  if (val->type != XRV_STRING)
+    return -1;
+  *nval = val->str_val;
+  return 0;
+}
+
+int xr_value_to_bool(xr_value* val, int* nval)
+{
+  g_assert(val != NULL);
+  g_assert(nval != NULL);
+  if (val->type != XRV_BOOLEAN)
+    return -1;
+  *nval = val->int_val;
+  return 0;
+}
+
+int xr_value_to_double(xr_value* val, double* nval)
+{
+  g_assert(val != NULL);
+  g_assert(nval != NULL);
+  if (val->type != XRV_DOUBLE)
+    return -1;
+  *nval = val->dbl_val;
+  return 0;
+}
+
+int xr_value_to_time(xr_value* val, char** nval)
+{
+  g_assert(val != NULL);
+  g_assert(nval != NULL);
+  if (val->type != XRV_TIME)
+    return -1;
+  *nval = val->str_val;
+  return 0;
+}
+
+int xr_value_to_blob(xr_value* val, xr_blob** nval)
+{
+  g_assert(val != NULL);
+  g_assert(nval != NULL);
+  if (val->type != XRV_BLOB)
+    return -1;
+  *nval = val->blob_val;
+  return 0;
+}
+
+int xr_value_get_type(xr_value* val)
+{
+  g_assert(val != NULL);
+  return val->type;
+}
+
+GSList* xr_value_get_members(xr_value* val)
+{
+  g_assert(val != NULL);
+  g_assert(val->type == XRV_STRUCT);
+  return val->children;
+}
+
+char* xr_value_get_member_name(xr_value* val)
+{
+  g_assert(val != NULL);
+  g_assert(val->type == XRV_MEMBER);
+  return val->member_name;
+}
+
+xr_value* xr_value_get_member_value(xr_value* val)
+{
+  g_assert(val != NULL);
+  g_assert(val->type == XRV_MEMBER);
+  return val->member_value;
+}
+
+xr_value* xr_value_get_member(xr_value* val, char* name)
+{
+  g_assert(val != NULL);
+  g_assert(val->type == XRV_STRUCT);
+  GSList* i;
+  for (i = val->children; i; i = i->next)
+  {
+    xr_value* m = i->data;
+    if (!strcmp(xr_value_get_member_name(m), name))
+      return xr_value_get_member_value(m);
+  }
+  return NULL;
+}
+
+GSList* xr_value_get_items(xr_value* val)
+{
+  g_assert(val != NULL);
+  g_assert(val->type == XRV_ARRAY);
+  return val->children;
+}
+
+/* composite types */
+
+xr_value* xr_value_struct_new()
+{
+  xr_value* v = g_new0(xr_value, 1);
+  v->type = XRV_STRUCT;
+  return v;
+}
+
+xr_value* xr_value_array_new()
+{
+  xr_value* v = g_new0(xr_value, 1);
+  v->type = XRV_ARRAY;
   return v;
 }
 
@@ -98,4 +240,12 @@ void xr_value_array_append(xr_value* arr, xr_value* val)
 void xr_value_free(xr_value* val)
 {
   g_free(val);
+}
+
+int xr_value_is_error_retval(xr_value* v, int* errcode, char** errmsg)
+{
+  g_assert(v != NULL);
+  *errcode = 10;
+  *errmsg = "MESS";
+  return 1;
 }

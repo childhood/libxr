@@ -132,7 +132,7 @@ static __inline__ void xp_free_nodes(struct nodeset* ns)
 
 static __inline__ gchar* xp_eval_cont_str(xmlXPathContextPtr ctx, const gchar* path)
 {
-  gchar* ret = 0;
+  gchar* ret = NULL;
   xmlXPathObjectPtr o = xmlXPathEvalExpression(path, ctx);
   if (o && o->type == XPATH_NODESET && o->nodesetval && o->nodesetval->nodeNr > 0)
     ret = xml_get_cont_str(o->nodesetval->nodeTab[0]);

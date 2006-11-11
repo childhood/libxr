@@ -157,7 +157,7 @@ static int _xr_server_servlet_call(xr_servlet* servlet, xr_server* server)
 
   // do call
   // XXX
-  xr_call_set_errval(call, 100, "Method not implemented.");
+  xr_call_set_error(call, 100, "Method not implemented.");
 
   // send response
 

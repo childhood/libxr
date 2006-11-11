@@ -5,29 +5,13 @@
 #include <glib.h>
 
 #include "xr-client.h"
+#include "EEEClient.h"
 
 #include "bench.h"
-
-/* XML-RPC methods proxy implementation */
-
-int testMethod(xr_client_conn* conn, char* str, int val)
-{
-  int retval = -1;
-  xr_call* call = xr_call_new(__func__);
-//  xr_call_add_param(call, xr_value_blob_new(str, strlen(str)));
-  xr_call_add_param(call, xr_value_string_new(str));
-  xr_call_add_param(call, xr_value_int_new(val));
-  xr_client_call(conn, call);
-  if (call->retval)
-    retval = call->retval->int_val;
-  xr_call_free(call);
-  return retval;
-}
 
 /* main() */
 
 static char* opt_uri = "127.0.0.1:444";
-//static char* opt_uri = "127.0.0.1:80";
 
 static GOptionEntry entries[] = 
 {
@@ -45,7 +29,6 @@ int main(int ac, char* av[])
   signal(SIGPIPE, SIG_IGN);
 
   reset_timers();
-
   start_timer(9);
   xr_client_init();
   stop_timer(9);
@@ -61,12 +44,11 @@ int main(int ac, char* av[])
   }
 
   // test
-  for (int i=0; i<1000; i++)
-  {
-    continue_timer(1);
-    testMethod(conn, "test_p1", 6);
-    stop_timer(1);
-  }
+  continue_timer(1);
+  EEEDateTime* t = EEEClient_getTime(conn);
+  EEEUser* u = EEEClient_getUserData(conn, "bob");
+  EEEClient_setUserData(conn, u);
+  stop_timer(1);
 
   // disconnect
   xr_client_close(conn);

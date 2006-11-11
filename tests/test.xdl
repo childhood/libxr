@@ -14,7 +14,7 @@ struct Calendar
     string      uid;
     time        create_date;
     blob        ical;
-    array<Item> items;
+    array<array<Item>> items;
 }
 
 struct User

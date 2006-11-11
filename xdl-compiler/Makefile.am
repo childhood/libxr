@@ -1,7 +1,6 @@
 EXTRA_DIST = xdl.h
 
 AM_CFLAGS = \
-	-I$(top_srcdir)/src \
 	$(XR_CFLAGS) \
 	-D_GNU_SOURCE
 

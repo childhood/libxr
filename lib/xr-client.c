@@ -17,7 +17,7 @@
 #include <openssl/err.h>
 
 #include "xr-client.h"
-//#define DEBUG
+#define DEBUG
 
 struct _xr_client_conn
 {
@@ -28,7 +28,19 @@ struct _xr_client_conn
   char* host;
   int secure;
   int is_open;
+
+  int errcode;    /* this must be > 0 for errors */
+  char* errmsg;   /* Non-NULL on error. */
 };
+
+void _xr_client_set_error(xr_client_conn* conn, int code, char* msg)
+{
+  g_assert(conn != NULL);
+  g_assert(conn->errcode >= 0);
+  conn->errcode = code;
+  g_free(conn->errmsg);
+  conn->errmsg = g_strdup(msg);
+}
 
 void xr_client_init()
 {
@@ -49,6 +61,18 @@ xr_client_conn* xr_client_new()
     return NULL;
   }
   return conn;
+}
+
+int xr_client_get_error_code(xr_client_conn* conn)
+{
+  g_assert(conn != NULL);
+  return conn->errcode;
+}
+
+char* xr_client_get_error_message(xr_client_conn* conn)
+{
+  g_assert(conn != NULL);
+  return conn->errmsg;
 }
 
 int xr_client_open(xr_client_conn* conn, char* uri)
@@ -167,6 +191,8 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
 {
   g_assert(conn != NULL);
   g_assert(conn->is_open);
+  g_assert(call != NULL);
+  g_assert(conn->errcode >= 0);
 
   char* request_buffer;
   int request_length;
@@ -189,17 +215,18 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
   {
     g_free(request_header);
     xr_call_free_buffer(request_buffer);
-    return -1;
+    _xr_client_set_error(conn, -1, "");
+    goto fatal_err;
   }
   if (BIO_write(conn->bio, request_buffer, request_length) != request_length)
   {
     g_free(request_header);
     xr_call_free_buffer(request_buffer);
-    return -1;
+    _xr_client_set_error(conn, -1, "");
+    goto fatal_err;
   }
 #ifdef DEBUG
-  printf("---- REQ HDR ----\n%s", request_header);
-  printf("---- REQ ----\n");
+  printf("%s", request_header);
   fwrite(request_buffer, request_length, 1, stdout);
   fflush(stdout);
 #endif
@@ -207,7 +234,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
   xr_call_free_buffer(request_buffer);
 
   // read response
-#define READ_STEP 256
+#define READ_STEP 128
   char response_header[1025];
   int response_header_length = 0;
   char* response_buffer_preread;
@@ -218,10 +245,16 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
   while (1)
   {
     if (response_header_length + READ_STEP > sizeof(response_header)-1)
-      return -1; //ERR: headers too long
+    {
+      _xr_client_set_error(conn, -1, "");
+      goto fatal_err; //ERR: headers too long
+    }
     int bytes_read = BIO_read(conn->bio, response_header + response_header_length, READ_STEP);
     if (bytes_read <= 0)
-      return -1; //ERR: err or eof in headers?
+    {
+      _xr_client_set_error(conn, -1, "");
+      goto fatal_err; //ERR: err or eof in headers?
+    }
     char* eoh = _find_eoh(response_header + response_header_length, bytes_read); // search for block for \r\n\r\n (EOH)
     response_header_length += bytes_read;
     if (eoh) // end of headers in the current block
@@ -235,14 +268,16 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
   }
 
 #ifdef DEBUG
-  printf("---- RES HDR ----\n");
   fwrite(response_header, response_header_length, 1, stdout);
   fflush(stdout);
 #endif
 
   response_length = _xr_client_parse_headers(conn, response_header, response_header_length);
   if (response_length <= 0 || response_length > 1024*1024)
-    return -1;
+  {
+    _xr_client_set_error(conn, -1, "");
+    goto fatal_err;
+  }
 
   response_buffer = g_malloc(response_length);  
   memcpy(response_buffer, response_buffer_preread, response_length_preread);
@@ -251,19 +286,37 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
       != response_length - response_length_preread)
   {
     g_free(response_buffer);
-    return -1;
+    _xr_client_set_error(conn, -1, "");
+    goto fatal_err;
   }
 
 #ifdef DEBUG
-  printf("---- RES ----\n");
   fwrite(response_buffer, response_length, 1, stdout);
   fflush(stdout);
 #endif
 
-  xr_call_unserialize_response(call, response_buffer, response_length);
+  int retval = xr_call_unserialize_response(call, response_buffer, response_length);
   g_free(response_buffer);
+  if (retval < 0)
+  {
+    _xr_client_set_error(conn, xr_call_get_error_code(call), xr_call_get_error_message(call));
+    return 1;
+  }
+
+  _xr_client_set_error(conn, 0, NULL);
 
   return 0;
+ fatal_err:
+  return -1;
+}
+
+int xr_client_call_ex(xr_client_conn* conn, xr_call* call, xr_demarchalizer_t dem, void** retval)
+{
+  if (xr_client_call(conn, call) == 0)
+  {
+    if (dem(xr_call_get_retval(call), retval) < 0)
+      _xr_client_set_error(conn, 100, "getListList: Retval demarchalziation failed!");
+  }
 }
 
 void xr_client_free(xr_client_conn* conn)

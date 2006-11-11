@@ -36,6 +36,62 @@ static void line_fprintf(FILE* f, int indent, const char* fmt, ...)
   va_end(ap);
 }
 
+void gen_type_marchalizers(FILE* f, xdl_typedef* t)
+{
+  GSList *i, *j, *k;
+    if (t->type == TD_STRUCT)
+    {
+      EL(0, "static xr_value* %s(%s val)", t->march_name, t->ctype);
+      EL(0, "{");
+      EL(1, "xr_value* v = xr_value_struct_new();");
+      for (k=t->struct_members; k; k=k->next)
+      {
+        xdl_struct_member* m = k->data;
+        EL(1, "xr_value_struct_set_member(v, \"%s\", %s(val->%s));", m->name, m->type->march_name, m->name);
+      }
+      EL(1, "return v;");
+      EL(0, "}");
+      NL;
+      EL(0, "static int %s(xr_value* v, %s* val)", t->demarch_name, t->ctype);
+      EL(0, "{");
+      EL(1, "%s s = g_new0(typeof(*s), 1);", t->ctype, t->ctype);
+      for (k=t->struct_members; k; k=k->next)
+      {
+        xdl_struct_member* m = k->data;
+        EL(1, "%s(xr_value_get_member(v, \"%s\"), &s->%s);", m->type->demarch_name, m->name, m->name);
+      }
+      EL(1, "*val = s;");
+      EL(1, "return 0;");
+      EL(0, "}");
+      NL;
+    }
+    else if (t->type == TD_ARRAY)
+    {
+      EL(0, "static xr_value* %s(%s val)", t->march_name, t->ctype);
+      EL(0, "{");
+      EL(1, "GSList* i;");
+      EL(1, "xr_value* v = xr_value_array_new();");
+      EL(1, "for (i = val; i; i = i->next)");
+      EL(2, "xr_value_array_append(v, %s(i->data));", t->item_type->march_name);
+      EL(1, "return v;");
+      EL(0, "}");
+      NL;
+      EL(0, "static int %s(xr_value* v, %s* val)", t->demarch_name, t->ctype);
+      EL(0, "{");
+      EL(1, "GSList *a, *i;");
+      EL(1, "%s ival;", t->item_type->ctype);
+      EL(1, "for (i = xr_value_get_items(v); i; i = i->next)");
+      EL(1, "{");
+      EL(2, "%s(i->data, &ival);", t->item_type->demarch_name);
+      EL(2, "a = g_slist_append(a, ival);");
+      EL(1, "}");
+      EL(1, "*val = a;");
+      EL(1, "return 0;");
+      EL(0, "}");
+      NL;
+    }
+}
+
 /* main() */
 
 static gchar* out_dir = NULL;
@@ -87,10 +143,16 @@ int main(int ac, char* av[])
   for (j=xdl->types; j; j=j->next)
   {
     xdl_typedef* t = j->data;
+    if (t->type == TD_STRUCT)
+      EL(0, "typedef struct _%s %s;", t->cname, t->cname);
+  }
+  NL;
 
+  for (j=xdl->types; j; j=j->next)
+  {
+    xdl_typedef* t = j->data;
     if (t->type == TD_STRUCT)
     {
-      EL(0, "typedef struct _%s %s;", t->cname, t->cname);
       EL(0, "struct _%s", t->cname);
       EL(0, "{");
       for (k=t->struct_members; k; k=k->next)
@@ -119,32 +181,7 @@ int main(int ac, char* av[])
   for (j=xdl->types; j; j=j->next)
   {
     xdl_typedef* t = j->data;
-    if (t->type == TD_STRUCT)
-    {
-      EL(0, "static __inline__ xr_value* %s(%s val)", t->demarch_name, t->ctype);
-      EL(0, "{");
-      //XXX: impleemnt
-      EL(0, "}");
-      NL;
-      EL(0, "static __inline__ int %s(xr_value* xrv, %s* val)", t->march_name, t->ctype);
-      EL(0, "{");
-      //XXX: impleemnt
-      EL(0, "}");
-      NL;
-    }
-    else if (t->type == TD_ARRAY)
-    {
-      EL(0, "static __inline__ xr_value* %s(%s val)", t->demarch_name, t->ctype);
-      EL(0, "{");
-      //XXX: impleemnt
-      EL(0, "}");
-      NL;
-      EL(0, "static __inline__ int %s(xr_value* xrv, %s* val)", t->march_name, t->ctype);
-      EL(0, "{");
-      //XXX: impleemnt
-      EL(0, "}");
-      NL;
-    }
+    gen_type_marchalizers(f, t);
   }
 
   EL(0, "#endif");
@@ -168,10 +205,17 @@ int main(int ac, char* av[])
     for (j=s->types; j; j=j->next)
     {
       xdl_typedef* t = j->data;
+      if (t->type == TD_STRUCT)
+        EL(0, "typedef struct _%s %s;", t->cname, t->cname);
+    }
+
+    for (j=s->types; j; j=j->next)
+    {
+      xdl_typedef* t = j->data;
   
       if (t->type == TD_STRUCT)
       {
-        EL(0, "typedef struct _%s %s;", t->cname, t->cname);
+        NL;
         EL(0, "struct _%s", t->cname);
         EL(0, "{");
         for (k=t->struct_members; k; k=k->next)
@@ -180,9 +224,9 @@ int main(int ac, char* av[])
           EL(1, "%s %s;", m->type->ctype, m->name);
         }
         EL(0, "};");
-        NL;
       }
     }
+    NL;
 
     for (j=s->methods; j; j=j->next)
     {
@@ -200,10 +244,31 @@ int main(int ac, char* av[])
 
     EL(0, "#endif");
 
+    /* common types marchalizer/demarchalizer functions */
+
+    OPEN("%s/%s%s.xrm.h", out_dir, xdl->name, s->name);
+
+    EL(0, "#ifndef __%s_%s_XRM_H__", xdl->name, s->name);
+    EL(0, "#define __%s_%s_XRM_H__", xdl->name, s->name);
+    NL;
+
+    EL(0, "#include \"%s%s.h\"", xdl->name, s->name);
+    EL(0, "#include \"%sCommon.xrm.h\"", xdl->name);
+    NL;
+
+    for (j=s->types; j; j=j->next)
+    {
+      xdl_typedef* t = j->data;
+      gen_type_marchalizers(f, t);
+    }
+
+    EL(0, "#endif");
+
+    /*  */
+
     OPEN("%s/%s%s.xrc.c", out_dir, xdl->name, s->name);
 
     EL(0, "#include \"%s%s.h\"", xdl->name, s->name);
-//    EL(0, "#include \"%sCommon.xrm.h\"", xdl->name);
     EL(0, "#include \"%s%s.xrm.h\"", xdl->name, s->name);
     NL;
 
@@ -233,10 +298,7 @@ int main(int ac, char* av[])
         xdl_method_param* p = k->data;
         EL(1, "xr_call_add_param(call, %s(%s));", p->type->march_name, p->name);
       }
-      EL(1, "xr_client_call(conn, call);");
-      EL(1, "if (call->retval)");
-      EL(2, "%s(call->retval, &retval);", m->return_type->demarch_name);
-      EL(0, "  err:");
+      EL(1, "xr_client_call_ex(conn, call, (xr_demarchalizer_t)%s, (void**)&retval);", m->return_type->demarch_name);
       EL(1, "xr_call_free(call);");
       EL(1, "return retval;");
       EL(0, "}");

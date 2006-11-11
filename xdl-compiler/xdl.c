@@ -32,7 +32,7 @@ xdl_model* xdl_new()
   c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "string",   "string",   "char*",  "NULL",  "xr_value_to_string", "xr_value_string_new"));
   c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "double",   "double",   "double", "0.0",   "xr_value_to_double", "xr_value_double_new"));
   c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "time",     "time",     "char*",  "NULL",  "xr_value_to_time", "xr_value_time_new"));
-  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BLOB, "blob",     "blob",     "char*",  "NULL",  "xr_value_to_blob", "xr_value_blob_new"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BLOB, "blob",     "blob",     "xr_blob*",  "NULL",  "xr_value_to_blob", "xr_value_blob_new"));
   c->types = g_slist_append(c->types, xdl_typedef_new(TD_ANY,  "any",      "any",      "xr_value*", "NULL", NULL, NULL));
   return c;
 }
