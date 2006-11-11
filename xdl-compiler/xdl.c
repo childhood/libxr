@@ -2,133 +2,87 @@
 
 #include "xdl.h"
 
-struct type t_int = { .type = T_INT, .name = "int" };
-struct type t_bool = { .type = T_BOOL, .name = "boolean" };
-struct type t_string = { .type = T_STRING, .name = "string" };
-struct type t_double = { .type = T_DOUBLE, .name = "double" };
-struct type t_time = { .type = T_TIME, .name = "time" };
-struct type t_blob = { .type = T_BLOB, .name = "blob" };
-struct type t_any = { .type = T_ANY, .name = "any" };
-
-struct parser_context* pctx_new()
+xdl_typedef* xdl_typedef_new(int type, char* name, char* ctype, char* cnull)
 {
-  struct parser_context* c = g_new0(struct parser_context, 1);
-  c->types = g_slist_append(c->types, &t_int);
-  c->types = g_slist_append(c->types, &t_bool);
-  c->types = g_slist_append(c->types, &t_string);
-  c->types = g_slist_append(c->types, &t_double);
-  c->types = g_slist_append(c->types, &t_time);
-  c->types = g_slist_append(c->types, &t_blob);
-  c->types = g_slist_append(c->types, &t_any);
+  xdl_typedef* t = g_new0(xdl_typedef, 1);
+  t->type = type;
+  t->name = g_strdup(name);
+  t->ctype = g_strdup(ctype);
+  t->cnull = g_strdup(cnull);
+  return t;
+}
+
+xdl_model* xdl_new()
+{
+  xdl_model* c = g_new0(xdl_model, 1);
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "int",      "int",    "-1"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "boolean",  "int",    "-1"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "string",   "char*",  "NULL"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "double",   "double", "0.0"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "time",     "char*",  "NULL"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BLOB, "blob",     "char*",  "NULL"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_ANY,  "any",      "xr_value*", "NULL"));
   return c;
 }
 
-struct type* find_type(struct parser_context *ctx, const char* name)
+xdl_typedef* xdl_typedef_find(xdl_model *xdl, xdl_servlet *servlet, const char* name)
 {
   GSList* i;
-  for (i=ctx->types; i; i=i->next)
+  if (servlet != NULL)
   {
-    struct type* t = i->data;
-    if (!strcmp(t->name, name))
+    for (i=servlet->types; i; i=i->next)
+    {
+      xdl_typedef* t = i->data;
+      if (t->name && !strcmp(t->name, name))
+        return t;
+    }
+  }
+  for (i=xdl->types; i; i=i->next)
+  {
+    xdl_typedef* t = i->data;
+    if (t->name && !strcmp(t->name, name))
       return t;
   }
   return NULL;
 }
 
-//////
-#define EL(i, fmt, args...) \
-  line_fprintf(f, i, fmt "\n", ##args)
-
-#define E(i, fmt, args...) \
-  line_fprintf(f, i, fmt, ##args)
-
-#define NL \
-  fprintf(f, "\n")
-
-static void line_fprintf(FILE* f, int indent, const char* fmt, ...)
+xdl_typedef* xdl_typedef_find_array(xdl_model *xdl, xdl_typedef* item)
 {
-  va_list ap;
-  int i;
-  for (i=0;i<indent;i++)
-    fprintf(f, "\t");
-  va_start(ap, fmt);
-  vfprintf(f, fmt, ap);
-  va_end(ap);
-}
-//////
-
-char* get_type(struct type* t)
-{
-  if (t->type == T_STRUCT)
-    return g_strdup_printf("struct %s*", t->name);
-  else if (t->type == T_ARRAY)
-    return "GSList*";
-  else if (t->type == T_INT || t->type == T_BOOL)
-    return "int";
-  else if (t->type == T_STRING)
-    return "char*";
-  else if (t->type == T_DOUBLE)
-    return "double";
-  else if (t->type == T_TIME)
-    return "time_t";
-  else if (t->type == T_BLOB)
-    return "blob*";
-  else if (t->type == T_ANY)
-    return "any*";
-  printf("Unknown type %s\n", t->name);
-  exit(1);
-}
-
-void gen_c(struct parser_context *ctx, const char* name)
-{
-  FILE* f = fopen(name, "w");
-  if (f == NULL)
+  GSList* i;
+  for (i=xdl->types; i; i=i->next)
   {
-    printf("Can't open output file for writing.");
-    return;
+    xdl_typedef* t = i->data;
+    if (t->type == TD_ARRAY && t->item_type == item)
+      return t;
   }
+  return NULL;
+}
 
-  EL(0, "#include <glib.h>");
-  NL;
-
+void xdl_process(xdl_model *xdl)
+{
   GSList *i, *j;
-
-/*
-  for (i=ctx->types; i; i=i->next)
-  { struct type* t = i->data;
-    if (t->type != T_STRUCT)
-      continue;
-    EL(0, "typedef struct _%s %s;", t->name, t->name);
-  }
-  NL;
-*/
-
-  for (i=ctx->types; i; i=i->next)
-  { struct type* t = i->data;
-    
-    if (t->type != T_STRUCT)
-      continue;
-    
-    EL(0, "struct %s", t->name);
-    EL(0, "{");
-    for (j=t->members; j; j=j->next)
-    { struct member* m = j->data;
-      EL(1, "%s %s;", get_type(m->type), m->name);
+  for (i=xdl->types; i; i=i->next)
+  {
+    xdl_typedef* t = i->data;
+    if (t->type == TD_STRUCT)
+    {
+      t->name = g_strdup_printf("%s%s", xdl->name, t->name);
+      t->ctype = g_strdup_printf("%s*", t->name);
     }
-    EL(0, "};");
-    NL;
   }
 
-  for (i=ctx->methods; i; i=i->next)
-  { struct method* m = i->data;
-
-    E(0, "%s %s(", get_type(m->return_type), m->name);
-
-    for (j=m->params; j; j=j->next)
-    { struct param* p = j->data;
-      E(0, "%s %s%s", get_type(p->type), p->name, j->next ? ", " : "");
+  for (i=xdl->servlets; i; i=i->next)
+  {
+    xdl_servlet* s = i->data;
+    for (j=s->types; j; j=j->next)
+    {
+      xdl_typedef* t = j->data;
+      if (t->type == TD_STRUCT)
+      {
+        t->name = g_strdup_printf("%s%s_%s", xdl->name, s->name, t->name);
+        t->ctype = g_strdup_printf("%s*", t->name);
+      }
     }
-
-    EL(0, ");");
   }
 }
+

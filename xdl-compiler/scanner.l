@@ -3,7 +3,7 @@
 #include "xdl.h"
 #include "parser.h"
 
-#define YY_DECL int yylex (YYSTYPE *yylval_param, YYLTYPE *yylloc_param, struct parser_context *ctx)
+#define YY_DECL int yylex (YYSTYPE *yylval_param, YYLTYPE *yylloc_param, xdl_model *xdl)
 #define uploc    { yylloc->first_column = yylloc->last_column + 1; yylloc->last_column += strlen (yytext); }
 
 %}
@@ -45,10 +45,14 @@ string_literal              \"{string_character}*\"
 "}"                         { uploc; return CLOSE_BRACE; }
 "("                         { uploc; return OPEN_RBRACE; }
 ")"                         { uploc; return CLOSE_RBRACE; }
-"[]"                        { uploc; return ARRAY; }
+"<"                         { uploc; return OPEN_SBRACE; }
+">"                         { uploc; return CLOSE_SBRACE; }
 ";"                         { uploc; return SEMICOLON; }
 ","                         { uploc; return COMMA; }
 struct                      { uploc; return STRUCT; }
+array                       { uploc; return ARRAY; }
+servlet                     { uploc; return SERVLET; }
+namespace                   { uploc; return NAMESPACE; }
 
 {integer_literal}           { uploc; yylval->num = atoi(yytext); return INTEGER_LITERAL; }
 

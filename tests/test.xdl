@@ -1,0 +1,43 @@
+namespace EEE;
+
+struct Item
+{
+    string      uid;
+    string      type;
+    time        from_date;
+    time        to_date;
+    blob        ical;
+}
+
+struct Calendar
+{
+    string      uid;
+    time        create_date;
+    blob        ical;
+    array<Item> items;
+}
+
+struct User
+{
+    string          uid;
+    time            create_date;
+    blob            ical;
+    Calendar        maincal;
+    array<Calendar> calendars;
+}
+
+servlet Client
+{
+    struct Bob
+    {
+      int test;
+    }
+    Bob getBob();
+    User getUserData(string name);
+    boolean setUserData(User data);
+}
+
+servlet Server
+{
+    boolean auth(string username, string password);
+}

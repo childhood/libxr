@@ -3,47 +3,84 @@
 
 #include <glib.h>
 
-/** @file mpkg model header
-*/
+/** @file xdl model header
+ */
 
-struct parser_context
+/* types */
+
+enum
 {
-  GSList* types;
-  GSList* methods;
+  TD_BASE,
+  TD_STRUCT,
+  TD_ARRAY,
+  TD_BLOB,
+  TD_ANY,
 };
 
-enum { T_INT, T_BOOL, T_STRING, T_DOUBLE, T_TIME, T_BLOB, T_STRUCT, T_ARRAY, T_ANY };
+typedef struct _xdl_typedef xdl_typedef;
+typedef struct _xdl_struct_member xdl_struct_member;
+typedef struct _xdl_method_param xdl_method_param;
+typedef struct _xdl_method xdl_method;
+typedef struct _xdl_servlet xdl_servlet;
+typedef struct _xdl_model xdl_model;
 
-struct type
+struct _xdl_typedef
 {
-  int type;
-  char* name;
-  GSList* members; // for struct
-  struct type* elem_type; // for array
+  int type;                /* typedef node type */
+  char* name;              /* name of the type (for use in XDL) */
+  char* ctype;             /* C type name */
+  char* cnull;             /* null value in C for this type */
+  xdl_servlet* servlet;    /* servlet owning this type */
+
+  GSList* struct_members;  /* struct memners list */
+  xdl_typedef* item_type; /* array item type */
 };
 
-struct member
+struct _xdl_struct_member
 {
-  struct type* type;
   char* name;
+  xdl_typedef* type;
 };
 
-struct param
+/* methods */
+
+struct _xdl_method_param
 {
-  struct type* type;
   char* name;
+  xdl_typedef* type;
 };
 
-struct method
+struct _xdl_method
 {
   char* name;
-  struct type* return_type;
   GSList* params;
+  xdl_typedef* return_type;
 };
 
-int xdl_load(struct parser_context *ctx, const char* path);
-struct type* find_type(struct parser_context *ctx, const char* name);
-struct parser_context* pctx_new();
-void gen_c(struct parser_context *ctx, const char* name);
+/* servlets */
+
+struct _xdl_servlet
+{
+  char* name;
+
+  GSList* types;    /* servlet types */
+  GSList* methods;  /* methods */
+};
+
+/* parser */
+
+struct _xdl_model
+{
+  char* name;
+  GSList* servlets;
+  GSList* types;    /* global types */
+};
+
+xdl_model* xdl_new();
+int xdl_load(xdl_model *ctx, const char* path);
+xdl_typedef* xdl_typedef_find(xdl_model *xdl, xdl_servlet *servlet, const char* name);
+xdl_typedef* xdl_typedef_new(int type, char* name, char* ctype, char* cnull);
+xdl_typedef* xdl_typedef_find_array(xdl_model *xdl, xdl_typedef* item);
+void xdl_process(xdl_model *ctx);
 
 #endif

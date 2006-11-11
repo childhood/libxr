@@ -10,16 +10,18 @@
 #define yyin xdl_in
 #define yylex_destroy xdl_lex_destroy
 
-int yylex (YYSTYPE *yylval_param, YYLTYPE *yylloc_param, struct parser_context *ctx);
-static void yyerror(YYLTYPE *locp, struct parser_context *ctx, const char *msg);
+int yylex (YYSTYPE *yylval_param, YYLTYPE *yylloc_param, xdl_model *xdl);
+static void yyerror(YYLTYPE *locp, xdl_model *xdl, const char *msg);
+
+xdl_servlet* cur_servlet = NULL;
 
 %}
 
 %defines
 %locations
 %pure-parser
-%parse-param {struct parser_context *ctx}
-%lex-param {struct parser_context *ctx}
+%parse-param {xdl_model *xdl}
+%lex-param {xdl_model *xdl}
 %error-verbose
 %name-prefix="xdl_"
 
@@ -27,20 +29,25 @@ static void yyerror(YYLTYPE *locp, struct parser_context *ctx, const char *msg);
   int num;
   char* str;
   GSList* list;
-  struct type* type;
-  struct param* param;
-  struct member* member;
-  struct method* method;
+  xdl_typedef* type;
+  xdl_method_param* param;
+  xdl_struct_member* member;
+  xdl_method* method;
+  xdl_servlet* servlet;
 }
 
 %token OPEN_BRACE "{"
 %token CLOSE_BRACE "}"
+%token OPEN_SBRACE "<"
+%token CLOSE_SBRACE ">"
 %token OPEN_RBRACE "("
 %token CLOSE_RBRACE ")"
-%token ARRAY "[]"
 %token SEMICOLON ";"
 %token COMMA ","
 %token STRUCT "struct"
+%token ARRAY "array"
+%token SERVLET "servlet"
+%token NAMESPACE "namespace"
 
 %token <str> DOC_COMMENT
 %token <str> STRING_LITERAL
@@ -48,44 +55,57 @@ static void yyerror(YYLTYPE *locp, struct parser_context *ctx, const char *msg);
 %token <num> INTEGER_LITERAL
 
 %type <type> type
-%type <type> type_decl
+%type <type> struct_decl
 %type <member> struct_member
 %type <list> struct_members
 %type <list> params opt_params
 %type <param> param
 %type <method> method_decl
+%type <servlet> servlet_decl
 
 %start compilation_unit
 
 %%
 
 compilation_unit
-  : opt_type_decls method_decls
+  : namespace_decl toplevel_decls
   ;
 
-opt_type_decls
-  :
-  | type_decls
-  ;
-
-type_decls
-  : type_decl
-  | type_decls type_decl
-  ;
-
-method_decls
-  : method_decl
-  | method_decls method_decl
-  ;
-
-type_decl
-  : "struct" IDENTIFIER "{" struct_members "}" ";"
+namespace_decl
+  : "namespace" IDENTIFIER ";"
     {
-      $$ = g_new(typeof(*$$), 1);
-      $$->type = T_STRUCT;
-      $$->name = $2;
-      $$->members = $4;
-      ctx->types = g_slist_append(ctx->types, $$);
+      xdl->name = g_strdup($2);
+    }
+  ;
+
+toplevel_decls
+  : toplevel_decl
+  | toplevel_decls toplevel_decl
+  ;
+
+toplevel_decl
+  : struct_decl
+    {
+      xdl->types = g_slist_append(xdl->types, $1);
+    }
+  | servlet_decl
+    {
+      xdl->servlets = g_slist_append(xdl->servlets, $1);
+    }
+  ;
+
+/* structs */
+
+struct_decl
+  : "struct" IDENTIFIER "{" struct_members "}"
+    {
+      if (xdl_typedef_find(xdl, cur_servlet, $2))
+      {
+        printf("Redefining already defined type %s\n", $2);
+        exit(1);
+      }
+      $$ = xdl_typedef_new(TD_STRUCT, $2, NULL, "NULL");
+      $$->struct_members = $4;
     }
   ;
 
@@ -103,33 +123,77 @@ struct_members
 struct_member
   : type IDENTIFIER ";"
     {
-      $$ = g_new(typeof(*$$), 1);
+      $$ = g_new0(typeof(*$$), 1);
       $$->type = $1;
       $$->name = $2;
     }
   ;
 
-type
-  : IDENTIFIER "[]"
+/* servlets */
+
+servlet_decl
+  : "servlet" IDENTIFIER
     {
-      $$ = g_new(typeof(*$$), 1);
-      $$->type = T_ARRAY;
-      $$->name = $1;
-      $$->elem_type = find_type(ctx, $1);
-      if ($$->elem_type == NULL)
+      cur_servlet = g_new0(xdl_servlet, 1);
+      cur_servlet->name = g_strdup($2);
+    }
+    "{" servlet_body_decls "}"
+    {
+      $$ = cur_servlet;
+      cur_servlet = NULL;
+    }
+  ;
+
+servlet_body_decls
+  : servlet_body_decl
+  | servlet_body_decls servlet_body_decl
+  ;
+
+servlet_body_decl
+  : struct_decl
+    {
+      cur_servlet->types = g_slist_append(cur_servlet->types, $1);
+    }
+  | method_decl
+    {
+      cur_servlet->methods = g_slist_append(cur_servlet->methods, $1);
+    }
+  ;
+
+/* type use */
+
+type
+  : "array" "<" type ">"
+    {
+      $$ = xdl_typedef_find_array(xdl, $3);
+      if ($$ == NULL)
       {
-        printf("Undefined type %s\n", $1);
-        exit(1);
+        $$ = g_new0(typeof(*$$), 1);
+        $$->type = TD_ARRAY;
+        $$->ctype = "GSList*";
+        $$->item_type = $3;
       }
     }
   | IDENTIFIER
     {
-      $$ = find_type(ctx, $1);
+      $$ = xdl_typedef_find(xdl, cur_servlet, $1);
       if ($$ == NULL)
       {
         printf("Undefined type %s\n", $1);
         exit(1);
       }
+    }
+  ;
+
+/* methods */
+
+method_decl
+  : type IDENTIFIER "(" opt_params ")" ";"
+    {
+      $$ = g_new0(typeof(*$$), 1);
+      $$->name = $2;
+      $$->return_type = $1;
+      $$->params = $4;
     }
   ;
 
@@ -155,26 +219,15 @@ params
 param
   : type IDENTIFIER
     {
-      $$ = g_new(typeof(*$$), 1);
+      $$ = g_new0(typeof(*$$), 1);
       $$->type = $1;
       $$->name = $2;
     }
   ;
 
-method_decl
-  : type IDENTIFIER "(" opt_params ")" ";"
-    {
-      $$ = g_new(typeof(*$$), 1);
-      $$->name = $2;
-      $$->return_type = $1;
-      $$->params = $4;
-      ctx->methods = g_slist_append(ctx->methods, $$);
-    }
-  ;
-
 %%
 
-static void yyerror(YYLTYPE *locp, struct parser_context *ctx, const char *msg)
+static void yyerror(YYLTYPE *locp, xdl_model *xdl, const char *msg)
 {
   printf("Syntax error at [line %d, col %d]: %s.\n", locp->first_line, locp->first_column, msg);
   exit(1);
@@ -183,7 +236,7 @@ static void yyerror(YYLTYPE *locp, struct parser_context *ctx, const char *msg)
 extern FILE* yyin;
 extern int yylex_destroy(void);
 
-int xdl_load(struct parser_context *ctx, const char* path)
+int xdl_load(xdl_model *xdl, const char* path)
 {
   yylex_destroy();
 
@@ -193,7 +246,7 @@ int xdl_load(struct parser_context *ctx, const char* path)
     printf("Couldn't open source file: %s.\n", path);
     return -1;
   }
-  yyparse(ctx);
+  yyparse(xdl);
   fclose(yyin);
 
   yylex_destroy();

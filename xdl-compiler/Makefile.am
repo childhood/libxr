@@ -10,4 +10,4 @@ LDADD = $(XR_LIBS)
 
 bin_PROGRAMS = xdl-compiler
 
-xdl_compiler_SOURCES = main.c xdl.c parser.y scanner.l
+xdl_compiler_SOURCES = xdl.c main.c parser.y scanner.l

@@ -1,7 +1,7 @@
 EXTRA_DIST = \
   bench.h \
   bench.sh \
-  test.xri \
+  test.xdl \
   server.pem
 
 AM_CFLAGS= \
