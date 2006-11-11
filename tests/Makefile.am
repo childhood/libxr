@@ -4,6 +4,9 @@ EXTRA_DIST = \
   test.xdl \
   server.pem
 
+TESTS = \
+  t-xdl-compiler1.sh
+
 AM_CFLAGS= \
   -std=gnu99 \
   $(XR_CFLAGS) \
