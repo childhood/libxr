@@ -22,6 +22,7 @@ int xr_client_call_ex(xr_client_conn* conn, xr_call* call, xr_demarchalizer_t de
 
 int xr_client_get_error_code(xr_client_conn* conn);
 char* xr_client_get_error_message(xr_client_conn* conn);
+void xr_client_reset_error(xr_client_conn* conn);
 
 void xr_client_init();
 

@@ -33,7 +33,7 @@ struct _xr_client_conn
   char* errmsg;   /* Non-NULL on error. */
 };
 
-void _xr_client_set_error(xr_client_conn* conn, int code, char* msg)
+static void _xr_client_set_error(xr_client_conn* conn, int code, char* msg)
 {
   g_assert(conn != NULL);
   g_assert(conn->errcode >= 0);
@@ -75,6 +75,11 @@ char* xr_client_get_error_message(xr_client_conn* conn)
   return conn->errmsg;
 }
 
+void xr_client_reset_error(xr_client_conn* conn)
+{
+  _xr_client_set_error(conn, 0, NULL);
+}
+
 int xr_client_open(xr_client_conn* conn, char* uri)
 {
   g_assert(conn != NULL);
@@ -98,7 +103,7 @@ int xr_client_open(xr_client_conn* conn, char* uri)
   }
 
 #ifdef DEBUG
-  BIO_set_callback(conn->bio, BIO_debug_callback);
+//  BIO_set_callback(conn->bio, BIO_debug_callback);
 #endif
 
   if (BIO_do_connect(conn->bio) <= 0)
@@ -192,7 +197,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
   g_assert(conn != NULL);
   g_assert(conn->is_open);
   g_assert(call != NULL);
-  g_assert(conn->errcode >= 0);
+  g_assert(conn->errcode == 0);
 
   char* request_buffer;
   int request_length;
@@ -246,14 +251,14 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
   {
     if (response_header_length + READ_STEP > sizeof(response_header)-1)
     {
-      _xr_client_set_error(conn, -1, "");
-      goto fatal_err; //ERR: headers too long
+      _xr_client_set_error(conn, -1, "Headers too long (limit is 1024 bytes)");
+      goto fatal_err;
     }
     int bytes_read = BIO_read(conn->bio, response_header + response_header_length, READ_STEP);
     if (bytes_read <= 0)
     {
-      _xr_client_set_error(conn, -1, "");
-      goto fatal_err; //ERR: err or eof in headers?
+      _xr_client_set_error(conn, -1, "EOS in headers. Are we talking to HTTP server?");
+      goto fatal_err;
     }
     char* eoh = _find_eoh(response_header + response_header_length, bytes_read); // search for block for \r\n\r\n (EOH)
     response_header_length += bytes_read;
@@ -275,7 +280,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
   response_length = _xr_client_parse_headers(conn, response_header, response_header_length);
   if (response_length <= 0 || response_length > 1024*1024)
   {
-    _xr_client_set_error(conn, -1, "");
+    _xr_client_set_error(conn, -1, "Content length unknown or over limit (1MB).");
     goto fatal_err;
   }
 
@@ -286,7 +291,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
       != response_length - response_length_preread)
   {
     g_free(response_buffer);
-    _xr_client_set_error(conn, -1, "");
+    _xr_client_set_error(conn, -1, "EOS in content. Server terminated connecton?");
     goto fatal_err;
   }
 
@@ -303,7 +308,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
     return 1;
   }
 
-  _xr_client_set_error(conn, 0, NULL);
+  xr_client_reset_error(conn);
 
   return 0;
  fatal_err:
