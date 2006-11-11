@@ -286,7 +286,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
   response_buffer = g_malloc(response_length);  
   memcpy(response_buffer, response_buffer_preread, response_length_preread);
 
-  if (BIO_read(conn->bio, response_buffer, response_length - response_length_preread) 
+  if (BIO_read(conn->bio, response_buffer + response_length_preread, response_length - response_length_preread) 
       != response_length - response_length_preread)
   {
     g_free(response_buffer);

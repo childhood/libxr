@@ -138,7 +138,7 @@ static int _xr_server_servlet_call(xr_servlet* servlet, xr_server* server)
   request_buffer = g_malloc(request_length);  
   memcpy(request_buffer, request_buffer_preread, request_length_preread);
 
-  if (BIO_read(servlet->bio, request_buffer, request_length - request_length_preread) 
+  if (BIO_read(servlet->bio, request_buffer + request_length_preread, request_length - request_length_preread) 
       != request_length - request_length_preread)
   {
     g_free(request_buffer);
