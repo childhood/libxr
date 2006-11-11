@@ -2,7 +2,8 @@ EXTRA_DIST = \
   bench.h \
   bench.sh \
   test.xdl \
-  server.pem
+  server.pem \
+  t-xdl-compiler1.sh
 
 TESTS = \
   t-xdl-compiler1.sh
