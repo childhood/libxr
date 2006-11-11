@@ -2,6 +2,7 @@
 #include <memory.h>
 #include <errno.h>
 #include <unistd.h>
+#include <regex.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -79,6 +80,46 @@ void xr_client_reset_error(xr_client_conn* conn)
   _xr_client_set_error(conn, 0, NULL);
 }
 
+static int _parse_uri(const char* uri, int* secure, char** host, char** resource)
+{
+  g_assert(uri != NULL);
+  g_assert(secure != NULL);
+  g_assert(host != NULL);
+  g_assert(resource != NULL);
+
+  regex_t r;
+  regmatch_t m[7];
+  gint rs;
+  if (rs = regcomp(&r, "^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", REG_EXTENDED|REG_ICASE))
+    return -1;
+  rs = regexec(&r, uri, 7, m, 0);
+  regfree(&r);
+  if (rs != 0)
+    return -1;
+  
+  char* schema = g_strndup(uri+m[1].rm_so, m[1].rm_eo-m[1].rm_so);
+
+  if (!strcasecmp("3es", schema))
+    *secure = 1;
+  else if (!strcasecmp("3e", schema))
+    *secure = 0;
+  else if (!strcasecmp("http", schema))
+    *secure = 0;
+  else if (!strcasecmp("https", schema))
+    *secure = 1;
+  else
+  {
+    g_free(schema);
+    return -1;
+  }
+  g_free(schema);
+  
+  *host = g_strndup(uri+m[2].rm_so, m[2].rm_eo-m[2].rm_so);
+  *resource = g_strndup(uri+m[5].rm_so, m[5].rm_eo-m[5].rm_so);
+  
+  return 0;
+}
+
 int xr_client_open(xr_client_conn* conn, char* uri)
 {
   g_assert(conn != NULL);
@@ -86,19 +127,26 @@ int xr_client_open(xr_client_conn* conn, char* uri)
   g_assert(!conn->is_open);
 
   // parse URI format: http://host:8080/RES
-  conn->secure = 1;
-  conn->resource = "/CLIENT";
-  conn->host = "127.0.0.1";
+  g_free(conn->host);
+  g_free(conn->resource);
+  conn->host = NULL;
+  conn->resource = NULL;
+  if (_parse_uri(uri, &conn->secure, &conn->host, &conn->resource))
+  {
+    fprintf(stderr, "Invalid URI format (%s).\n", uri);
+    return -1;
+  }
+
   if (conn->secure)
   {
     conn->bio = BIO_new_ssl_connect(conn->ctx);
     BIO_get_ssl(conn->bio, &conn->ssl);
     SSL_set_mode(conn->ssl, SSL_MODE_AUTO_RETRY);
-    BIO_set_conn_hostname(conn->bio, uri);
+    BIO_set_conn_hostname(conn->bio, conn->host);
   }
   else
   {
-    conn->bio = BIO_new_connect(uri);
+    conn->bio = BIO_new_connect(conn->host);
   }
 
 #ifdef DEBUG
@@ -328,6 +376,8 @@ void xr_client_free(xr_client_conn* conn)
   g_assert(conn != NULL);
   if (conn->is_open)
     xr_client_close(conn);
+  g_free(conn->host);
+  g_free(conn->resource);
   SSL_CTX_free(conn->ctx);
   g_free(conn);
 }
