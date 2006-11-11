@@ -35,6 +35,7 @@ struct _xdl_typedef
 
   char* march_name;
   char* demarch_name;
+  char* free_func;
 
   GSList* struct_members;  /* struct memners list */
   xdl_typedef* item_type; /* array item type */
@@ -84,7 +85,6 @@ xdl_model* xdl_new();
 
 int xdl_load(xdl_model *ctx, const char* path);
 
-xdl_typedef* xdl_typedef_new(int type, char* name, char* cname, char* ctype, char* cnull, char* dem_name, char* mar_name);
 xdl_typedef* xdl_typedef_new_array(xdl_model *xdl, xdl_servlet *servlet, xdl_typedef* item);
 xdl_typedef* xdl_typedef_new_struct(xdl_model *xdl, xdl_servlet *servlet, char* name);
 
