@@ -36,7 +36,6 @@ struct _xr_client_conn
 static void _xr_client_set_error(xr_client_conn* conn, int code, char* msg)
 {
   g_assert(conn != NULL);
-  g_assert(conn->errcode >= 0);
   conn->errcode = code;
   g_free(conn->errmsg);
   conn->errmsg = g_strdup(msg);
