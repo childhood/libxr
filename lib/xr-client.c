@@ -115,7 +115,10 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
   g_free(schema);
   
   *host = g_strndup(uri+m[2].rm_so, m[2].rm_eo-m[2].rm_so);
-  *resource = g_strndup(uri+m[5].rm_so, m[5].rm_eo-m[5].rm_so);
+  if (m[5].rm_eo-m[5].rm_so == 0)
+    *resource = g_strdup("/RPC2");
+  else
+    *resource = g_strndup(uri+m[5].rm_so, m[5].rm_eo-m[5].rm_so);
   
   return 0;
 }

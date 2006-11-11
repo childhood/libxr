@@ -22,7 +22,7 @@ static int print_error(xr_client_conn* conn)
 
 /* main() */
 
-static char* opt_uri = "127.0.0.1:444";
+static char* opt_uri = "http://localhost:80";
 
 static GOptionEntry entries[] = 
 {
