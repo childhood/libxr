@@ -1,0 +1,29 @@
+XML-RPC Library With XML-RPC Interface Compiler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is brand new XML-RPC library with support for:
+
+  - persistent connections over HTTP/1.1
+  - SSL3/TLS1 using OpenSSL
+  - XML-RPC interface description language (XDL)
+  - XML-RPC interface compiler
+
+XDL Compiler
+~~~~~~~~~~~~
+
+XDL Compiler outputs following files:
+
+  (Lets suppose that we have Test interface)
+
+  .
+  |-- EEETest.h        -- Test interface types definitions
+  |-- EEETest.c        -- Test interface types access methods
+  |-- EEETest.xrc.c    -- implementation of client interface for Test servlet
+  |-- EEETest.xrm.h    -- marchalizers/demarchalizers for Test servlet types
+  |-- EEETest.xrs.h    -- server interface public method for servlet registration
+  |-- EEETest.xrs.c    -- servlet interface implementation
+  |-- EEETest.stubs.h  -- servlet stubs header
+  |-- EEETest.stubs.c  -- servlet stubs implementation
+  |-- EEECommon.h      -- common types declared outside of servlet
+  |-- EEECommon.c      -- common types access methods (for freeing/allocation)
+  `-- EEECommon.xrm.h  -- marchalizers/demarchalizers for common types
