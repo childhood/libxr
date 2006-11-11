@@ -216,7 +216,8 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len)
   xmlDocDumpFormatMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8", 1);
 }
 
-//XXX: better error handling
+// return NULL if some unrecognized XML elements are found
+
 static xr_value* _xr_value_unserialize(xmlNode* node)
 {
   for_each_node(node, tn)
@@ -228,7 +229,7 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
     else if (match_node(tn, "boolean"))
       return xr_value_bool_new(xml_get_cont_bool(tn));
     else if (match_node(tn, "double"))
-      return xr_value_double_new(0);
+      return xr_value_double_new(xml_get_cont_double(tn));
     else if (match_node(tn, "time"))
       return xr_value_time_new(xml_get_cont_str(tn));
     else if (match_node(tn, "base64"))
@@ -247,8 +248,12 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
         if (match_node(v, "value"))
         {
           xr_value* elem = _xr_value_unserialize(v);
-          if (elem)
-            xr_value_array_append(arr, elem);
+          if (elem == NULL)
+          {
+            xr_value_free(arr);
+            return NULL;
+          }
+          xr_value_array_append(arr, elem);
         }
       }
       return arr;
@@ -277,16 +282,21 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
                 val = _xr_value_unserialize(me);
             }
           }
+
           if (values != 1 || names != 1)
           {
             g_free(name);
             xr_value_free(val);
+            xr_value_free(str);
+            return NULL;
           }
           xr_value_struct_set_member(str, name, val);
         }
       }
       return str;
     }
+    else
+      return NULL;
   }
   return NULL;
 }
