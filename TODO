@@ -1,10 +1,7 @@
 - client codegen:
-  check errors in demarchalers
-  check errors in value unserialize
   doubles in lists? -- too long to fit into i->data
+
+- implement URI parsing in xmlrpc-client
 
 - servlet registration
 - servlet generetaor
-- servlet creation/destruction (lifetime)
-- implement URI parsing in xmlrpc-client
-
