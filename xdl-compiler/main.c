@@ -41,6 +41,20 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
   GSList *i, *j, *k;
     if (t->type == TD_STRUCT)
     {
+      EL(0, "static void %s(%s val)", t->free_func, t->ctype);
+      EL(0, "{");
+      EL(1, "if (val == NULL)");
+      EL(2, "return;");
+      for (k=t->struct_members; k; k=k->next)
+      {
+        xdl_struct_member* m = k->data;
+        if (m->type->free_func)
+          EL(1, "%s(val->%s);", m->type->free_func, m->name);
+      }
+      EL(1, "g_free(val);");
+      EL(0, "}");
+      NL;
+
       EL(0, "static xr_value* %s(%s val)", t->march_name, t->ctype);
       EL(0, "{");
       EL(1, "xr_value* v = xr_value_struct_new();");
@@ -73,23 +87,17 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(1, "return 0;");
       EL(0, "}");
       NL;
-
-      EL(0, "static void %s(%s val)", t->free_func, t->ctype);
-      EL(0, "{");
-      EL(1, "if (val == NULL)");
-      EL(2, "return;");
-      for (k=t->struct_members; k; k=k->next)
-      {
-        xdl_struct_member* m = k->data;
-        if (m->type->free_func)
-          EL(1, "%s(val->%s);", m->type->free_func, m->name);
-      }
-      EL(1, "g_free(val);");
-      EL(0, "}");
-      NL;
     }
     else if (t->type == TD_ARRAY)
     {
+      EL(0, "static void %s(%s val)", t->free_func, t->ctype);
+      EL(0, "{");
+      if (t->item_type->free_func)
+        EL(1, "g_slist_foreach(val, (GFunc)%s, NULL);", t->item_type->free_func);
+      EL(1, "g_slist_free(val);");
+      EL(0, "}");
+      NL;
+
       EL(0, "static xr_value* %s(%s val)", t->march_name, t->ctype);
       EL(0, "{");
       EL(1, "GSList* i;");
@@ -113,14 +121,6 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(1, "}");
       EL(1, "*val = a;");
       EL(1, "return 0;");
-      EL(0, "}");
-      NL;
-
-      EL(0, "static void %s(%s val)", t->free_func, t->ctype);
-      EL(0, "{");
-      if (t->item_type->free_func)
-        EL(1, "g_slist_foreach(val, (GFunc)%s, NULL);", t->item_type->free_func);
-      EL(1, "g_slist_free(val);");
       EL(0, "}");
       NL;
     }
