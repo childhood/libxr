@@ -9,6 +9,16 @@
 
 #include "bench.h"
 
+static int print_error(xr_client_conn* conn)
+{
+  if (xr_client_get_error_code(conn))
+  {
+    fprintf(stderr, "error[%d]: %s\n", xr_client_get_error_code(conn), xr_client_get_error_message(conn));
+    return 1;
+  }
+  return 0;
+}
+
 /* main() */
 
 static char* opt_uri = "127.0.0.1:444";
@@ -46,14 +56,23 @@ int main(int ac, char* av[])
   // test
   continue_timer(1);
   EEEDateTime* t = EEEClient_getTime(conn);
+  if (!print_error(conn))
+  {
+  }
   EEEUser* u = EEEClient_getUserData(conn, "bob");
-  EEEClient_setUserData(conn, u);
+  if (!print_error(conn))
+  {
+    EEEClient_setUserData(conn, u);
+  }
+  //EEEUser_free(u);
   stop_timer(1);
 
   // disconnect
   xr_client_close(conn);
   xr_client_free(conn);
   stop_timer(0);
+
+  g_option_context_free(ctx);
 
   // print results
   print_timer(0, "connect(), test(), close()");

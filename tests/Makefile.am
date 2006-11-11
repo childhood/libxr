@@ -20,8 +20,8 @@ AM_LDFLAGS = -static
 LDADD = $(XR_LIBS) $(top_builddir)/lib/libxr.la
 
 noinst_PROGRAMS = \
-  server \
-  client
+  client \
+  server
 
 #  test
 
