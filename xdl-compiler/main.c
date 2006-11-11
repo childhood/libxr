@@ -55,12 +55,20 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
 
       EL(0, "static int %s(xr_value* v, %s* val)", t->demarch_name, t->ctype);
       EL(0, "{");
+      EL(1, "if (v == NULL)");
+      EL(2, "return -1;");
       EL(1, "%s s = g_new0(typeof(*s), 1);", t->ctype, t->ctype);
+      EL(1, "if (");
       for (k=t->struct_members; k; k=k->next)
       {
         xdl_struct_member* m = k->data;
-        EL(1, "%s(xr_value_get_member(v, \"%s\"), &s->%s);", m->type->demarch_name, m->name, m->name);
+        EL(2, "%s(xr_value_get_member(v, \"%s\"), &s->%s)%s", m->type->demarch_name, m->name, m->name, k->next ? " ||" : "");
       }
+      EL(1, ")");
+      EL(1, "{");
+      EL(2, "%s(s);", t->free_func);
+      EL(2, "return -1;");
+      EL(1, "}");
       EL(1, "*val = s;");
       EL(1, "return 0;");
       EL(0, "}");
@@ -68,6 +76,8 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
 
       EL(0, "static void %s(%s val)", t->free_func, t->ctype);
       EL(0, "{");
+      EL(1, "if (val == NULL)");
+      EL(2, "return;");
       for (k=t->struct_members; k; k=k->next)
       {
         xdl_struct_member* m = k->data;
@@ -94,6 +104,8 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(0, "{");
       EL(1, "GSList *a, *i;");
       EL(1, "%s ival;", t->item_type->ctype);
+      EL(1, "if (v == NULL)");
+      EL(2, "return -1;");
       EL(1, "for (i = xr_value_get_items(v); i; i = i->next)");
       EL(1, "{");
       EL(2, "%s(i->data, &ival);", t->item_type->demarch_name);
@@ -380,16 +392,30 @@ int main(int ac, char* av[])
       EL(0, "int __%s%sServlet_%s(%s%sServlet* _s, xr_call* _call)", xdl->name, s->name, m->name, xdl->name, s->name);
       EL(0, "{");
       // prepare parameters
-      for (k=m->params; k; k=k->next)
+      if (m->params)
       {
+        for (k=m->params; k; k=k->next)
+        {
         xdl_method_param* p = k->data;
-        EL(1, "%s %s;", p->type->ctype, p->name);
-      }
-      int n = 0;
-      for (k=m->params; k; k=k->next)
-      {
-        xdl_method_param* p = k->data;
-        EL(1, "%s(xr_call_get_param(_call, %d), &%s);", p->type->demarch_name, n++, p->name);
+          EL(1, "%s %s = %s;", p->type->ctype, p->name, p->type->cnull);
+        }
+        int n = 0;
+        EL(1, "if (");
+        for (k=m->params; k; k=k->next)
+        {
+          xdl_method_param* p = k->data;
+          EL(2, "%s(xr_call_get_param(_call, %d), &%s)%s", p->type->demarch_name, n++, p->name, k->next ? " ||" : "");
+        }
+        EL(1, ")");
+        EL(1, "{");
+        for (k=m->params; k; k=k->next)
+        {
+          xdl_method_param* p = k->data;
+           if (p->type->free_func)
+            EL(2, "%s(%s);", p->type->free_func, p->name);
+        }
+        EL(2, "return -1;");
+        EL(1, "}");
       }
 
       // call stub

@@ -5,6 +5,7 @@
 #include <glib.h>
 
 #include "xr-server.h"
+#include "EEEClient.xrs.c"
 
 /* servlet implementation stubs */
 
