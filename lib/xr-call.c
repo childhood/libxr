@@ -72,6 +72,7 @@ void xr_call_set_error(xr_call* call, int code, char* msg)
   g_assert(call->errcode == 0);
   g_assert(call->errmsg == NULL);
   call->errcode = code;
+  g_free(call->errmsg);
   call->errmsg = g_strdup(msg);
 }
 

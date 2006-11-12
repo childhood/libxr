@@ -186,7 +186,7 @@ int xr_client_open(xr_client_conn* conn, char* uri)
   return 0;
 }
 
-int xr_client_close(xr_client_conn* conn)
+void xr_client_close(xr_client_conn* conn)
 {
   g_assert(conn != NULL);
   g_assert(conn->is_open);
@@ -197,7 +197,6 @@ int xr_client_close(xr_client_conn* conn)
   conn->ssl = NULL;
   conn->bio = NULL;
   conn->is_open = 0;
-  return 0;
 }
 
 static int _xr_client_parse_headers(xr_client_conn* conn, char* buf, int len)

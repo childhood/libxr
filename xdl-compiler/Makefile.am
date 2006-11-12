@@ -1,4 +1,4 @@
-EXTRA_DIST = xdl.h
+EXTRA_DIST = xdl.h xdl-compiler.1
 
 AM_CFLAGS = \
 	$(XR_CFLAGS) \

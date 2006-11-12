@@ -33,4 +33,5 @@ AC_OUTPUT([
 	lib/Makefile
 	xdl-compiler/Makefile
 	tests/Makefile
+	docs/Makefile
 ])

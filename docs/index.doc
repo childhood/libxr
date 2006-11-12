@@ -1,0 +1,89 @@
+/** @page index Main Page
+
+This is documentation for @b libxr.
+
+@section toc Table of Contents
+@li @ref xdl
+@li @ref xdlc
+@li @ref xr-value.h "XR Value API"
+@li @ref xr-call.h "XR Call API"
+@li @ref xr-client.h "XR Client API"
+*/
+
+/** @page xdl XDL Language
+
+XDL language is used to describe XML-RPC servlet interfaces and data
+types. You may use @ref xdlc to compile XDL file into C source files
+that implement client and server interfaces.
+
+Here is description of two sample servlets:
+
+@code
+namespace EEE;
+
+struct Item
+{
+    string      uid;
+    string      type;
+    time        from_date;
+    time        to_date;
+    blob        ical;
+}
+
+struct Calendar
+{
+    string      uid;
+    time        create_date;
+    blob        ical;
+    array<array<Item>> items;
+}
+
+struct User
+{
+    string          uid;
+    time            create_date;
+    blob            ical;
+    Calendar        maincal;
+    array<Calendar> calendars;
+}
+
+servlet Client
+{
+    struct Date
+    {
+      int day;
+      int month;
+      int year;
+      int weekday;
+    }
+    struct Time
+    {
+      int hour;
+      int minute;
+    }
+    struct DateTime
+    {
+      Date date;
+      Time time;
+    }
+
+    DateTime getTime();
+    
+    User getUserData(string name);
+    boolean setUserData(User data);
+}
+
+servlet Server
+{
+    boolean auth(string username, string password);
+    array<boolean> getList();
+    array<array<boolean>> getListList();
+    boolean setList(array<User> list);
+}
+@endcode
+
+*/
+
+/** @page xdlc XDL Language Compiler
+
+*/

@@ -88,9 +88,8 @@ xr_value* xr_value_blob_new(xr_blob* val)
 
 int xr_value_to_int(xr_value* val, int* nval)
 {
-  g_assert(val != NULL);
   g_assert(nval != NULL);
-  if (val->type != XRV_INT)
+  if (val == NULL || val->type != XRV_INT)
     return -1;
   *nval = val->int_val;
   return 0;
@@ -98,9 +97,8 @@ int xr_value_to_int(xr_value* val, int* nval)
 
 int xr_value_to_string(xr_value* val, char** nval)
 {
-  g_assert(val != NULL);
   g_assert(nval != NULL);
-  if (val->type != XRV_STRING)
+  if (val == NULL || val->type != XRV_STRING)
     return -1;
   *nval = val->str_val;
   return 0;
@@ -108,9 +106,8 @@ int xr_value_to_string(xr_value* val, char** nval)
 
 int xr_value_to_bool(xr_value* val, int* nval)
 {
-  g_assert(val != NULL);
   g_assert(nval != NULL);
-  if (val->type != XRV_BOOLEAN)
+  if (val == NULL || val->type != XRV_BOOLEAN)
     return -1;
   *nval = val->int_val;
   return 0;
@@ -118,9 +115,8 @@ int xr_value_to_bool(xr_value* val, int* nval)
 
 int xr_value_to_double(xr_value* val, double* nval)
 {
-  g_assert(val != NULL);
   g_assert(nval != NULL);
-  if (val->type != XRV_DOUBLE)
+  if (val == NULL || val->type != XRV_DOUBLE)
     return -1;
   *nval = val->dbl_val;
   return 0;
@@ -128,9 +124,8 @@ int xr_value_to_double(xr_value* val, double* nval)
 
 int xr_value_to_time(xr_value* val, char** nval)
 {
-  g_assert(val != NULL);
   g_assert(nval != NULL);
-  if (val->type != XRV_TIME)
+  if (val == NULL || val->type != XRV_TIME)
     return -1;
   *nval = val->str_val;
   return 0;
@@ -138,9 +133,8 @@ int xr_value_to_time(xr_value* val, char** nval)
 
 int xr_value_to_blob(xr_value* val, xr_blob** nval)
 {
-  g_assert(val != NULL);
   g_assert(nval != NULL);
-  if (val->type != XRV_BLOB)
+  if (val == NULL || val->type != XRV_BLOB)
     return -1;
   *nval = val->blob_val;
   return 0;
@@ -224,7 +218,7 @@ void xr_value_struct_set_member(xr_value* str, char* name, xr_value* val)
   }
   xr_value* v = g_new0(xr_value, 1);
   v->type = XRV_MEMBER;
-  v->member_name = name;
+  v->member_name = g_strdup(name);
   v->member_value = val;
   str->children = g_slist_append(str->children, v);
 }
@@ -239,6 +233,17 @@ void xr_value_array_append(xr_value* arr, xr_value* val)
 
 void xr_value_free(xr_value* val)
 {
+  GSList* i;
+  if (val == NULL)
+    return;
+  if (val->type == XRV_STRING || val->type == XRV_TIME)
+    g_free(val->str_val);
+  if (val->type == XRV_BLOB)
+    xr_blob_free(val->blob_val);
+  g_free(val->member_name);
+  xr_value_free(val->member_value);
+  for (i=val->children; i; i=i->next)
+    xr_value_free((xr_value*)i->data);
   g_free(val);
 }
 
