@@ -152,7 +152,7 @@ int xr_value_to_int(xr_value* val, int* nval);
  */
 int xr_value_to_string(xr_value* val, char** nval);
 
-/** Extract @ref xr_value of type @ref XRV_BOOELAN into the native language type.
+/** Extract @ref xr_value of type @ref XRV_BOOLEAN into the native language type.
  *
  * @param val Value node. May be NULL, see below.
  * @param nval Pointer to the variable where value should be extracted.

@@ -1,10 +1,12 @@
+/** @file xr-server.h
+ *
+ * XML-RPC Server API
+ *
+ * This API can be used to implement multithreaded XML-RPC server.
+ */
+
 #ifndef __XR_SERVER_H__
 #define __XR_SERVER_H__
-
-#include <glib.h>
-
-/** @file xmlrpc_server Header
- */
 
 #include "xr-call.h"
 
