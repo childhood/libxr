@@ -19,26 +19,11 @@
 #include "xr-server.h"
 //#define DEBUG
 
-struct _xr_servlet_method_desc
-{
-  char* name;
-  servlet_method_t cb;
-};
-
-struct _xr_servlet_desc
-{
-  char* name;
-  GHashTable* methods;
-  servlet_construct_t construct;
-  servlet_destruct_t destruct;
-};
-
 /* server */
-
-typedef struct _xr_servlet xr_servlet;
 
 struct _xr_servlet
 {
+  void* priv;
   BIO* bio;
   int running;
 };
@@ -52,6 +37,15 @@ struct _xr_server
   int secure;
   int running;
 };
+
+void* xr_servlet_get_priv(xr_servlet* servlet)
+{
+  return servlet->priv;
+}
+
+void xr_servlet_return_error(xr_servlet* servlet, int code, char* msg)
+{
+}
 
 static int _xr_server_parse_headers(xr_server* server, char* buf, int len)
 {
@@ -228,6 +222,8 @@ static int _xr_server_servlet_run(xr_servlet* servlet, xr_server* server)
 
 void xr_server_init()
 {
+  if (!g_thread_supported())
+    g_thread_init(NULL);
   SSL_library_init();
   ERR_load_crypto_strings();
   SSL_load_error_strings();
@@ -300,6 +296,10 @@ xr_server* xr_server_new(const char* certfile, const char* port)
  err1:
   g_free(server);
   return NULL;
+}
+
+int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
+{
 }
 
 void xr_server_free(xr_server* server)
