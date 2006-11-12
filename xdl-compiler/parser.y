@@ -68,7 +68,12 @@ xdl_servlet* cur_servlet = NULL;
 %%
 
 compilation_unit
-  : namespace_decl toplevel_decls
+  : opt_namespace_decl toplevel_decls
+  ;
+
+opt_namespace_decl
+  :
+  | namespace_decl
   ;
 
 namespace_decl
