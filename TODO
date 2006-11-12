@@ -1,7 +1,6 @@
 - client codegen:
   doubles in lists? -- too long to fit into i->data
 
-- implement URI parsing in xmlrpc-client
-
 - servlet registration
-- servlet generetaor
+- server/servlet refactoring
+- sigpipe thing
