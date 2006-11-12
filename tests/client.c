@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <string.h>
-#include <glib.h>
 
-#include "xr-client.h"
 #include "EEEClient.h"
 
-#include "bench.h"
+/* this function prints client error if any and resets error so that futher calls to client funcs work */
 
 static int print_error(xr_client_conn* conn)
 {
@@ -20,64 +17,43 @@ static int print_error(xr_client_conn* conn)
   return 0;
 }
 
-/* main() */
-
-static char* opt_uri = "http://localhost:80";
-
-static GOptionEntry entries[] = 
-{
-  { "uri", 'u', 0, G_OPTION_ARG_STRING, &opt_uri, "URI of the resource.", "URI" },
-  { NULL }
-};
-
 int main(int ac, char* av[])
 {
-  GOptionContext* ctx = g_option_context_new("- XML-RPC SSL Spike Client.");
-  g_option_context_add_main_entries(ctx, entries, NULL);
-  g_option_context_parse(ctx, &ac, &av, NULL);
-  g_option_context_set_help_enabled(ctx, TRUE);
+  char* uri = ac == 2 ? av[1] : "http:/*localhost:80";
 
+  /* initialize xr client library */
+  xr_client_init();
+
+  /* just a workaround for now */
   signal(SIGPIPE, SIG_IGN);
 
-  reset_timers();
-  start_timer(9);
-  xr_client_init();
-  stop_timer(9);
-
-  // connect
-  start_timer(0);
+  /* create object for performing client connections */
   xr_client_conn* conn = xr_client_new();
-  if (xr_client_open(conn, opt_uri))
+  g_assert(conn != NULL);
+
+  /* connect to the servlet on the server specified by uri */
+  if (xr_client_open(conn, uri))
   {
-    printf("Can't open connection.\n");
     xr_client_free(conn);
-    exit(1);
+    return 1;
   }
 
-  // test
-  continue_timer(1);
+  /* call some servlet methods */
   EEEDateTime* t = EEEClient_getTime(conn);
-  if (!print_error(conn))
-  {
-  }
+  print_error(conn);
+  EEEDateTime_free(t);
+  
+  /* call some more methods */
   EEEUser* u = EEEClient_getUserData(conn, "bob");
   if (!print_error(conn))
-  {
     EEEClient_setUserData(conn, u);
-  }
-  //EEEUser_free(u);
-  stop_timer(1);
+  EEEUser_free(u);
 
-  // disconnect
+  /* disconnect */
   xr_client_close(conn);
+  
+  /* free connections object */
   xr_client_free(conn);
-  stop_timer(0);
 
-  g_option_context_free(ctx);
-
-  // print results
-  print_timer(0, "connect(), test(), close()");
-  print_timer(1, "test()");
-  print_timer(9, "init()");
   return 0;
 }
