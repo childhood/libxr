@@ -427,15 +427,18 @@ int main(int ac, char* av[])
     EL(0, "typedef struct _%s%sServlet %s%sServlet;", xdl->name, s->name, xdl->name, s->name);
     NL;
 
-    EL(0, "int %s%sServlet_init(%s%sServlet* _s, xr_servlet* _servlet);", xdl->name, s->name, xdl->name, s->name);
-    EL(0, "void %s%sServlet_fini(%s%sServlet* _s, xr_servlet* _servlet);", xdl->name, s->name, xdl->name, s->name);
+    EL(0, "int __%s%sServlet_get_priv_size();", xdl->name, s->name);
+    NL;
+
+    EL(0, "int %s%sServlet_init(xr_servlet* _servlet);", xdl->name, s->name);
+    EL(0, "void %s%sServlet_fini(xr_servlet* _servlet);", xdl->name, s->name);
     NL;
 
     for (j=s->methods; j; j=j->next)
     {
       xdl_method* m = j->data;
 
-      E(0, "%s %s%sServlet_%s(%s%sServlet* _s, xr_servlet* _servlet", m->return_type->ctype, xdl->name, s->name, m->name, xdl->name, s->name);
+      E(0, "%s %s%sServlet_%s(xr_servlet* _servlet", m->return_type->ctype, xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
@@ -461,13 +464,22 @@ int main(int ac, char* av[])
     EL(0, "};");
     NL;
 
-    EL(0, "int %s%sServlet_init(%s%sServlet* _s, xr_servlet* _servlet)", xdl->name, s->name, xdl->name, s->name);
+    EL(0, "int __%s%sServlet_get_priv_size()", xdl->name, s->name);
     EL(0, "{");
+    EL(1, "return sizeof(%s%sServlet);", xdl->name, s->name);
     EL(0, "}");
     NL;
 
-    EL(0, "void %s%sServlet_fini(%s%sServlet* _s, xr_servlet* _servlet)", xdl->name, s->name, xdl->name, s->name);
+    EL(0, "int %s%sServlet_init(xr_servlet* _servlet)", xdl->name, s->name);
     EL(0, "{");
+    EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
+    EL(1, "return 0;");
+    EL(0, "}");
+    NL;
+
+    EL(0, "void %s%sServlet_fini(xr_servlet* _servlet)", xdl->name, s->name);
+    EL(0, "{");
+    EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
     EL(0, "}");
     NL;
 
@@ -475,7 +487,7 @@ int main(int ac, char* av[])
     {
       xdl_method* m = j->data;
 
-      E(0, "%s %s%sServlet_%s(%s%sServlet* _priv, xr_servlet* _servlet", m->return_type->ctype, xdl->name, s->name, m->name, xdl->name, s->name);
+      E(0, "%s %s%sServlet_%s(xr_servlet* _servlet", m->return_type->ctype, xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
@@ -483,6 +495,7 @@ int main(int ac, char* av[])
       }
       EL(0, ")");
       EL(0, "{");
+      EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
       EL(1, "%s retval = %s;", m->return_type->ctype, m->return_type->cnull);
       EL(1, "xr_servlet_return_error(_servlet, 100, \"%s is not implemented!\");", m->name);
       EL(1, "return retval;");
@@ -553,7 +566,7 @@ int main(int ac, char* av[])
       }
 
       // call stub
-      E(1, "%s _retval = %s%sServlet_%s(xr_servlet_get_priv(_s), _s", m->return_type->ctype, xdl->name, s->name, m->name);
+      E(1, "%s _retval = %s%sServlet_%s(_s", m->return_type->ctype, xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
@@ -592,7 +605,6 @@ int main(int ac, char* av[])
 
     EL(0, "static xr_servlet_def __servlet = {");
     EL(1, ".name = \"%s\",", s->name);
-//    EL(1, ".size = sizeof(%s%sServlet),", xdl->name, s->name);
     EL(1, ".init = NULL,");
     EL(1, ".fini = NULL,");
     EL(1, ".methods_count = %d,", g_slist_length(s->methods));
@@ -602,6 +614,7 @@ int main(int ac, char* av[])
 
     EL(0, "xr_servlet_def* __%s%sServlet_def()", xdl->name, s->name);
     EL(0, "{");
+    EL(0, "__servlet.size = __%s%sServlet_get_priv_size();", xdl->name, s->name);
     EL(1, "return &__servlet;");
     EL(0, "}");
   }
