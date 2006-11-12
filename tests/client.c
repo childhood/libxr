@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <signal.h>
 
-#include "EEEClient.h"
+#include "EEEClient.xrc.h"
+#include "EEEServer.xrc.h"
 
 /* this function prints client error if any and resets error so that futher calls to client funcs work */
 
