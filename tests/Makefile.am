@@ -2,11 +2,7 @@ EXTRA_DIST = \
   bench.h \
   bench.sh \
   test.xdl \
-  server.pem \
-  t-xdl-compiler1.sh
-
-TESTS = \
-  t-xdl-compiler1.sh
+  server.pem
 
 AM_CFLAGS= \
   -std=gnu99 \
@@ -23,19 +19,37 @@ noinst_PROGRAMS = \
   client \
   server
 
-#  test
-
 test_SOURCES = \
   test.c
 
 server_SOURCES = \
-  server.c
+  server.c \
+  EEEServer.xrs.c \
+  EEEClient.xrs.c \
+  EEEServer.stubs.c \
+  EEEClient.stubs.c \
+  EEEServer.c \
+  EEEClient.c \
+  EEECommon.c
 
 client_SOURCES = \
   client.c \
-  EEEClient.xrc.c
+  EEEServer.xrc.c \
+  EEEClient.xrc.c \
+  EEEServer.c \
+  EEEClient.c \
+  EEECommon.c
 
-#CLEANFILES = create.c
+client.c: EEECommon.c
+server.c: EEECommon.c
+
+.PHONY: EEECommon.c
+
+EEECommon.c: test.xdl
+	../xdl-compiler/xdl-compiler -i test.xdl -o .
+
+CLEANFILES = EEE*.{c,h}
+
 #EXTRA_DIST += create.pgc
 
 #%.c: %.pgc
