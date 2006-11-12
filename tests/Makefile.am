@@ -19,9 +19,6 @@ noinst_PROGRAMS = \
   client \
   server
 
-test_SOURCES = \
-  test.c
-
 server_SOURCES = \
   server.c \
   EEEServer.xrs.c \
@@ -49,8 +46,3 @@ EEECommon.c: test.xdl
 	../xdl-compiler/xdl-compiler -i test.xdl -o .
 
 CLEANFILES = EEE*.{c,h}
-
-#EXTRA_DIST += create.pgc
-
-#%.c: %.pgc
-#	$(ECPG) $<
