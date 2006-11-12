@@ -41,20 +41,6 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
   GSList *i, *j, *k;
     if (t->type == TD_STRUCT)
     {
-      EL(0, "static void %s(%s val)", t->free_func, t->ctype);
-      EL(0, "{");
-      EL(1, "if (val == NULL)");
-      EL(2, "return;");
-      for (k=t->struct_members; k; k=k->next)
-      {
-        xdl_struct_member* m = k->data;
-        if (m->type->free_func)
-          EL(1, "%s(val->%s);", m->type->free_func, m->name);
-      }
-      EL(1, "g_free(val);");
-      EL(0, "}");
-      NL;
-
       EL(0, "static xr_value* %s(%s val)", t->march_name, t->ctype);
       EL(0, "{");
       EL(1, "xr_value* v = xr_value_struct_new();");
@@ -90,14 +76,6 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
     }
     else if (t->type == TD_ARRAY)
     {
-      EL(0, "static void %s(%s val)", t->free_func, t->ctype);
-      EL(0, "{");
-      if (t->item_type->free_func)
-        EL(1, "g_slist_foreach(val, (GFunc)%s, NULL);", t->item_type->free_func);
-      EL(1, "g_slist_free(val);");
-      EL(0, "}");
-      NL;
-
       EL(0, "static xr_value* %s(%s val)", t->march_name, t->ctype);
       EL(0, "{");
       EL(1, "GSList* i;");
@@ -124,6 +102,75 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(0, "}");
       NL;
     }
+}
+
+void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
+{
+  GSList *i, *j, *k;
+
+  if (def)
+  {
+    if (t->type == TD_STRUCT || t->type == TD_ARRAY)
+      EL(0, "void %s(%s val);", t->free_func, t->ctype);
+    return;
+  }
+
+  if (t->type == TD_STRUCT)
+  {
+    EL(0, "void %s(%s val)", t->free_func, t->ctype);
+    EL(0, "{");
+    EL(1, "if (val == NULL)");
+    EL(2, "return;");
+    for (k=t->struct_members; k; k=k->next)
+    {
+      xdl_struct_member* m = k->data;
+      if (m->type->free_func)
+        EL(1, "%s(val->%s);", m->type->free_func, m->name);
+    }
+    EL(1, "g_free(val);");
+    EL(0, "}");
+    NL;
+  }
+  else if (t->type == TD_ARRAY)
+  {
+    EL(0, "void %s(%s val)", t->free_func, t->ctype);
+    EL(0, "{");
+    if (t->item_type->free_func)
+      EL(1, "g_slist_foreach(val, (GFunc)%s, NULL);", t->item_type->free_func);
+    EL(1, "g_slist_free(val);");
+    EL(0, "}");
+    NL;
+  }
+}
+
+void gen_type_defs(FILE* f, GSList* types)
+{
+  GSList *i, *j, *k;
+
+  for (j=types; j; j=j->next)
+  {
+    xdl_typedef* t = j->data;
+    if (t->type == TD_STRUCT)
+      EL(0, "typedef struct _%s %s;", t->cname, t->cname);
+  }
+  NL;
+
+  for (j=types; j; j=j->next)
+  {
+    xdl_typedef* t = j->data;
+    if (t->type == TD_STRUCT)
+    {
+      EL(0, "struct _%s", t->cname);
+      EL(0, "{");
+      for (k=t->struct_members; k; k=k->next)
+      {
+        xdl_struct_member* m = k->data;
+        EL(1, "%s %s;%s", m->type->ctype, m->name, m->type->type == TD_ARRAY ? S(" /* %s */", m->type->cname) : "");
+      }
+      EL(0, "};");
+      NL;
+    }
+  }
 }
 
 /* main() */
@@ -163,7 +210,9 @@ int main(int ac, char* av[])
   FILE* f = NULL;
   GSList *i, *j, *k;
 
-  /* common types header */
+  /***********************************************************
+   * common types header                                     *
+   ***********************************************************/
 
   OPEN("%s/%sCommon.h", out_dir, xdl->name);
 
@@ -174,34 +223,35 @@ int main(int ac, char* av[])
   EL(0, "#include <xr-value.h>");
   NL;
 
+  gen_type_defs(f, xdl->types);
+
   for (j=xdl->types; j; j=j->next)
   {
     xdl_typedef* t = j->data;
-    if (t->type == TD_STRUCT)
-      EL(0, "typedef struct _%s %s;", t->cname, t->cname);
+    gen_type_freealloc(f, t, 1);
   }
+  NL;
+
+  EL(0, "#endif");
+
+  /***********************************************************
+   * common types implementation                             *
+   ***********************************************************/
+
+  OPEN("%s/%sCommon.c", out_dir, xdl->name);
+
+  EL(0, "#include \"%sCommon.h\"", xdl->name);
   NL;
 
   for (j=xdl->types; j; j=j->next)
   {
     xdl_typedef* t = j->data;
-    if (t->type == TD_STRUCT)
-    {
-      EL(0, "struct _%s", t->cname);
-      EL(0, "{");
-      for (k=t->struct_members; k; k=k->next)
-      {
-        xdl_struct_member* m = k->data;
-        EL(1, "%s %s;", m->type->ctype, m->name);
-      }
-      EL(0, "};");
-      NL;
-    }
+    gen_type_freealloc(f, t, 0);
   }
 
-  EL(0, "#endif");
-
-  /* common types marchalizer/demarchalizer functions */
+  /***********************************************************
+   * common types private implementation                     *
+   ***********************************************************/
 
   OPEN("%s/%sCommon.xrm.h", out_dir, xdl->name);
 
@@ -226,59 +276,48 @@ int main(int ac, char* av[])
   {
     xdl_servlet* s = i->data;
 
+    /***********************************************************
+     * servlet types header                                    *
+     ***********************************************************/
+
     OPEN("%s/%s%s.h", out_dir, xdl->name, s->name);
 
     EL(0, "#ifndef __%s_%s_H__", xdl->name, s->name);
     EL(0, "#define __%s_%s_H__", xdl->name, s->name);
     NL;
 
-    EL(0, "#include <xr-client.h>");
     EL(0, "#include \"%sCommon.h\"", xdl->name);
     NL;
 
-    for (j=s->types; j; j=j->next)
-    {
-      xdl_typedef* t = j->data;
-      if (t->type == TD_STRUCT)
-        EL(0, "typedef struct _%s %s;", t->cname, t->cname);
-    }
+    gen_type_defs(f, s->types);
 
     for (j=s->types; j; j=j->next)
     {
       xdl_typedef* t = j->data;
-  
-      if (t->type == TD_STRUCT)
-      {
-        NL;
-        EL(0, "struct _%s", t->cname);
-        EL(0, "{");
-        for (k=t->struct_members; k; k=k->next)
-        {
-          xdl_struct_member* m = k->data;
-          EL(1, "%s %s;", m->type->ctype, m->name);
-        }
-        EL(0, "};");
-      }
-    }
-    NL;
-
-    for (j=s->methods; j; j=j->next)
-    {
-      xdl_method* m = j->data;
-
-      E(0, "%s %s%s_%s(xr_client_conn* conn", m->return_type->ctype, xdl->name, s->name, m->name);
-      for (k=m->params; k; k=k->next)
-      {
-        xdl_method_param* p = k->data;
-        E(0, ", %s %s", p->type->ctype, p->name);
-      }
-      EL(0, ");");
+      gen_type_freealloc(f, t, 1);
     }
     NL;
 
     EL(0, "#endif");
 
-    /* common types marchalizer/demarchalizer functions */
+    /***********************************************************
+     * servlet types implementation                            *
+     ***********************************************************/
+
+    OPEN("%s/%s%s.c", out_dir, xdl->name, s->name);
+
+    EL(0, "#include \"%s%s.h\"", xdl->name, s->name);
+    NL;
+
+    for (j=s->types; j; j=j->next)
+    {
+      xdl_typedef* t = j->data;
+      gen_type_freealloc(f, t, 0);
+    }
+
+    /***********************************************************
+     * servlet types private implementation                    *
+     ***********************************************************/
 
     OPEN("%s/%s%s.xrm.h", out_dir, xdl->name, s->name);
 
@@ -298,11 +337,43 @@ int main(int ac, char* av[])
 
     EL(0, "#endif");
 
-    /* client interface */
+    /***********************************************************
+     * servlet client interface definition                     *
+     ***********************************************************/
+
+    OPEN("%s/%s%s.xrc.h", out_dir, xdl->name, s->name);
+
+    EL(0, "#ifndef __%s_%s_XRC_H__", xdl->name, s->name);
+    EL(0, "#define __%s_%s_XRC_H__", xdl->name, s->name);
+    NL;
+
+    EL(0, "#include <xr-client.h>");
+    EL(0, "#include \"%s%s.h\"", xdl->name, s->name);
+    NL;
+
+    for (j=s->methods; j; j=j->next)
+    {
+      xdl_method* m = j->data;
+
+      E(0, "%s %s%s_%s(xr_client_conn* conn", m->return_type->ctype, xdl->name, s->name, m->name);
+      for (k=m->params; k; k=k->next)
+      {
+        xdl_method_param* p = k->data;
+        E(0, ", %s %s", p->type->ctype, p->name);
+      }
+      EL(0, ");");
+    }
+    NL;
+
+    EL(0, "#endif");
+
+    /***********************************************************
+     * servlet client interface implementation                 *
+     ***********************************************************/
 
     OPEN("%s/%s%s.xrc.c", out_dir, xdl->name, s->name);
 
-    EL(0, "#include \"%s%s.h\"", xdl->name, s->name);
+    EL(0, "#include \"%s%s.xrc.h\"", xdl->name, s->name);
     EL(0, "#include \"%s%s.xrm.h\"", xdl->name, s->name);
     NL;
 
@@ -339,15 +410,49 @@ int main(int ac, char* av[])
       NL;
     }
 
-    /* server interface */
+    /***********************************************************
+     * servlet server stubs for implementation                 *
+     ***********************************************************/
 
-    OPEN("%s/%s%s.xrs.c", out_dir, xdl->name, s->name);
+    OPEN("%s/%s%s.stubs.h", out_dir, xdl->name, s->name);
+
+    EL(0, "#ifndef __%s_%s_STUBS_H__", xdl->name, s->name);
+    EL(0, "#define __%s_%s_STUBS_H__", xdl->name, s->name);
+    NL;
 
     EL(0, "#include \"%s%s.h\"", xdl->name, s->name);
-    EL(0, "#include \"%s%s.xrm.h\"", xdl->name, s->name);
     NL;
 
     EL(0, "typedef struct _%s%sServlet %s%sServlet;", xdl->name, s->name, xdl->name, s->name);
+    NL;
+
+    EL(0, "int %s%sServlet_init(%s%sServlet* _s)", xdl->name, s->name, xdl->name, s->name);
+    EL(0, "void %s%sServlet_fini(%s%sServlet* _s)", xdl->name, s->name, xdl->name, s->name);
+    NL;
+
+    for (j=s->methods; j; j=j->next)
+    {
+      xdl_method* m = j->data;
+
+      E(0, "%s %s%sServlet_%s(%s%sServlet* _s", m->return_type->ctype, xdl->name, s->name, m->name, xdl->name, s->name);
+      for (k=m->params; k; k=k->next)
+      {
+        xdl_method_param* p = k->data;
+        E(0, ", %s %s", p->type->ctype, p->name);
+      }
+      EL(0, ");");
+    }
+    NL;
+
+    EL(0, "#endif");
+
+    /***********************************************************
+     * servlet server stubs for implementation                 *
+     ***********************************************************/
+
+    OPEN("%s/%s%s.stubs.c", out_dir, xdl->name, s->name);
+
+    EL(0, "#include \"%s%s.stubs.h\"", xdl->name, s->name);
     NL;
 
     EL(0, "struct _%s%sServlet", xdl->name, s->name);
@@ -385,11 +490,40 @@ int main(int ac, char* av[])
       NL;
     }
 
+    /***********************************************************
+     * servlet server interface internals header               *
+     ***********************************************************/
+
+    OPEN("%s/%s%s.xrs.h", out_dir, xdl->name, s->name);
+
+    EL(0, "#ifndef __%s_%s_XRS_H__", xdl->name, s->name);
+    EL(0, "#define __%s_%s_XRS_H__", xdl->name, s->name);
+    NL;
+
+    EL(0, "#include <xr-server.h>");
+    EL(0, "#include \"%s%s.stubs.h\"", xdl->name, s->name);
+    NL;
+
+    EL(0, "xr_servlet_def* __%s%s_def();", xdl->name, s->name);
+    NL;
+
+    EL(0, "#endif");
+
+    /***********************************************************
+     * servlet server interface implementation                 *
+     ***********************************************************/
+
+    OPEN("%s/%s%s.xrs.c", out_dir, xdl->name, s->name);
+
+    EL(0, "#include \"%s%s.xrs.h\"", xdl->name, s->name);
+    EL(0, "#include \"%s%s.xrm.h\"", xdl->name, s->name);
+    NL;
+
     for (j=s->methods; j; j=j->next)
     {
       xdl_method* m = j->data;
 
-      EL(0, "int __%s%sServlet_%s(%s%sServlet* _s, xr_call* _call)", xdl->name, s->name, m->name, xdl->name, s->name);
+      EL(0, "static int __%s%sServlet_%s(%s%sServlet* _s, xr_call* _call)", xdl->name, s->name, m->name, xdl->name, s->name);
       EL(0, "{");
       // prepare parameters
       if (m->params)
@@ -443,6 +577,11 @@ int main(int ac, char* av[])
       EL(0, "}");
       NL;
     }
+
+    EL(0, "xr_servlet_def* __%s%s_def()", xdl->name, s->name);
+    EL(0, "{");
+    EL(1, "return NULL;");
+    EL(0, "}");
   }
   
   fclose(f);
