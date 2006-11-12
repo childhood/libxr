@@ -30,3 +30,5 @@ Makefile.in
 /xdl-compiler/parser.h
 /xdl-compiler/scanner.c
 /xdl-compiler/xdl-compiler
+
+/tests/EEE*
