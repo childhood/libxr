@@ -4,14 +4,14 @@ This is documentation for @b libxr.
 
 This is brand new XML-RPC library with support for:
 
-  - SSL3/TLS1 using OpenSSL
-  - IPV6 as soon as OpenSSL 0.9.9 is released
-  - persistent connections over HTTP/1.1
-  - XML-RPC interface description language (XDL)
-  - XML-RPC client stubs/servlet skels compiler
-  - multiple servlets per server
-  - servlet lifetime (init -- call -- call -- fini)
-  - multiplatform (linux, migw32 on windows)
+@li SSL3/TLS1 using OpenSSL
+@li IPV6 as soon as OpenSSL 0.9.9 is released
+@li persistent connections over HTTP/1.1
+@li XML-RPC interface description language (XDL)
+@li XML-RPC client stubs/servlet skels compiler
+@li multiple servlets per server
+@li servlet lifetime (init -- call -- call -- fini)
+@li multiplatform (linux, migw32 on windows)
 
 @section toc Table of Contents
 @li @ref xdl
