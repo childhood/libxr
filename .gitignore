@@ -32,3 +32,6 @@ Makefile.in
 /xdl-compiler/xdl-compiler
 
 /tests/EEE*
+
+/docs/html
+/docs/man3
