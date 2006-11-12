@@ -79,9 +79,9 @@ xdl_typedef* xdl_typedef_new_array(xdl_model *xdl, xdl_servlet *servlet, xdl_typ
       return t;
   }
   xdl_typedef* a = xdl_typedef_new(TD_ARRAY,
-    NULL, g_strdup_printf("array_%s", item->cname),
+    NULL, g_strdup_printf("Array_%s", item->cname),
     "GSList*", "NULL", NULL, NULL,
-    g_strdup_printf("__array_%s_free", item->cname));
+    g_strdup_printf("Array_%s_free", item->cname));
   a->item_type = item;
   if (servlet != NULL)
     servlet->types = g_slist_append(servlet->types, a);
@@ -97,7 +97,7 @@ xdl_typedef* xdl_typedef_new_struct(xdl_model *xdl, xdl_servlet *servlet, char* 
     g_strdup_printf("%s%s", xdl->name, name),
     g_strdup_printf("%s%s*", xdl->name, name),
     "NULL", NULL, NULL,
-    g_strdup_printf("__%s%s_free", xdl->name, name)
+    g_strdup_printf("%s%s_free", xdl->name, name)
   );
   return s;
 }
