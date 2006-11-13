@@ -379,6 +379,7 @@ void xr_server_free(xr_server* server)
   g_thread_pool_free(server->pool, TRUE, FALSE);
   BIO_free_all(server->bio_in);
   SSL_CTX_free(server->ctx);
+  g_slist_free(server->servlet_types);
   g_free(server);
 }
 
