@@ -351,7 +351,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
 
   int retval = xr_call_unserialize_response(call, response_buffer, response_length);
   g_free(response_buffer);
-  if (retval < 0)
+  if (retval)
   {
     _xr_client_set_error(conn, xr_call_get_error_code(call), xr_call_get_error_message(call));
     return 1;
@@ -370,7 +370,7 @@ int xr_client_call_ex(xr_client_conn* conn, xr_call* call, xr_demarchalizer_t de
   if (rs == 0)
   {
     if (dem(xr_call_get_retval(call), retval) < 0)
-      _xr_client_set_error(conn, 100, "getListList: Retval demarchalziation failed!");
+      _xr_client_set_error(conn, 100, "Retval demarchalziation failed!");
   }
   return rs;
 }
