@@ -1,6 +1,6 @@
+- blobs: check that they are passed around sanely
+- any type: make xdl compiler understand any type
+- sigpipe: handle SIGPIPE signal on per thread basis in client and server
+
 - client codegen:
   doubles in lists? -- too long to fit into i->data
-
-- servlet registration
-- server/servlet refactoring
-- sigpipe thing
