@@ -11,37 +11,6 @@
 /* this file contains frequently used macros and functions,
  for xml parsing/generation */
 
-/* load xml file */
-static __inline__ gint xml_load_doc(const gchar* file, xmlDocPtr* d, xmlNodePtr* r)
-{
-  if (access(file, R_OK) < 0)
-    return 1;
-  *d = xmlReadFile(file, 0, XML_PARSE_NOWARNING|XML_PARSE_NOERROR|XML_PARSE_NONET);
-  if (*d == 0)
-    return 1;
-  *r = xmlDocGetRootElement(*d);
-  if (*r == 0)
-  {
-    xmlFreeDoc(*d);
-    return 1;
-  }
-  return 0;
-}
-
-#define xml_load_doc_or(file) \
-  xmlDocPtr d=0; xmlNodePtr r=0; \
-  if (xml_load_doc(file, &d, &r))
-
-static __inline__ void xml_set_prop(xmlNodePtr n, const gchar* name, const gchar* value)
-{
-  xmlSetProp(n, BAD_CAST name, BAD_CAST value);
-}
-
-static __inline__ void xml_set_cont(xmlNodePtr n, const gchar* cont)
-{
-  xmlNodeSetContent(n, BAD_CAST cont);
-}
-
 /* get property from xml node */
 static __inline__ gchar* xml_get_prop_str(xmlNodePtr n, const gchar* name)
 {
@@ -126,7 +95,7 @@ static __inline__ struct nodeset* xp_eval_nodes(xmlXPathContextPtr ctx, const gc
     ns->nodes = o->nodesetval->nodeTab;
     ns->count = o->nodesetval->nodeNr;
   }
-  if (!ns->obj)
+  if (ns->obj == NULL)
     xmlXPathFreeObject(o);
   return ns;
 }
