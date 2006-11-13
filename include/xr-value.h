@@ -143,8 +143,7 @@ int xr_value_to_int(xr_value* val, int* nval);
  *   On error value pointed to by nval is not modified. 0 is returned
  *   on success.
  *
- * @warning Value is still owned by the xr_value node and will be freed
- *   whenever xr_value_free is called on the original node.
+ * @warning Caller must free returned string using g_free.
  */
 int xr_value_to_string(xr_value* val, char** nval);
 
@@ -201,8 +200,7 @@ int xr_value_to_time(xr_value* val, char** nval);
  *   On error value pointed to by nval is not modified. 0 is returned
  *   on success.
  *
- * @warning Value is still owned by the xr_value node and will be freed
- *   whenever xr_value_free is called on the original node.
+ * @warning Caller must free returned string using g_free.
  */
 int xr_value_to_blob(xr_value* val, xr_blob** nval);
 
@@ -301,6 +299,8 @@ void xr_value_free(xr_value* val);
  * @param errmsg Pointer to the variable where the faultString should be stored.
  *
  * @return Function returns 1 if node is XML-RPC error node, 0 Otherwise.
+ *
+ * @warning Caller must free returned errmsg using g_free.
  */
 int xr_value_is_error_retval(xr_value* val, int* errcode, char** errmsg);
 

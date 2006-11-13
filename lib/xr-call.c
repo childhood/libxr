@@ -131,6 +131,7 @@ static void _xr_value_serialize(xmlNode* node, xr_value* val)
       char* str_val = NULL;
       xr_value_to_string(val, &str_val);
       value = xmlNewChild(node, NULL, BAD_CAST "string", BAD_CAST str_val);
+      g_free(str_val);
       break;
     }
     case XRV_BOOLEAN:
@@ -411,6 +412,7 @@ int xr_call_unserialize_response(xr_call* call, char* buf, int len)
     xr_value_free(call->retval);
     call->retval = NULL;
   }
+  g_free(errmsg);
 
   xmlXPathFreeContext(ctx);
   xmlFreeDoc(doc);

@@ -101,7 +101,7 @@ int xr_value_to_string(xr_value* val, char** nval)
   g_assert(nval != NULL);
   if (val == NULL || val->type != XRV_STRING)
     return -1;
-  *nval = val->str_val;
+  *nval = g_strdup(val->str_val);
   return 0;
 }
 
@@ -128,7 +128,7 @@ int xr_value_to_time(xr_value* val, char** nval)
   g_assert(nval != NULL);
   if (val == NULL || val->type != XRV_TIME)
     return -1;
-  *nval = val->str_val;
+  *nval = g_strdup(val->str_val);
   return 0;
 }
 
