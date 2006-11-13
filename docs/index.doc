@@ -4,22 +4,387 @@ This is documentation for @b libxr.
 
 This is brand new XML-RPC library with support for:
 
-@li SSL3/TLS1 using OpenSSL
-@li IPV6 as soon as OpenSSL 0.9.9 is released
-@li persistent connections over HTTP/1.1
-@li XML-RPC interface description language (XDL)
-@li XML-RPC client stubs/servlet skels compiler
-@li multiple servlets per server
-@li servlet lifetime (init -- call -- call -- fini)
-@li multiplatform (linux, migw32 on windows)
+@li SSLv3/TLSv1 using OpenSSL.
+@li IPV6 as soon as OpenSSL 0.9.9 is released.
+@li Persistent connections over HTTP/1.1
+@li XML-RPC interface description language (XDL).
+@li XML-RPC client stubs/servlet skels compiler.
+@li Multiple servlets per server.
+@li Servlet lifetime (init -- call -- call -- fini).
+@li Multiplatform (linux, mingw32 on windows).
 
 @section toc Table of Contents
+@li @ref howto
 @li @ref xdl
 @li @ref xdlc
+@li @ref sample
 @li @ref xr-value.h "XR Value API"
 @li @ref xr-call.h "XR Call API"
 @li @ref xr-client.h "XR Client API"
 @li @ref xr-server.h "XR Server API"
+
+*/
+
+/** @page howto HOWTO
+
+This HOWTO describes how to implement XML-RPC interface between server
+and client in C.
+
+As an example we will implement simple remote management interface for
+Zblok. First we will specify features of the interface:
+
+@li Client must authenticate against zblok users database.
+@li Client should be allowed to read status information about zblok.
+@li Client should be able to change his/her password. 
+
+First we will need to describe server interface. Server interface is
+implemented using so called servlet. Servlet is object on the server
+that has constructor, destructor and implements interface methods.
+
+When client connects to the server, server creates @ref xr_servlet and
+waits for RPCs. On the first RPC, servlet is looked up in the list of
+registered servlets by the resource passed in the HTTP header and
+constructor is called.
+
+Server interface can be described using @ref xdl. Following code
+describes interface of our Zblok management server.
+
+@code
+namespace ZM; // Zblok Management
+
+struct User
+{
+    string      username;
+    string      realname;
+    int     mail_usage;
+}
+
+struct Folder
+{
+    string      name;
+    string      type;
+    int     size;
+}
+
+struct SystemStatus
+{
+    int        uptime;
+    array<User>    users;
+    array<Folder>  folders;
+}
+
+servlet Server
+{
+    boolean auth(string username, string password);
+    SystemStatus getSystemStatus();
+    boolean changeUserPassword(string newpassword);
+}
+@endcode
+
+Now we will use @ref xdlc to compile XDL file into C source code, that
+implements client and server interfaces and stubs for implementation
+of servlet methods.
+
+@verbatim
+xdl-compiler -i zblok.xdl -o .
+@endverbatim
+
+This command should create following files in the current directory.
+
+@verbatim
+.
+|-- ZMCommon.c
+|-- ZMCommon.h
+|-- ZMCommon.xrm.h
+|-- ZMServer.c
+|-- ZMServer.h
+|-- ZMServer.stubs.c
+|-- ZMServer.stubs.h
+|-- ZMServer.xrc.c
+|-- ZMServer.xrc.h
+|-- ZMServer.xrm.h
+|-- ZMServer.xrs.c
+|-- ZMServer.xrs.h
+`-- zblok.xdl
+@endverbatim
+
+Only file you should be interested in is @b ZMServer.stubs.c, which
+implements servlet methods and looks like this:
+
+@code
+#include "ZMServer.stubs.h"
+
+struct _ZMServerServlet
+{
+};
+
+int __ZMServerServlet_get_priv_size()
+{
+    return sizeof(ZMServerServlet);
+}
+
+int ZMServerServlet_init(xr_servlet* _servlet)
+{
+    ZMServerServlet* _priv = xr_servlet_get_priv(_servlet);
+    return 0;
+}
+
+void ZMServerServlet_fini(xr_servlet* _servlet)
+{
+    ZMServerServlet* _priv = xr_servlet_get_priv(_servlet);
+}
+
+int ZMServerServlet_auth(xr_servlet* _servlet, char* username, char* password)
+{
+    ZMServerServlet* _priv = xr_servlet_get_priv(_servlet);
+    int retval = -1;
+    xr_servlet_return_error(_servlet, 100, "auth is not implemented!");
+    return retval;
+}
+
+ZMSystemStatus* ZMServerServlet_getSystemStatus(xr_servlet* _servlet)
+{
+    ZMServerServlet* _priv = xr_servlet_get_priv(_servlet);
+    ZMSystemStatus* retval = NULL;
+    xr_servlet_return_error(_servlet, 100, "getSystemStatus is not implemented!");
+    return retval;
+}
+
+int ZMServerServlet_changeUserPassword(xr_servlet* _servlet, char* newpassword)
+{
+    ZMServerServlet* _priv = xr_servlet_get_priv(_servlet);
+    int retval = -1;
+    xr_servlet_return_error(_servlet, 100, "changeUserPassword is not implemented!");
+    return retval;
+}
+@endcode
+
+Now you have to implement servlet methods. We will use some phony
+implementations just to show how to handle errors and how to manipulate
+with complex structures.
+
+First we will add some status attributes to the servlet object:
+
+@code
+struct _ZMServerServlet
+{
+    int auth_ok;     // True if client is authenticated
+    char* username;  // Contains username of the client (when authenticated)
+    char* password;  // Contains user's password (when authenticated)
+};
+@endcode
+
+Now let's implement constructor and destructor:
+
+@code
+int ZMServerServlet_init(xr_servlet* _servlet)
+{
+    ZMServerServlet* _priv = xr_servlet_get_priv(_servlet);
+    _priv->password = g_strdup("qwe");
+    return 0;
+}
+
+void ZMServerServlet_fini(xr_servlet* _servlet)
+{
+    ZMServerServlet* _priv = xr_servlet_get_priv(_servlet);
+    g_free(_priv->username);
+    g_free(_priv->password);
+}
+@endcode
+
+Now lets implement authentication method:
+
+@code
+int ZMServerServlet_auth(xr_servlet* _servlet, char* username, char* password)
+{
+    ZMServerServlet* _priv = xr_servlet_get_priv(_servlet);
+    if (!strcmp(username, "bob") && !strcmp(password, _priv->password))
+    {
+        _priv->username = g_strdup(username);
+        _priv->auth_ok = 1;
+        return 1;
+    }
+    return 0;
+}
+@endcode
+
+And finally more complicated status method:
+
+@code
+ZMSystemStatus* ZMServerServlet_getSystemStatus(xr_servlet* _servlet)
+{
+    ZMServerServlet* _priv = xr_servlet_get_priv(_servlet);
+    ZMSystemStatus* retval = NULL;
+    ZMUser *user;
+    ZMFolder *folder;
+    if (!_priv->auth_ok)
+    {
+        xr_servlet_return_error(_servlet, 99, "You must call auth before getSystemStatus!");
+        return NULL;
+    }
+    // create SystemStatus object
+    retval = ZMSystemStatus_new();
+    // create User object for bob
+    user = ZMUser_new();
+    user->username = g_strdup("bob");
+    user->realname = g_strdup("Bobby");
+    user->mail_usage = 20;
+    retval->users = g_slist_append(retval->users, user);
+    // create Folder object
+    folder = ZMFolder_new();
+    folder->name = g_strdup("data");
+    folder->type = g_strdup("shared");
+    folder->size = 1024*45;
+    retval->folders = g_slist_append(retval->folders, folder);
+    return retval;
+}
+@endcode
+
+And now lets implement our last method for changing passwords:
+
+@code
+int ZMServerServlet_changeUserPassword(xr_servlet* _servlet, char* newpassword)
+{
+    ZMServerServlet* _priv = xr_servlet_get_priv(_servlet);
+    int retval = -1;
+    if (!_priv->auth_ok)
+    {
+        xr_servlet_return_error(_servlet, 99, "You must call auth before trying to change password!");
+        return retval;
+    }
+    if (strlen(newpassword) <= 5)
+    {
+        xr_servlet_return_error(_servlet, 98, "New pasword must have at least 6 characters!");
+        return retval;
+    }
+    g_free(_priv->password);
+    _priv->password = g_strdup(newpassword);
+    return retval;
+}
+@endcode
+
+Stubs are implemented and now we should create XML-RPC server and
+register our servlet with it.
+
+@code
+#include <stdio.h>
+#include <signal.h>
+
+#include "ZMServer.xrs.h"
+
+static xr_server* server = NULL;
+static void _sig_stop(int signum)
+{
+  xr_server_stop(server);
+}
+
+int main(int ac, char* av[])
+{
+  /* initialize xr server library */
+  xr_server_init();
+  
+  /* hookup signals to stop server, see above */
+  signal(SIGINT, _sig_stop);
+  signal(SIGHUP, _sig_stop);
+
+  /* create new server and bind it to the port 444 */
+  server = xr_server_new("*:444", "server.pem");
+  if (server == NULL)
+  {
+    printf("error: can't initialize server\n");
+    return 1;
+  }
+
+  xr_server_register_servlet(server, __ZMServerServlet_def());
+
+  /* run server */
+  xr_server_run(server);
+
+  /* free server after it is stopped */
+  xr_server_free(server);
+
+  return 0;
+}
+@endcode
+
+That's it! Server is done, now just compile it:
+
+@verbatim
+gcc -o zm-server server.c ZMCommon.c ZMServer.c ZMServer.stubs.c \
+  ZMServer.xrs.c `pkg-config --cflags --libs libxr` -lssl -lcrypto
+@endverbatim
+
+Ok, now we have server and we want to connect to it so we need to
+implement client. Following code will connect to the server,
+authenticates user and changes his password:
+
+@code
+#include <stdio.h>
+#include <signal.h>
+
+#include "ZMServer.xrc.h"
+
+static int _print_error(xr_client_conn* conn)
+{
+  if (xr_client_get_error_code(conn))
+  {
+    fprintf(stderr, "error[%d]: %s\n", xr_client_get_error_code(conn),
+      xr_client_get_error_message(conn));
+    xr_client_reset_error(conn);
+    return 1;
+  }
+  return 0;
+}
+
+int main(int ac, char* av[])
+{
+  char* uri = ac == 2 ? av[1] : "http://localhost:444/ZMServer";
+
+  /* initialize xr client library */
+  xr_client_init();
+
+  /* create object for performing client connections */
+  xr_client_conn* conn = xr_client_new();
+  g_assert(conn != NULL);
+
+  /* connect to the servlet on the server specified by uri */
+  if (xr_client_open(conn, uri))
+  {
+    xr_client_free(conn);
+    return 1;
+  }
+
+  /* login */
+  int auth_ok = ZMServer_auth(conn, "bob", "qwe");
+  if (print_error(conn) || !auth_ok)
+    goto err;
+  
+  /* change password */
+  ZMServer_changeUserPassword(conn, "qqq");
+  if (print_error(conn))
+    goto err;
+
+ err:
+  /* disconnect */
+  xr_client_close(conn);
+  
+  /* free connections object */
+  xr_client_free(conn);
+
+  print_timer(1, "call");
+  return 0;
+}
+@endcode
+
+You can compile client code using:
+
+@verbatim
+gcc -o zm-client client.c ZMCommon.c ZMServer.c ZMServer.xrc.c \
+  `pkg-config --cflags --libs libxr` -lssl -lcrypto
+@endverbatim
+
+And that's it.
+
 */
 
 /** @page xdl XDL Language
@@ -37,25 +402,25 @@ struct Item
 {
     string      uid;
     string      type;
-    time        from_date;
-    time        to_date;
-    blob        ical;
+    time    from_date;
+    time    to_date;
+    blob    ical;
 }
 
 struct Calendar
 {
     string      uid;
-    time        create_date;
-    blob        ical;
+    time    create_date;
+    blob    ical;
     array<array<Item>> items;
 }
 
 struct User
 {
-    string          uid;
-    time            create_date;
-    blob            ical;
-    Calendar        maincal;
+    string      uid;
+    time        create_date;
+    blob        ical;
+    Calendar    maincal;
     array<Calendar> calendars;
 }
 
@@ -127,3 +492,4 @@ servlet and EEE namespace)
 @include EEEClient.stubs.c
 
 */
+
