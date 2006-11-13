@@ -5,6 +5,7 @@
 - sigpipe: handle SIGPIPE signal on per thread basis in client and server
 
 - audit code
+- testuite
 
 - client codegen:
   doubles in lists? -- too long to fit into i->data
