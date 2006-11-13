@@ -184,8 +184,7 @@ int xr_value_to_double(xr_value* val, double* nval);
  *   On error value pointed to by nval is not modified. 0 is returned
  *   on success.
  *
- * @warning Value is still owned by the xr_value node and will be freed
- *   whenever xr_value_free is called on the original node.
+ * @warning Caller must free returned string using g_free.
  */
 int xr_value_to_time(xr_value* val, char** nval);
 
@@ -200,7 +199,8 @@ int xr_value_to_time(xr_value* val, char** nval);
  *   On error value pointed to by nval is not modified. 0 is returned
  *   on success.
  *
- * @warning Caller must free returned string using g_free.
+ * @warning Returned blob is still owned by the xr_value node and will be freed
+ *   whenever xr_value_free is called on the original node.
  */
 int xr_value_to_blob(xr_value* val, xr_blob** nval);
 
