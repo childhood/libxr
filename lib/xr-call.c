@@ -180,6 +180,7 @@ void xr_call_serialize_request(xr_call* call, char** buf, int* len)
   }
 
   xmlDocDumpFormatMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8", 1);
+  xmlFreeDoc(doc);
 }
 
 void xr_call_free_buffer(char* buf)
@@ -213,6 +214,7 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len)
   }
 
   xmlDocDumpFormatMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8", 1);
+  xmlFreeDoc(doc);
 }
 
 // return NULL if some unrecognized XML elements are found
