@@ -22,7 +22,8 @@ int main(int ac, char* av[])
   signal(SIGHUP, _sig_stop);
 
   /* create new server and bind it to the port 444 */
-  server = xr_server_new("server.pem", "*:444");
+  server = xr_server_new("*:444", "server.pem");
+//  server = xr_server_new("*:444", NULL);
   if (server == NULL)
   {
     printf("error: can't initialize server\n");

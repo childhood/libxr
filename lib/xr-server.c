@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <memory.h>
 #include <errno.h>
+#include <regex.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -17,7 +18,7 @@
 #include <openssl/err.h>
 
 #include "xr-server.h"
-//#define DEBUG
+#define DEBUG
 
 /* server */
 
@@ -26,6 +27,8 @@ struct _xr_servlet
   void* priv;
   BIO* bio;
   int running;
+  char* resource;
+  xr_servlet_def* def;
 };
 
 struct _xr_server
@@ -36,6 +39,7 @@ struct _xr_server
   GThreadPool* pool;
   int secure;
   int running;
+  GSList* servlet_types;
 };
 
 void* xr_servlet_get_priv(xr_servlet* servlet)
@@ -47,7 +51,34 @@ void xr_servlet_return_error(xr_servlet* servlet, int code, char* msg)
 {
 }
 
-static int _xr_server_parse_headers(xr_server* server, char* buf, int len)
+char* _parse_http_request(char* header)
+{
+  regex_t r;
+  regmatch_t m[4];
+  int rs = regcomp(&r, "^([^ ]+)[ ]+([^ ]+)[ ]+(.+)$", REG_EXTENDED);
+  if (rs)
+    return NULL;
+  rs = regexec(&r, header, 4, m, 0);
+  regfree(&r);
+  if (rs != 0)
+    return NULL;
+  char* res = g_strndup(header+m[2].rm_so, m[2].rm_eo-m[2].rm_so);
+  return res;
+}
+
+static int _xr_server_servlet_method_call(xr_server* server, xr_servlet* servlet, xr_call* call)
+{
+  g_assert(server != NULL);
+  g_assert(servlet != NULL);
+  g_assert(call != NULL);
+
+  // initialize servlet if necessary
+  // perform a call
+
+  xr_call_set_error(call, 100, "Method not implemented.");
+}
+
+static int _xr_server_parse_headers(xr_servlet* servlet, char* buf, int len)
 {
   int i, content_length = -1;
   GSList* headers = NULL, *it;
@@ -64,11 +95,18 @@ static int _xr_server_parse_headers(xr_server* server, char* buf, int len)
   if (line < buf + len)
     headers = g_slist_append(headers, g_strndup(line, buf + len - line));
 
-#define match_prefix(str) !strncasecmp(header, str, sizeof(str)-1)
+#define match_iprefix(str) !strncasecmp(header, str, sizeof(str)-1)
+#define match_prefix(str) !strncmp(header, str, sizeof(str)-1)
+
   for (it=headers; it; it=it->next)
   {
     char* header = it->data;
-    if (match_prefix("Content-Length:"))
+    if (match_prefix("POST ") && it == headers)
+    {
+      g_free(servlet->resource);
+//      servlet->resource = _parse_http_request(header);
+    }
+    else if (match_iprefix("Content-Length:"))
     {
       content_length = atoi(g_strstrip(header + sizeof("Content-Length:")-1));
     }
@@ -89,10 +127,13 @@ static char* _find_eoh(char* buf, int len)
   return NULL;
 }
 
-static int _xr_server_servlet_call(xr_servlet* servlet, xr_server* server)
+static int _xr_server_servlet_call(xr_server* server, xr_servlet* servlet)
 {
+  g_assert(server != NULL);
+  g_assert(servlet != NULL);
+
   // read request
-#define READ_STEP 256
+#define READ_STEP 128
   char request_header[1025];
   int request_header_length = 0;
   char* request_buffer_preread;
@@ -120,12 +161,11 @@ static int _xr_server_servlet_call(xr_servlet* servlet, xr_server* server)
   }
 
 #ifdef DEBUG
-  printf("---- RES HDR ----\n");
   fwrite(request_header, request_header_length, 1, stdout);
   fflush(stdout);
 #endif
 
-  request_length = _xr_server_parse_headers(server, request_header, request_header_length);
+  request_length = _xr_server_parse_headers(servlet, request_header, request_header_length);
   if (request_length <= 0 || request_length > 1024*1024)
     return -1;
 
@@ -140,18 +180,21 @@ static int _xr_server_servlet_call(xr_servlet* servlet, xr_server* server)
   }
 
 #ifdef DEBUG
-  printf("---- RES ----\n");
   fwrite(request_buffer, request_length, 1, stdout);
   fflush(stdout);
 #endif
 
   xr_call* call = xr_call_new(NULL);
-  xr_call_unserialize_request(call, request_buffer, request_length);
+  if (xr_call_unserialize_request(call, request_buffer, request_length))
+  {
+    xr_call_set_error(call, 100, "Unserialize request failure.");
+  }
+  else
+  {
+    xr_call_set_error(call, 100, "Unserialize request failure.");
+//    _xr_server_servlet_method_call(server, servlet, call);
+  }
   g_free(request_buffer);
-
-  // do call
-  // XXX
-  xr_call_set_error(call, 100, "Method not implemented.");
 
   // send response
 
@@ -183,8 +226,7 @@ static int _xr_server_servlet_call(xr_servlet* servlet, xr_server* server)
     return -1;
   }
 #ifdef DEBUG
-  printf("---- REQ HDR ----\n%s", response_header);
-  printf("---- REQ ----\n");
+  printf("%s", response_header);
   fwrite(response_buffer, response_length, 1, stdout);
   fflush(stdout);
 #endif
@@ -207,11 +249,10 @@ static int _xr_server_servlet_run(xr_servlet* servlet, xr_server* server)
       goto end;
   }
 
-  char buf[256];
   servlet->running = 1;
   while (servlet->running)
   {
-    if (_xr_server_servlet_call(servlet, server) < 0)
+    if (_xr_server_servlet_call(server, servlet) < 0)
       goto end;
   }
 
@@ -220,22 +261,55 @@ static int _xr_server_servlet_run(xr_servlet* servlet, xr_server* server)
   g_free(servlet);
 }
 
-void xr_server_init()
+void xr_server_stop(xr_server* server)
 {
-  if (!g_thread_supported())
-    g_thread_init(NULL);
-  SSL_library_init();
-  ERR_load_crypto_strings();
-  SSL_load_error_strings();
-  ERR_load_SSL_strings();
+  g_assert(server != NULL);
+  server->running = 0;
 }
 
-xr_server* xr_server_new(const char* certfile, const char* port)
+int xr_server_run(xr_server* server)
 {
+  g_assert(server != NULL);
+  GError* err = NULL;
+
+  server->running = 1;
+  while (server->running)
+  {
+    if (BIO_do_accept(server->bio_in) <= 0)
+      goto err;
+    // new connection accepted
+    xr_servlet* servlet = g_new0(xr_servlet, 1);
+    servlet->bio = BIO_pop(server->bio_in);
+    g_thread_pool_push(server->pool, servlet, &err);
+    if (err)
+    {
+      // reject connection if thread pool is full
+      BIO_free_all(servlet->bio);
+      g_free(servlet);
+      g_error_free(err);
+      err = NULL;
+    }
+  }
+
+  return 0;
+ err:
+  return -1;
+}
+
+int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
+{
+  g_assert(server != NULL);
+  g_assert(servlet != NULL);
+  server->servlet_types = g_slist_append(server->servlet_types, servlet);
+}
+
+xr_server* xr_server_new(const char* port, const char* cert)
+{
+  g_assert(port != NULL);
   GError* err = NULL;
 
   xr_server* server = g_new0(xr_server, 1);
-  server->secure = !!certfile;
+  server->secure = !!cert;
 
   server->ctx = SSL_CTX_new(SSLv3_server_method());
   if (server->ctx == NULL)
@@ -243,15 +317,15 @@ xr_server* xr_server_new(const char* certfile, const char* port)
 
   if (server->secure)
   {
-    if (!SSL_CTX_use_certificate_file(server->ctx, certfile, SSL_FILETYPE_PEM))
+    if (!SSL_CTX_use_certificate_file(server->ctx, cert, SSL_FILETYPE_PEM))
       goto err2;
-    if (!SSL_CTX_use_PrivateKey_file(server->ctx, certfile, SSL_FILETYPE_PEM))
+    if (!SSL_CTX_use_PrivateKey_file(server->ctx, cert, SSL_FILETYPE_PEM))
       goto err2;
     if (!SSL_CTX_check_private_key(server->ctx))
       goto err2;
   }
 
-  server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, 100, TRUE, &err);
+  server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, 5, TRUE, &err);
   if (err)
     goto err2;
 
@@ -283,8 +357,6 @@ xr_server* xr_server_new(const char* certfile, const char* port)
   BIO_get_fd(server->bio_in, &sock);
   if (sock >= 0)
     setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(flag));
-  else
-    fprintf(stderr, "Error disabling Nagle.\n");
 
   return server;
  err4:
@@ -298,10 +370,6 @@ xr_server* xr_server_new(const char* certfile, const char* port)
   return NULL;
 }
 
-int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
-{
-}
-
 void xr_server_free(xr_server* server)
 {
   g_assert(server != NULL);
@@ -311,36 +379,12 @@ void xr_server_free(xr_server* server)
   g_free(server);
 }
 
-void xr_server_stop(xr_server* server)
+void xr_server_init()
 {
-  g_assert(server != NULL);
-  server->running = 0;
-}
-
-int xr_server_run(xr_server* server)
-{
-  GError* err;
-  g_assert(server != NULL);
-
-  server->running = 1;
-  while (server->running)
-  {
-    if (BIO_do_accept(server->bio_in) <= 0)
-      goto err;
-    // new connection accepted
-    xr_servlet* servlet = g_new0(xr_servlet, 1);
-    servlet->bio = BIO_pop(server->bio_in);
-    g_thread_pool_push(server->pool, servlet, &err);
-    if (err)
-    {
-      BIO_free_all(servlet->bio);
-      g_free(servlet);
-      g_error_free(err);
-      err = NULL;
-    }
-  }
-
-  return 0;
- err:
-  return -1;
+  if (!g_thread_supported())
+    g_thread_init(NULL);
+  SSL_library_init();
+  ERR_load_crypto_strings();
+  SSL_load_error_strings();
+  ERR_load_SSL_strings();
 }
