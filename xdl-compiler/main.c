@@ -357,15 +357,27 @@ int main(int ac, char* av[])
     {
       xdl_method* m = j->data;
 
-      E(0, "%s %s%s_%s(xr_client_conn* conn", m->return_type->ctype, xdl->name, s->name, m->name);
+      EL(0, "/** ");
+      EL(0, " * ");
+      EL(0, " * @param _conn Client connection object.");
+      for (k=m->params; k; k=k->next)
+      {
+        xdl_method_param* p = k->data;
+        EL(0, " * @param %s", p->name);
+      }
+      EL(0, " * ");
+      EL(0, " * @return ");
+      EL(0, " */ ");
+
+      E(0, "%s %s%s_%s(xr_client_conn* _conn", m->return_type->ctype, xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
         E(0, ", %s %s", p->type->ctype, p->name);
       }
       EL(0, ");");
+      NL;
     }
-    NL;
 
     EL(0, "#endif");
 
@@ -383,7 +395,7 @@ int main(int ac, char* av[])
     {
       xdl_method* m = j->data;
 
-      E(0, "%s %s%s_%s(xr_client_conn* conn", m->return_type->ctype, xdl->name, s->name, m->name);
+      E(0, "%s %s%s_%s(xr_client_conn* _conn", m->return_type->ctype, xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
@@ -392,7 +404,7 @@ int main(int ac, char* av[])
       EL(0, ")");
       EL(0, "{");
       EL(1, "%s retval = %s;", m->return_type->ctype, m->return_type->cnull);
-      EL(1, "g_assert(conn != NULL);");
+      EL(1, "g_assert(_conn != NULL);");
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
@@ -405,7 +417,7 @@ int main(int ac, char* av[])
         xdl_method_param* p = k->data;
         EL(1, "xr_call_add_param(call, %s(%s));", p->type->march_name, p->name);
       }
-      EL(1, "xr_client_call_ex(conn, call, (xr_demarchalizer_t)%s, (void**)&retval);", m->return_type->demarch_name);
+      EL(1, "xr_client_call_ex(_conn, call, (xr_demarchalizer_t)%s, (void**)&retval);", m->return_type->demarch_name);
       EL(1, "xr_call_free(call);");
       EL(1, "return retval;");
       EL(0, "}");
@@ -426,19 +438,49 @@ int main(int ac, char* av[])
     EL(0, "#include \"%s%s.h\"", xdl->name, s->name);
     NL;
 
+    EL(0, "/** Implementation specific servlet data.");
+    EL(0, " */ ");
     EL(0, "typedef struct _%s%sServlet %s%sServlet;", xdl->name, s->name, xdl->name, s->name);
     NL;
 
+    EL(0, "/** Utility method that returns size of the servlet private data.");
+    EL(0, " * ");
+    EL(0, " * @return Size of the @ref %s%sServlet struct.", xdl->name, s->name);
+    EL(0, " */ ");
     EL(0, "int __%s%sServlet_get_priv_size();", xdl->name, s->name);
     NL;
 
+    EL(0, "/** Servlet constructor.");
+    EL(0, " * ");
+    EL(0, " * @param _servlet Servlet object.");
+    EL(0, " * ");
+    EL(0, " * @return ");
+    EL(0, " */ ");
     EL(0, "int %s%sServlet_init(xr_servlet* _servlet);", xdl->name, s->name);
+    NL;
+
+    EL(0, "/** Servlet destructor.");
+    EL(0, " * ");
+    EL(0, " * @param _servlet Servlet object.");
+    EL(0, " */ ");
     EL(0, "void %s%sServlet_fini(xr_servlet* _servlet);", xdl->name, s->name);
     NL;
 
     for (j=s->methods; j; j=j->next)
     {
       xdl_method* m = j->data;
+
+      EL(0, "/** ");
+      EL(0, " * ");
+      EL(0, " * @param _servlet Servlet object.");
+      for (k=m->params; k; k=k->next)
+      {
+        xdl_method_param* p = k->data;
+        EL(0, " * @param %s", p->name);
+      }
+      EL(0, " * ");
+      EL(0, " * @return ");
+      EL(0, " */ ");
 
       E(0, "%s %s%sServlet_%s(xr_servlet* _servlet", m->return_type->ctype, xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
@@ -447,8 +489,8 @@ int main(int ac, char* av[])
         E(0, ", %s %s", p->type->ctype, p->name);
       }
       EL(0, ");");
+      NL;
     }
-    NL;
 
     EL(0, "#endif");
 
