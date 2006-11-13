@@ -337,7 +337,7 @@ int xr_call_unserialize_request(xr_call* call, char* buf, int len)
     goto err_2;
   }
 
-  struct nodeset* ns = xp_eval_nodes(ctx, "/methodCall/params/param/value[0]");
+  struct nodeset* ns = xp_eval_nodes(ctx, "/methodCall/params/param/value");
   for (int i = 0; i < ns->count; i++)
   {
     xr_value* v = _xr_value_unserialize(ns->nodes[i]);
