@@ -2,7 +2,8 @@ EXTRA_DIST = \
   bench.h \
   bench.sh \
   test.xdl \
-  server.pem
+  server.pem \
+  $(wildcard EEE*)
 
 AM_CFLAGS= \
   -std=gnu99 \
@@ -19,28 +20,28 @@ noinst_PROGRAMS = \
   client \
   server
 
+client_SOURCES = \
+  client.c \
+  EEECommon.c \
+  EEEServer.xrc.c \
+  EEEClient.xrc.c \
+  EEEServer.c \
+  EEEClient.c
+
 server_SOURCES = \
   server.c \
+  EEECommon.c \
   EEEServer.xrs.c \
   EEEClient.xrs.c \
   EEEServer.stubs.c \
   EEEClient.stubs.c \
   EEEServer.c \
-  EEEClient.c \
-  EEECommon.c
+  EEEClient.c
 
-client_SOURCES = \
-  client.c \
-  EEEServer.xrc.c \
-  EEEClient.xrc.c \
-  EEEServer.c \
-  EEEClient.c \
-  EEECommon.c
-
-client.o: EEECommon.c
-server.o: EEECommon.c
+server.c: EEECommon.c
+client.c: EEECommon.c
 
 EEECommon.c: test.xdl
 	../xdl-compiler/xdl-compiler -i test.xdl -o .
 
-CLEANFILES = EEE*.{c,h}
+CLEANFILES = EEE*
