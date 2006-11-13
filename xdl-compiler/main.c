@@ -114,6 +114,8 @@ void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
   {
     if (t->type == TD_STRUCT || t->type == TD_ARRAY)
       EL(0, "void %s(%s val);", t->free_func, t->ctype);
+    if (t->type == TD_STRUCT)
+      EL(0, "%s %s_new();", t->ctype, t->cname);
     return;
   }
 
@@ -130,6 +132,12 @@ void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
         EL(1, "%s(val->%s);", m->type->free_func, m->name);
     }
     EL(1, "g_free(val);");
+    EL(0, "}");
+    NL;
+
+    EL(0, "%s %s_new()", t->ctype, t->cname);
+    EL(0, "{");
+    EL(1, "return g_new0(%s, 1);", t->cname);
     EL(0, "}");
     NL;
   }
