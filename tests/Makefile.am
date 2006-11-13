@@ -38,10 +38,9 @@ server_SOURCES = \
   EEEServer.c \
   EEEClient.c
 
-server.c: EEECommon.c
-client.c: EEECommon.c
+local-all: EEECommon.h
 
-EEECommon.c: test.xdl
-	../xdl-compiler/xdl-compiler -i test.xdl -o .
+EEECommon.h: test.xdl
+	$(top_builddir)/xdl-compiler/xdl-compiler -i test.xdl -o $(top_builddir)/tests/
 
 CLEANFILES = EEE*
