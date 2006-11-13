@@ -34,4 +34,5 @@ AC_OUTPUT([
 	xdl-compiler/Makefile
 	tests/Makefile
 	docs/Makefile
+	libxr.pc
 ])
