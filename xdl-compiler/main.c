@@ -584,6 +584,16 @@ int main(int ac, char* av[])
           EL(1, "%s(%s);", p->type->free_func, p->name);
       }
 
+      EL(1, "if (xr_call_get_error_code(_call))");
+      EL(2, "return 1;");
+      if (!strcmp("NULL", m->return_type->cnull))
+      {
+        EL(1, "if (_retval == NULL)");
+        EL(1, "{");
+        EL(2, "xr_call_set_error(_call, 100, \"%s returned NULL!\");", m->name);
+        EL(2, "return 1;");
+        EL(1, "}");
+      }
       // prepare retval
       EL(1, "xr_call_set_retval(_call, %s(_retval));", m->return_type->march_name);
       if (m->return_type->free_func)
@@ -606,9 +616,9 @@ int main(int ac, char* av[])
     NL;
 
     EL(0, "static xr_servlet_def __servlet = {");
-    EL(1, ".name = \"%s\",", s->name);
-    EL(1, ".init = NULL,");
-    EL(1, ".fini = NULL,");
+    EL(1, ".name = \"%s%s\",", xdl->name, s->name);
+    EL(1, ".init = %s%sServlet_init,", xdl->name, s->name);
+    EL(1, ".fini = %s%sServlet_fini,", xdl->name, s->name);
     EL(1, ".methods_count = %d,", g_slist_length(s->methods));
     EL(1, ".methods = __servlet_methods");
     EL(0, "};");
@@ -616,7 +626,7 @@ int main(int ac, char* av[])
 
     EL(0, "xr_servlet_def* __%s%sServlet_def()", xdl->name, s->name);
     EL(0, "{");
-    EL(0, "__servlet.size = __%s%sServlet_get_priv_size();", xdl->name, s->name);
+    EL(1, "__servlet.size = __%s%sServlet_get_priv_size();", xdl->name, s->name);
     EL(1, "return &__servlet;");
     EL(0, "}");
   }
