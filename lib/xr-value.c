@@ -257,7 +257,7 @@ int xr_value_is_error_retval(xr_value* v, int* errcode, char** errmsg)
   xr_value* faultString = xr_value_get_member(v, "faultString");
   if (faultCode && faultCode->type == XRV_INT && faultString && faultString->type == XRV_STRING)
   {
-    xr_value_to_int(faultString, errcode);
+    xr_value_to_int(faultCode, errcode);
     xr_value_to_string(faultString, errmsg);
     return 1;
   }
