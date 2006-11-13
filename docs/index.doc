@@ -117,3 +117,13 @@ servlet and EEE namespace)
 </pre>
 
 */
+
+/** @page sample Sample client/server implementation
+
+@include client.c
+
+@include server.c
+
+@include EEEClient.stubs.c
+
+*/
