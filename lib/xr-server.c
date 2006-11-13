@@ -27,8 +27,10 @@ struct _xr_servlet
   void* priv;
   BIO* bio;
   int running;
+  char* name;
   char* resource;
   xr_servlet_def* def;
+  xr_call* call;
 };
 
 struct _xr_server
@@ -44,15 +46,19 @@ struct _xr_server
 
 void* xr_servlet_get_priv(xr_servlet* servlet)
 {
+  g_assert(servlet != NULL);
   return servlet->priv;
 }
 
 void xr_servlet_return_error(xr_servlet* servlet, int code, char* msg)
 {
+  g_assert(servlet != NULL);
+  xr_call_set_error(servlet->call, code, msg);
 }
 
 char* _parse_http_request(char* header)
 {
+  g_assert(header != NULL);
   regex_t r;
   regmatch_t m[4];
   int rs = regcomp(&r, "^([^ ]+)[ ]+([^ ]+)[ ]+(.+)$", REG_EXTENDED);
@@ -66,17 +72,89 @@ char* _parse_http_request(char* header)
   return res;
 }
 
+xr_servlet_def* _find_servlet_def(xr_server* server, char* name)
+{
+  GSList* i;
+  for (i=server->servlet_types; i; i=i->next)
+  {
+    xr_servlet_def* sd = i->data;
+    if (!strcasecmp(sd->name, name))
+      return sd;
+  }
+  return NULL;
+}
+
+xr_servlet_method_def* _find_servlet_method_def(xr_servlet* servlet, char* name)
+{
+  g_assert(servlet != NULL);
+  g_assert(servlet->def != NULL);
+
+  int i;
+  for (i = 0; i < servlet->def->methods_count; i++)
+  {
+    if (!strcmp(servlet->def->methods[i].name, name))
+      return servlet->def->methods + i;
+  }
+  return NULL;
+}
+
 static int _xr_server_servlet_method_call(xr_server* server, xr_servlet* servlet, xr_call* call)
 {
   g_assert(server != NULL);
   g_assert(servlet != NULL);
   g_assert(call != NULL);
 
+  int retval = -1;
+  // check resource for this call
+  if (servlet->resource == NULL)
+  {
+    xr_call_set_error(call, 100, "Unknown resource!");
+    goto done;
+  }
+  servlet->call = call;
   // initialize servlet if necessary
-  // perform a call
+  if (servlet->name == NULL)
+  {
+    servlet->def = _find_servlet_def(server, servlet->resource+1);
+    if (servlet->def == NULL)
+    {
+      xr_call_set_error(call, 100, "Unknown servlet.");
+      goto done;
+    }
+    servlet->name = g_strdup(servlet->resource);
+    if (servlet->def->size > 0)
+      servlet->priv = g_malloc0(servlet->def->size);
+    if (servlet->def->init(servlet) < 0)
+    {
+      xr_call_set_error(call, 100, "Servlet initialization failed.");
+      g_free(servlet->name);
+      g_free(servlet->priv);
+      servlet->name = NULL;
+      servlet->priv = NULL;
+      goto done;
+    }
+  }
 
-  xr_call_set_error(call, 100, "Method not implemented.");
-  return 0;
+  // find method and perform a call
+  xr_servlet_method_def* method = _find_servlet_method_def(servlet, xr_call_get_method(call));
+  if (method == NULL)
+  {
+    char* msg = g_strdup_printf("Method %s not found in %s servlet.", xr_call_get_method(call), servlet->name);
+    xr_call_set_error(call, 100, msg);
+    g_free(msg);
+    goto done;
+  }
+
+  if (method->cb(servlet, call) < 0)
+  {
+    xr_call_set_error(call, 100, "Invalid parameters passed to the method.");
+    goto done;
+  }
+
+  retval = 0;
+ done:
+  servlet->call = NULL;
+  return retval;
 }
 
 static int _xr_server_parse_headers(xr_servlet* servlet, char* buf, int len)
@@ -105,7 +183,9 @@ static int _xr_server_parse_headers(xr_servlet* servlet, char* buf, int len)
     if (match_prefix("POST ") && it == headers)
     {
       g_free(servlet->resource);
-//      servlet->resource = _parse_http_request(header);
+      servlet->resource = _parse_http_request(header);
+      if (servlet->resource == NULL)
+        servlet->resource = g_strdup("/RPC2");
     }
     else if (match_iprefix("Content-Length:"))
     {
@@ -193,8 +273,7 @@ static int _xr_server_servlet_call(xr_server* server, xr_servlet* servlet)
   }
   else
   {
-    xr_call_set_error(call, 100, "Unserialize request failure.");
-//    _xr_server_servlet_method_call(server, servlet, call);
+    _xr_server_servlet_method_call(server, servlet, call);
   }
   g_free(request_buffer);
 
@@ -248,17 +327,26 @@ static int _xr_server_servlet_run(xr_servlet* servlet, xr_server* server)
   if (server->secure)
   {
     if (BIO_do_handshake(servlet->bio) <= 0)
-      goto end;
+      goto done;
   }
 
   servlet->running = 1;
   while (servlet->running)
   {
     if (_xr_server_servlet_call(server, servlet) < 0)
-      goto end;
+      goto done;
   }
 
- end:
+ done:
+  if (servlet->name != NULL)
+  {
+    g_assert(servlet->def != NULL);
+    servlet->def->fini(servlet);
+    g_free(servlet->name);
+    g_free(servlet->priv);
+    servlet->name = NULL;
+    servlet->priv = NULL;
+  }
   BIO_free_all(servlet->bio);
   g_free(servlet);
   return 0;
@@ -303,7 +391,9 @@ int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
 {
   g_assert(server != NULL);
   g_assert(servlet != NULL);
-  server->servlet_types = g_slist_append(server->servlet_types, servlet);
+  if (!_find_servlet_def(server, servlet->name))
+    server->servlet_types = g_slist_append(server->servlet_types, servlet);
+  return 0;
 }
 
 xr_server* xr_server_new(const char* port, const char* cert)
