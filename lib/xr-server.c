@@ -76,6 +76,7 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_servlet* servlet
   // perform a call
 
   xr_call_set_error(call, 100, "Method not implemented.");
+  return 0;
 }
 
 static int _xr_server_parse_headers(xr_servlet* servlet, char* buf, int len)
@@ -112,6 +113,7 @@ static int _xr_server_parse_headers(xr_servlet* servlet, char* buf, int len)
     }
     g_free(header);
   }
+  g_slist_free(headers);
 
   return content_length;
 }
@@ -135,7 +137,7 @@ static int _xr_server_servlet_call(xr_server* server, xr_servlet* servlet)
   // read request
 #define READ_STEP 128
   char request_header[1025];
-  int request_header_length = 0;
+  unsigned int request_header_length = 0;
   char* request_buffer_preread;
   int request_length_preread;
   char* request_buffer;
@@ -259,6 +261,7 @@ static int _xr_server_servlet_run(xr_servlet* servlet, xr_server* server)
  end:
   BIO_free_all(servlet->bio);
   g_free(servlet);
+  return 0;
 }
 
 void xr_server_stop(xr_server* server)

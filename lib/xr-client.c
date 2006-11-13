@@ -90,7 +90,7 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
   regex_t r;
   regmatch_t m[7];
   gint rs;
-  if (rs = regcomp(&r, "^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", REG_EXTENDED|REG_ICASE))
+  if ((rs = regcomp(&r, "^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", REG_EXTENDED|REG_ICASE)))
     return -1;
   rs = regexec(&r, uri, 7, m, 0);
   regfree(&r);
@@ -290,7 +290,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
   // read response
 #define READ_STEP 128
   char response_header[1025];
-  int response_header_length = 0;
+  unsigned int response_header_length = 0;
   char* response_buffer_preread;
   int response_length_preread;
   char* response_buffer;
@@ -366,11 +366,13 @@ int xr_client_call(xr_client_conn* conn, xr_call* call)
 
 int xr_client_call_ex(xr_client_conn* conn, xr_call* call, xr_demarchalizer_t dem, void** retval)
 {
-  if (xr_client_call(conn, call) == 0)
+  int rs = xr_client_call(conn, call);
+  if (rs == 0)
   {
     if (dem(xr_call_get_retval(call), retval) < 0)
       _xr_client_set_error(conn, 100, "getListList: Retval demarchalziation failed!");
   }
+  return rs;
 }
 
 void xr_client_free(xr_client_conn* conn)

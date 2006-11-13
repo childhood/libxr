@@ -88,7 +88,6 @@ static __inline__ double xml_get_cont_double(xmlNodePtr n)
   xmlChar* str = xmlNodeListGetString(n->doc, n->xmlChildrenNode, 1);
   if (str == 0)
     return 0;
-  char* err = NULL;
   double v = atof((const char*)str);
   xmlFree(str);
   return v;
