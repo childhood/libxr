@@ -37,10 +37,8 @@ client_SOURCES = \
   EEEClient.c \
   EEECommon.c
 
-client.c: EEECommon.c
-server.c: EEECommon.c
-
-.PHONY: EEECommon.c
+client.o: EEECommon.c
+server.o: EEECommon.c
 
 EEECommon.c: test.xdl
 	../xdl-compiler/xdl-compiler -i test.xdl -o .
