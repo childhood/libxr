@@ -71,9 +71,7 @@ void xr_blob_free(xr_blob* blob);
 
 /** Create new @ref xr_value node of type @ref XRV_STRING.
  *
- * @param val Value to be contained in the node. Ownership of the val
- *   is transferred to the @ref xr_value. Val will be freed using
- *   g_free when @ref xr_value_free is called.
+ * @param val Value to be contained in the node.
  *
  * @return New @ref xr_value node.
  */
@@ -105,9 +103,7 @@ xr_value* xr_value_double_new(double val);
 
 /** Create new @ref xr_value node of type @ref XRV_TIME.
  *
- * @param val Value to be contained in the node. Ownership of the val
- *   is transferred to the @ref xr_value. Val will be freed using
- *   g_free when @ref xr_value_free is called.
+ * @param val Value to be contained in the node.
  *
  * @return New @ref xr_value node.
  */

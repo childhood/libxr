@@ -40,7 +40,7 @@ xr_value* xr_value_string_new(char* val)
   g_assert(val != NULL);
   xr_value* v = g_new0(xr_value, 1);
   v->type = XRV_STRING;
-  v->str_val = val;
+  v->str_val = g_strdup(val);
   return v;
 }
 
@@ -73,7 +73,7 @@ xr_value* xr_value_time_new(char* val)
   g_assert(val != NULL);
   xr_value* v = g_new0(xr_value, 1);
   v->type = XRV_TIME;
-  v->str_val = val;
+  v->str_val = g_strdup(val);
   return v;
 }
 
