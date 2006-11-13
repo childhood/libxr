@@ -302,8 +302,6 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
       }
       return str;
     }
-    else
-      return NULL;
   }
   return NULL;
 }
