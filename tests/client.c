@@ -19,7 +19,7 @@ static int print_error(xr_client_conn* conn)
 
 int main(int ac, char* av[])
 {
-  char* uri = ac == 2 ? av[1] : "https://localhost:444";
+  char* uri = ac == 2 ? av[1] : "https://localhost:444/EEEClient";
 
   /* initialize xr client library */
   xr_client_init();
