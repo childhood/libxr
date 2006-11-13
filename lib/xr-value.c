@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 
 #include "xr-value.h"
 
@@ -261,4 +262,66 @@ int xr_value_is_error_retval(xr_value* v, int* errcode, char** errmsg)
     return 1;
   }
   return 0;
+}
+
+void xr_value_dump(xr_value* v, int indent)
+{
+  g_assert(v != NULL);
+
+  char buf[1024];
+  memset(buf, 0, sizeof(buf));
+  memset(buf, ' ', indent*4);
+  printf("%s", buf);
+  
+  GSList* i;
+
+  switch (xr_value_get_type(v))
+  {
+    case XRV_ARRAY:
+      printf("ARRAY\n");
+      for (i = xr_value_get_items(v); i; i = i->next)
+        xr_value_dump(i->data, indent+1);
+      printf("%sARRAY END\n", buf);
+      break;
+    case XRV_STRUCT:
+      printf("STRUCT\n");
+      for (i = xr_value_get_members(v); i; i = i->next)
+        xr_value_dump(i->data, indent+1);
+      printf("%sSTRUCT END\n", buf);
+      break;
+    case XRV_MEMBER:
+      printf("MEMBER:%s\n", xr_value_get_member_name(v));
+      xr_value_dump(xr_value_get_member_value(v), indent+1);
+      break;
+    case XRV_INT:
+    {
+      printf("INT:%d\n", v->int_val);
+      break;
+    }
+    case XRV_STRING:
+    {
+      printf("STRING:%s\n", v->str_val);
+      break;
+    }
+    case XRV_BOOLEAN:
+    {
+      printf("BOOLEAN:%s\n", v->int_val ? "true" : "false");
+      break;
+    }
+    case XRV_DOUBLE:
+    {
+      printf("DOUBLE:%g\n", v->dbl_val);
+      break;
+    }
+    case XRV_TIME:
+    {
+      printf("TIME:%s\n", v->str_val);
+      break;
+    }
+    case XRV_BLOB:
+    {
+      printf("BLOB:\n");
+      break;
+    }
+  }
 }
