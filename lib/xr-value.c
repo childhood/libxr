@@ -270,7 +270,7 @@ void xr_value_dump(xr_value* v, int indent)
 
   char buf[1024];
   memset(buf, 0, sizeof(buf));
-  memset(buf, ' ', indent*4);
+  memset(buf, ' ', indent*2);
   printf("%s", buf);
   
   GSList* i;
