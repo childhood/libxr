@@ -563,6 +563,7 @@ int main(int ac, char* av[])
            if (p->type->free_func)
             EL(2, "%s(%s);", p->type->free_func, p->name);
         }
+        EL(2, "xr_call_set_error(_call, 100, \"Invalid parameters passed to the %s method.\");", m->name);
         EL(2, "return -1;");
         EL(1, "}");
       }

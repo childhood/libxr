@@ -145,11 +145,17 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_servlet* servlet
     goto done;
   }
 
-  if (method->cb(servlet, call) < 0)
-  {
-    xr_call_set_error(call, 100, "Invalid parameters passed to the method.");
+#ifdef DEBUG
+  printf("Pre method call:\n");
+  xr_call_dump(call, 0);
+#endif
+  retval = method->cb(servlet, call);
+#ifdef DEBUG
+  printf("Post method call:\n");
+  xr_call_dump(call, 0);
+#endif
+  if (retval)
     goto done;
-  }
 
   retval = 0;
  done:
