@@ -33,6 +33,12 @@ void xr_call_free(xr_call* call)
   g_free(call);
 }
 
+char* xr_call_get_method(xr_call* call)
+{
+  g_assert(call != NULL);
+  return call->method;
+}
+
 /* param manipulation */
 
 void xr_call_add_param(xr_call* call, xr_value* val)
