@@ -1,11 +1,10 @@
-- generate struct mainpulation functions (Type_new() Type_set() Type_get() Type_clone())
-- allow documentation comments in XDL and emit doc comments into C code
-- blobs: check that they are passed around sanely
+- blobs: check that they are passed around sanely (ref counting)
 - any type: make xdl compiler understand any type
-- sigpipe: handle SIGPIPE signal on per thread basis in client and server
+- sigpipe: ignore SIGPIPE signal internally on per thread basis in client and server
 
+- allow documentation comments in XDL and emit doc comments into C code
 - audit code
-- testuite
+- testsuite
 
 - client codegen:
   doubles in lists? -- too long to fit into i->data

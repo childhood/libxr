@@ -3,37 +3,11 @@ XML-RPC Library With XML-RPC Interface Compiler
 
 This is brand new XML-RPC library with support for:
 
-  - SSL3/TLS1 using OpenSSL
-  - IPV6 as soon as OpenSSL 0.9.9 is released
-  - persistent connections over HTTP/1.1
-  - XML-RPC interface description language (XDL)
-  - XML-RPC client stubs/servlet skels compiler
-  - multiple servlets per server
-  - servlet lifetime (init -- call -- call -- fini)
-  - multiplatform (linux, migw32 on windows)
-
-XDL Compiler
-~~~~~~~~~~~~
-
-XDL Compiler outputs following files:
-
-  (Lets suppose that we have Test servlet and EEE namespace)
-
-  .
-  |-- EEETest.h        -- Test interface types definitions
-  |-- EEETest.c        -- Test interface types access methods
-  |-- EEETest.xrc.c    -- implementation of client interface for Test servlet
-  |-- EEETest.xrm.h    -- marchalizers/demarchalizers for Test servlet types
-  |-- EEETest.xrs.h    -- server interface public method for servlet registration
-  |-- EEETest.xrs.c    -- servlet interface implementation
-  |-- EEETest.stubs.h  -- servlet stubs header
-  |-- EEETest.stubs.c  -- servlet stubs implementation
-  |-- EEECommon.h      -- common types declared outside of servlet
-  |-- EEECommon.c      -- common types access methods (for freeing/allocation)
-  `-- EEECommon.xrm.h  -- marchalizers/demarchalizers for common types
-
-XR Server
-~~~~~~~~~
-
-XR Server is multithreaded (one thread per connection) TCP/IP server
-that is sittong on socket and creating 
+  - SSLv3/TLSv1 using OpenSSL.
+  - IPV6 as soon as OpenSSL 0.9.9 is released.
+  - Persistent connections over HTTP/1.1
+  - XML-RPC interface description language (XDL).
+  - XML-RPC client stubs/servlet skels compiler.
+  - Multiple servlets per server.
+  - Servlet lifetime (init -- call -- call -- fini).
+  - Multiplatform (linux, mingw32 on windows).
