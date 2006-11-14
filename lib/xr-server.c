@@ -18,7 +18,7 @@
 #include <openssl/err.h>
 
 #include "xr-server.h"
-#define DEBUG
+//#define DEBUG
 
 /* server */
 
@@ -424,7 +424,7 @@ xr_server* xr_server_new(const char* port, const char* cert)
       goto err2;
   }
 
-  server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, 5, TRUE, &err);
+  server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, 20, TRUE, &err);
   if (err)
     goto err2;
 
