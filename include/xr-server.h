@@ -64,6 +64,10 @@ struct _xr_servlet_def
  */
 void xr_server_init();
 
+/** Cleanup libxr server library before exit.
+ */
+void xr_server_fini();
+
 /** Create new server object.
  *
  * @param port Port and IP address to bind to.

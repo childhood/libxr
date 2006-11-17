@@ -479,12 +479,45 @@ void xr_server_free(xr_server* server)
   g_free(server);
 }
 
+static GMutex** _mutexes = NULL;
+
+static void _ssl_locking_callback(int mode, int type, char *file, int line)
+{
+  if (mode & CRYPTO_LOCK)
+    g_mutex_lock(_mutexes[type]);
+  else
+    g_mutex_unlock(_mutexes[type]);
+}
+
+static unsigned long _ssl_thread_id_callback()
+{
+  unsigned long ret;
+  ret = (unsigned long)g_thread_self();
+  return ret;
+}
+
 void xr_server_init()
 {
+  int i;
   if (!g_thread_supported())
     g_thread_init(NULL);
   SSL_library_init();
   ERR_load_crypto_strings();
   SSL_load_error_strings();
   ERR_load_SSL_strings();
+  _mutexes = g_new(GMutex*, CRYPTO_num_locks());
+  for (i=0; i<CRYPTO_num_locks(); i++)
+    _mutexes[i] = g_mutex_new();
+  CRYPTO_set_id_callback(_ssl_thread_id_callback);
+  CRYPTO_set_locking_callback(_ssl_locking_callback);
+}
+
+void xr_server_fini()
+{
+  CRYPTO_set_id_callback(NULL);
+  CRYPTO_set_locking_callback(NULL);
+  int i;
+  for (i=0; i<CRYPTO_num_locks(); i++)
+    g_mutex_free(_mutexes[i]);
+  g_free(_mutexes);
 }
