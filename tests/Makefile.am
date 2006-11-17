@@ -1,9 +1,32 @@
+BUILT_SOURCES = \
+  EEECommon.h \
+  EEECommon.xrm.h \
+  EEECommon.c \
+  EEEServer.xrs.c \
+  EEEClient.xrs.c \
+  EEEServer.xrc.c \
+  EEEClient.xrc.c \
+  EEEServer.stubs.c \
+  EEEClient.stubs.c \
+  EEEServer.c \
+  EEEClient.c \
+  EEEServer.xrs.h \
+  EEEClient.xrs.h \
+  EEEServer.xrc.h \
+  EEEClient.xrc.h \
+  EEEServer.xrm.h \
+  EEEClient.xrm.h \
+  EEEServer.stubs.h \
+  EEEClient.stubs.h \
+  EEEServer.h \
+  EEEClient.h
+
 EXTRA_DIST = \
   bench.h \
   bench.sh \
   test.xdl \
   server.pem \
-  $(wildcard EEE*)
+  $(BUILT_SOURCES)
 
 AM_CFLAGS= \
   -std=gnu99 \
@@ -38,9 +61,5 @@ server_SOURCES = \
   EEEServer.c \
   EEEClient.c
 
-local-all: EEECommon.h
-
-EEECommon.h: test.xdl
-	$(top_builddir)/xdl-compiler/xdl-compiler -i test.xdl -o $(top_builddir)/tests/
-
-CLEANFILES = EEE*
+$(BUILT_SOURCES): $(srcdir)/test.xdl
+	$(top_builddir)/xdl-compiler/xdl-compiler -i $(srcdir)/test.xdl -o $(top_builddir)/tests/
