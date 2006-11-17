@@ -1,19 +1,7 @@
-#include <stdio.h>
-#include <memory.h>
-#include <errno.h>
 #include <regex.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#include <netdb.h>
-#include <strings.h>
 
-#include <openssl/crypto.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
