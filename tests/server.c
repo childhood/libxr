@@ -39,5 +39,8 @@ int main(int ac, char* av[])
   /* free server after it is stopped */
   xr_server_free(server);
 
+  /* cleanup library */
+  xr_server_fini();
+
   return 0;
 }
