@@ -60,6 +60,7 @@ struct _xdl_method
   char* name;
   GSList* params;
   xdl_typedef* return_type;
+  char* stub_impl;
 };
 
 /* servlets */
@@ -70,6 +71,10 @@ struct _xdl_servlet
 
   GSList* types;    /* servlet types */
   GSList* methods;  /* methods */
+
+  char* stub_init;
+  char* stub_fini;
+  char* stub_attrs;
 };
 
 /* parser */
@@ -77,6 +82,7 @@ struct _xdl_servlet
 struct _xdl_model
 {
   char* name;
+  char* stub_header;
   GSList* servlets;
   GSList* types;    /* global types */
 };

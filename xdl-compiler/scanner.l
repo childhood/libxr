@@ -16,6 +16,7 @@
 %option prefix="xdl_" outfile="lex.yy.c"
 
 %x IN_COMMENT
+%x IN_CODE
 
 space                       [ \t\n]*
 ident                       [[:alnum:]_]+
@@ -38,8 +39,13 @@ string_literal              \"{string_character}*\"
 <IN_COMMENT>"*"             { uploc; yymore (); }
 <IN_COMMENT>\n              { yylloc->first_line = yylloc->last_line = yylineno; yylloc->first_column = 1; yylloc->last_column = 0; yymore (); }
 
-"//".*                      { uploc; }
+"<%"                        { uploc; BEGIN(IN_CODE); }
+<IN_CODE>"%>"               { uploc; BEGIN(INITIAL); yylval->str = g_strndup(yytext+2, strlen(yytext+2)-2); return INLINE_CODE; }
+<IN_CODE>[^%\n]+            { uploc; yymore (); }
+<IN_CODE>"%"                { uploc; yymore (); }
+<IN_CODE>\n                 { yylloc->first_line = yylloc->last_line = yylineno; yylloc->first_column = 1; yylloc->last_column = 0; yymore (); }
 
+"//".*                      { uploc; }
 
 "{"                         { uploc; return OPEN_BRACE; }
 "}"                         { uploc; return CLOSE_BRACE; }
@@ -53,6 +59,9 @@ struct                      { uploc; return STRUCT; }
 array                       { uploc; return ARRAY; }
 servlet                     { uploc; return SERVLET; }
 namespace                   { uploc; return NAMESPACE; }
+__init__                    { uploc; return KW_INIT; }
+__fini__                    { uploc; return KW_FINI; }
+__attrs__                   { uploc; return KW_ATTRS; }
 
 {integer_literal}           { uploc; yylval->num = atoi(yytext); return INTEGER_LITERAL; }
 

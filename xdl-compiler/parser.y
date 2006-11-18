@@ -49,11 +49,17 @@ xdl_servlet* cur_servlet = NULL;
 %token SERVLET "servlet"
 %token NAMESPACE "namespace"
 
+%token KW_INIT "__init__"
+%token KW_FINI "__fini__"
+%token KW_ATTRS "__attrs__"
+
 %token <str> DOC_COMMENT
 %token <str> STRING_LITERAL
 %token <str> IDENTIFIER
+%token <str> INLINE_CODE
 %token <num> INTEGER_LITERAL
 
+%type <str> opt_inline_code
 %type <type> type
 %type <type> struct_decl
 %type <member> struct_member
@@ -68,7 +74,18 @@ xdl_servlet* cur_servlet = NULL;
 %%
 
 compilation_unit
-  : opt_namespace_decl toplevel_decls
+  : opt_namespace_decl opt_inline_code toplevel_decls
+    {
+      xdl->stub_header = $2;
+    }
+  ;
+
+opt_inline_code
+  :
+    {
+      $$ = NULL;
+    }
+  | INLINE_CODE
   ;
 
 opt_namespace_decl
@@ -159,9 +176,26 @@ servlet_body_decl
     {
       cur_servlet->types = g_slist_append(cur_servlet->types, $1);
     }
-  | method_decl
+  | method_decl INLINE_CODE
     {
       cur_servlet->methods = g_slist_append(cur_servlet->methods, $1);
+      $1->stub_impl = $2;
+    }
+  | method_decl ";"
+    {
+      cur_servlet->methods = g_slist_append(cur_servlet->methods, $1);
+    }
+  | "__init__" INLINE_CODE
+    {
+      cur_servlet->stub_init = $2;
+    }
+  | "__fini__" INLINE_CODE
+    {
+      cur_servlet->stub_fini = $2;
+    }
+  | "__attrs__" INLINE_CODE
+    {
+      cur_servlet->stub_attrs = $2;
     }
   ;
 
@@ -186,7 +220,7 @@ type
 /* methods */
 
 method_decl
-  : type IDENTIFIER "(" opt_params ")" ";"
+  : type IDENTIFIER "(" opt_params ")"
     {
       $$ = g_new0(typeof(*$$), 1);
       $$->name = $2;
