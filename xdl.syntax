@@ -1,0 +1,48 @@
+wholechars abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-
+
+context default
+
+#    keyword \{abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\}+ yellow
+#    keyword @\{abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\}+ brightred
+
+    keyword whole servlet yellow
+    keyword whole __init__ yellow
+    keyword whole __fini__ yellow
+    keyword whole __attrs__ yellow
+    keyword whole struct yellow
+    keyword whole namespace yellow
+    keyword whole array yellow
+    keyword whole any yellow
+
+# html tags
+    keyword whole int brightred
+    keyword whole string brightred
+    keyword whole boolean brightred
+    keyword whole blob brightred
+    keyword whole time brightred
+
+    keyword <% white
+    keyword %> white
+
+    keyword { brightcyan
+    keyword } brightcyan
+    keyword ( brightcyan
+    keyword ) brightcyan
+    keyword < yellow
+    keyword > yellow
+
+    keyword ; brightmagenta
+    keyword , brightcyan
+    
+    keyword /\* brown
+    keyword \*/ brown
+    keyword // brown
+
+
+context exclusive /\* \*/ brown
+
+context exclusive <% %> white
+
+context exclusive // \n brown
+
+context " " brightgreen
