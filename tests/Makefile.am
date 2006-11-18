@@ -37,7 +37,7 @@ AM_CFLAGS= \
 
 AM_LDFLAGS = -static
 
-LDADD = $(XR_LIBS) $(top_builddir)/lib/libxr.la -lregex
+LDADD = $(XR_LIBS) $(top_builddir)/lib/libxr.la
 
 noinst_PROGRAMS = \
   client \
