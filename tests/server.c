@@ -7,6 +7,7 @@
 static xr_server* server = NULL;
 
 /* stop server on signal */
+
 static void _sig_stop(int signum)
 {
   xr_server_stop(server);
@@ -18,8 +19,10 @@ int main(int ac, char* av[])
   xr_server_init();
   
   /* hookup signals to stop server, see above */
+#ifndef __MINGW32__
   signal(SIGINT, _sig_stop);
   signal(SIGHUP, _sig_stop);
+#endif
 
   /* create new server and bind it to the port 444 */
   server = xr_server_new("*:444", "server.pem");

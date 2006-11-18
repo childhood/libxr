@@ -3,6 +3,7 @@ AC_INIT([libxr], 1.0, [ondrej.jirman@zonio.net], libxr)
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_CONFIG_HEADER([config.h])
 AC_CANONICAL_SYSTEM
+AC_CANONICAL_BUILD
 AM_INIT_AUTOMAKE([dist-bzip2])
 AM_MAINTAINER_MODE
 

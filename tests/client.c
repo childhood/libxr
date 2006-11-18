@@ -25,7 +25,9 @@ int main(int ac, char* av[])
   xr_client_init();
 
   /* just a workaround for now */
+#ifndef __MINGW32__
   signal(SIGPIPE, SIG_IGN);
+#endif
 
   /* create object for performing client connections */
   xr_client_conn* conn = xr_client_new();

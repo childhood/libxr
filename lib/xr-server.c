@@ -1,6 +1,12 @@
+#include <stdlib.h>
 #include <regex.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
+
+#ifdef __MINGW32__
+  #include <winsock2.h>
+#else
+  #include <arpa/inet.h>
+  #include <netinet/tcp.h>
+#endif
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
