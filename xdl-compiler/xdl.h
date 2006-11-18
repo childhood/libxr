@@ -39,6 +39,7 @@ struct _xdl_typedef
 
   GSList* struct_members;  /* struct memners list */
   xdl_typedef* item_type; /* array item type */
+  char* doc;
 };
 
 struct _xdl_struct_member
@@ -61,6 +62,7 @@ struct _xdl_method
   GSList* params;
   xdl_typedef* return_type;
   char* stub_impl;
+  char* doc;
 };
 
 /* servlets */
@@ -75,6 +77,7 @@ struct _xdl_servlet
   char* stub_init;
   char* stub_fini;
   char* stub_attrs;
+  char* doc;
 };
 
 /* parser */

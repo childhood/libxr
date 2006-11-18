@@ -59,7 +59,7 @@ xdl_servlet* cur_servlet = NULL;
 %token <str> INLINE_CODE
 %token <num> INTEGER_LITERAL
 
-%type <str> opt_inline_code
+%type <str> opt_inline_code opt_doc_comment
 %type <type> type
 %type <type> struct_decl
 %type <member> struct_member
@@ -86,6 +86,14 @@ opt_inline_code
       $$ = NULL;
     }
   | INLINE_CODE
+  ;
+
+opt_doc_comment
+  :
+    {
+      $$ = NULL;
+    }
+  | DOC_COMMENT
   ;
 
 opt_namespace_decl
@@ -119,15 +127,16 @@ toplevel_decl
 /* structs */
 
 struct_decl
-  : "struct" IDENTIFIER "{" struct_members "}"
+  : opt_doc_comment "struct" IDENTIFIER "{" struct_members "}"
     {
-      if (xdl_typedef_find(xdl, cur_servlet, $2))
+      if (xdl_typedef_find(xdl, cur_servlet, $3))
       {
-        printf("Redefining already defined type %s\n", $2);
+        printf("Redefining already defined type %s\n", $3);
         exit(1);
       }
-      $$ = xdl_typedef_new_struct(xdl, cur_servlet, $2);
-      $$->struct_members = $4;
+      $$ = xdl_typedef_new_struct(xdl, cur_servlet, $3);
+      $$->struct_members = $5;
+      $$->doc = $1;
     }
   ;
 
@@ -154,10 +163,11 @@ struct_member
 /* servlets */
 
 servlet_decl
-  : "servlet" IDENTIFIER
+  : opt_doc_comment "servlet" IDENTIFIER
     {
       cur_servlet = g_new0(xdl_servlet, 1);
-      cur_servlet->name = g_strdup($2);
+      cur_servlet->name = g_strdup($3);
+      cur_servlet->doc = $1;
     }
     "{" servlet_body_decls "}"
     {
@@ -220,12 +230,13 @@ type
 /* methods */
 
 method_decl
-  : type IDENTIFIER "(" opt_params ")"
+  : opt_doc_comment type IDENTIFIER "(" opt_params ")"
     {
       $$ = g_new0(typeof(*$$), 1);
-      $$->name = $2;
-      $$->return_type = $1;
-      $$->params = $4;
+      $$->name = $3;
+      $$->return_type = $2;
+      $$->params = $5;
+      $$->doc = $1;
     }
   ;
 

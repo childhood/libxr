@@ -161,7 +161,14 @@ void gen_type_defs(FILE* f, GSList* types)
   {
     xdl_typedef* t = j->data;
     if (t->type == TD_STRUCT)
+    {
+      if (t->doc)
+      {
+        NL;
+        EL(0, "%s", t->doc);
+      }
       EL(0, "typedef struct _%s %s;", t->cname, t->cname);
+    }
   }
   NL;
 
@@ -170,6 +177,8 @@ void gen_type_defs(FILE* f, GSList* types)
     xdl_typedef* t = j->data;
     if (t->type == TD_STRUCT)
     {
+      if (t->doc)
+        EL(0, "%s", t->doc);
       EL(0, "struct _%s", t->cname);
       EL(0, "{");
       for (k=t->struct_members; k; k=k->next)
@@ -446,8 +455,13 @@ int main(int ac, char* av[])
     EL(0, "#include \"%s%s.h\"", xdl->name, s->name);
     NL;
 
-    EL(0, "/** Implementation specific servlet data.");
-    EL(0, " */ ");
+    if (s->doc)
+      EL(0, "%s", s->doc);
+    else
+    {
+      EL(0, "/** Implementation specific servlet data.");
+      EL(0, " */ ");
+    }
     EL(0, "typedef struct _%s%sServlet %s%sServlet;", xdl->name, s->name, xdl->name, s->name);
     NL;
 
@@ -478,17 +492,24 @@ int main(int ac, char* av[])
     {
       xdl_method* m = j->data;
 
-      EL(0, "/** ");
-      EL(0, " * ");
-      EL(0, " * @param _servlet Servlet object.");
-      for (k=m->params; k; k=k->next)
+      if (m->doc)
       {
-        xdl_method_param* p = k->data;
-        EL(0, " * @param %s", p->name);
+        EL(0, "%s", m->doc);
       }
-      EL(0, " * ");
-      EL(0, " * @return ");
-      EL(0, " */ ");
+      else
+      {
+        EL(0, "/** ");
+        EL(0, " * ");
+        EL(0, " * @param _servlet Servlet object.");
+        for (k=m->params; k; k=k->next)
+        {
+          xdl_method_param* p = k->data;
+          EL(0, " * @param %s", p->name);
+        }
+        EL(0, " * ");
+        EL(0, " * @return ");
+        EL(0, " */ ");
+      }
 
       E(0, "%s %s%sServlet_%s(xr_servlet* _servlet", m->return_type->ctype, xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)

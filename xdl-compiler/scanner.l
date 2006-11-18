@@ -16,6 +16,7 @@
 %option prefix="xdl_" outfile="lex.yy.c"
 
 %x IN_COMMENT
+%x IN_DOC_COMMENT
 %x IN_CODE
 
 space                       [ \t\n]*
@@ -32,6 +33,12 @@ string_literal              \"{string_character}*\"
 /* " */
 
 %%
+
+"/**"                       { uploc; BEGIN(IN_DOC_COMMENT); yymore (); }
+<IN_DOC_COMMENT>"*/"        { uploc; BEGIN(INITIAL); yylval->str = g_strdup(yytext); return DOC_COMMENT; }
+<IN_DOC_COMMENT>[^*\n]+     { uploc; yymore (); }
+<IN_DOC_COMMENT>"*"         { uploc; yymore (); }
+<IN_DOC_COMMENT>\n          { yylloc->first_line = yylloc->last_line = yylineno; yylloc->first_column = 1; yylloc->last_column = 0; yymore (); }
 
 "/*"                        { uploc; BEGIN(IN_COMMENT); }
 <IN_COMMENT>"*/"            { uploc; BEGIN(INITIAL); yytext[strlen(yytext) - 2] = '\0'; }
