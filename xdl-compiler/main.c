@@ -514,7 +514,7 @@ int main(int ac, char* av[])
     EL(0, "struct _%s%sServlet", xdl->name, s->name);
     EL(0, "{");
     if (s->stub_attrs)
-      EL(1, "%s", g_strstrip(s->stub_attrs));
+      EL(1, "%s", s->stub_attrs);
     EL(0, "};");
     NL;
 
@@ -528,7 +528,7 @@ int main(int ac, char* av[])
     EL(0, "{");
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
     if (s->stub_init)
-      EL(1, "%s", g_strstrip(s->stub_init));
+      EL(1, "%s", s->stub_init);
     EL(1, "return 0;");
     EL(0, "}");
     NL;
@@ -537,7 +537,7 @@ int main(int ac, char* av[])
     EL(0, "{");
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
     if (s->stub_fini)
-      EL(1, "%s", g_strstrip(s->stub_fini));
+      EL(1, "%s", s->stub_fini);
     EL(0, "}");
     NL;
 
@@ -556,7 +556,7 @@ int main(int ac, char* av[])
       EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
       EL(1, "%s retval = %s;", m->return_type->ctype, m->return_type->cnull);
       if (m->stub_impl)
-        EL(1, "%s", g_strstrip(m->stub_impl));
+        EL(1, "%s", m->stub_impl);
       else
         EL(1, "xr_servlet_return_error(_servlet, 100, \"%s is not implemented!\");", m->name);
       EL(1, "return retval;");
