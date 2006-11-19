@@ -15,9 +15,6 @@ static void _sig_stop(int signum)
 
 int main(int ac, char* av[])
 {
-  /* initialize xr server library */
-  xr_server_init();
-  
   /* hookup signals to stop server, see above */
 #ifndef __MINGW32__
   signal(SIGINT, _sig_stop);
@@ -41,9 +38,6 @@ int main(int ac, char* av[])
 
   /* free server after it is stopped */
   xr_server_free(server);
-
-  /* cleanup library */
-  xr_server_fini();
 
   return 0;
 }

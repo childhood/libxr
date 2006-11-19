@@ -59,15 +59,6 @@ struct _xr_servlet_def
   xr_servlet_method_def* methods;   /**< Methods descriptions. */
 };
 
-/** Initialize libxr server library. This must be first function called
- * in the server code.
- */
-void xr_server_init();
-
-/** Cleanup libxr server library before exit.
- */
-void xr_server_fini();
-
 /** Create new server object.
  *
  * @param port Port and IP address to bind to.

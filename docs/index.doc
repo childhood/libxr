@@ -280,9 +280,6 @@ static void _sig_stop(int signum)
 
 int main(int ac, char* av[])
 {
-  /* initialize xr server library */
-  xr_server_init();
-  
   /* hookup signals to stop server, see above */
   signal(SIGINT, _sig_stop);
   signal(SIGHUP, _sig_stop);
@@ -339,9 +336,6 @@ static int _print_error(xr_client_conn* conn)
 int main(int ac, char* av[])
 {
   char* uri = ac == 2 ? av[1] : "http://localhost:444/ZMServer";
-
-  /* initialize xr client library */
-  xr_client_init();
 
   /* create object for performing client connections */
   xr_client_conn* conn = xr_client_new();

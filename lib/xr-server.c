@@ -1,17 +1,14 @@
 #include <stdlib.h>
 #include <regex.h>
 
-#ifdef __MINGW32__
-  #include <winsock2.h>
-#else
-  #include <arpa/inet.h>
-  #include <netinet/tcp.h>
+#ifndef WIN32
+  #include <signal.h>
 #endif
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-
 #include "xr-server.h"
+#include "xr-http.h"
+#include "xr-utils.h"
+
 //#define DEBUG
 
 /* server */
@@ -48,22 +45,6 @@ void xr_servlet_return_error(xr_servlet* servlet, int code, char* msg)
 {
   g_assert(servlet != NULL);
   xr_call_set_error(servlet->call, code, msg);
-}
-
-char* _parse_http_request(char* header)
-{
-  g_assert(header != NULL);
-  regex_t r;
-  regmatch_t m[4];
-  int rs = regcomp(&r, "^([^ ]+)[ ]+([^ ]+)[ ]+(.+)$", REG_EXTENDED);
-  if (rs)
-    return NULL;
-  rs = regexec(&r, header, 4, m, 0);
-  regfree(&r);
-  if (rs != 0)
-    return NULL;
-  char* res = g_strndup(header+m[2].rm_so, m[2].rm_eo-m[2].rm_so);
-  return res;
 }
 
 xr_servlet_def* _find_servlet_def(xr_server* server, char* name)
@@ -157,166 +138,41 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_servlet* servlet
   return retval;
 }
 
-static int _xr_server_parse_headers(xr_servlet* servlet, char* buf, int len)
-{
-  int i, content_length = -1;
-  GSList* headers = NULL, *it;
-  char* line = buf;
-  for (i = 0; i < len; i++)
-  {
-    if (buf[i] == '\r' && buf[i+1] == '\n')
-    {
-      if (line < buf + i)
-        headers = g_slist_append(headers, g_strndup(line, buf + i - line));
-      line = buf + i + 2;
-    }
-  }
-  if (line < buf + len)
-    headers = g_slist_append(headers, g_strndup(line, buf + len - line));
-
-#define match_iprefix(str) !strncasecmp(header, str, sizeof(str)-1)
-#define match_prefix(str) !strncmp(header, str, sizeof(str)-1)
-
-  for (it=headers; it; it=it->next)
-  {
-    char* header = it->data;
-    if (match_prefix("POST ") && it == headers)
-    {
-      g_free(servlet->resource);
-      servlet->resource = _parse_http_request(header);
-      if (servlet->resource == NULL)
-        servlet->resource = g_strdup("/RPC2");
-    }
-    else if (match_iprefix("Content-Length:"))
-    {
-      content_length = atoi(g_strstrip(header + sizeof("Content-Length:")-1));
-    }
-    g_free(header);
-  }
-  g_slist_free(headers);
-
-  return content_length;
-}
-
-static char* _find_eoh(char* buf, int len)
-{
-  int i;
-  for (i = 0; i < len-3; i++)
-  {
-    if (buf[i] == '\r' && !memcmp(buf+i, "\r\n\r\n", 4))
-      return buf+i;
-  }
-  return NULL;
-}
-
 static int _xr_server_servlet_call(xr_server* server, xr_servlet* servlet)
 {
   g_assert(server != NULL);
   g_assert(servlet != NULL);
 
-  // read request
-#define READ_STEP 128
-  char request_header[1025];
-  unsigned int request_header_length = 0;
-  char* request_buffer_preread;
-  int request_length_preread;
-  char* request_buffer;
-  int request_length;
+  char* buffer;
+  int length, rs, retval = -1;
 
-  while (1)
-  {
-    if (request_header_length + READ_STEP > sizeof(request_header)-1)
-      goto err; //ERR: headers too long
-    int bytes_read = BIO_read(servlet->bio, request_header + request_header_length, READ_STEP);
-    if (bytes_read <= 0)
-      goto err; //ERR: err or eof in headers?
-    char* eoh = _find_eoh(request_header + request_header_length, bytes_read); // search for block for \r\n\r\n (EOH)
-    request_header_length += bytes_read;
-    if (eoh) // end of headers in the current block
-    {
-      request_buffer_preread = eoh + 4;
-      request_length_preread = request_header_length - (eoh - request_header + 4);
-      request_header_length = eoh - request_header + 4;
-      *(eoh+2) = '\0';
-      break;
-    }
-  }
+  xr_http* http = xr_http_new(servlet->bio);
+  if (xr_http_receive(http, XR_HTTP_REQUEST, &buffer, &length) < 0)
+    goto err;
 
-#ifdef DEBUG
-  fwrite(request_header, request_header_length, 1, stdout);
-  fflush(stdout);
-#endif
-
-  request_length = _xr_server_parse_headers(servlet, request_header, request_header_length);
-  if (request_length <= 0 || request_length > 1024*1024)
-    return -1;
-
-  request_buffer = g_malloc(request_length);  
-  memcpy(request_buffer, request_buffer_preread, request_length_preread);
-
-  if (BIO_read(servlet->bio, request_buffer + request_length_preread, request_length - request_length_preread) 
-      != request_length - request_length_preread)
-  {
-    g_free(request_buffer);
-    return -1;
-  }
-
-#ifdef DEBUG
-  fwrite(request_buffer, request_length, 1, stdout);
-  fflush(stdout);
-#endif
+  g_free(servlet->resource);
+  servlet->resource = xr_http_get_resource(http);
 
   xr_call* call = xr_call_new(NULL);
-  if (xr_call_unserialize_request(call, request_buffer, request_length))
-  {
+  rs = xr_call_unserialize_request(call, buffer, length);
+  g_free(buffer);
+  if (rs)
     xr_call_set_error(call, 100, "Unserialize request failure.");
-  }
   else
-  {
     _xr_server_servlet_method_call(server, servlet, call);
-  }
-  g_free(request_buffer);
-
-  // send response
-
-  char* response_buffer;
-  int response_length;
-  char* response_header;
-  int response_header_length;
-
-  xr_call_serialize_response(call, &response_buffer, &response_length);
+  xr_call_serialize_response(call, &buffer, &length);
   xr_call_free(call);
 
-  response_header = g_strdup_printf(
-    "HTTP/1.1 200 OK\r\n"
-    "Content-Type: text/xml\r\n"
-    "Content-Length: %d\r\n\r\n",
-    response_length
-  );
-  response_header_length = strlen(response_header);
-  if (BIO_write(servlet->bio, response_header, response_header_length) != response_header_length)
-  {
-    g_free(response_header);
-    xr_call_free_buffer(response_buffer);
-    return -1;
-  }
-  if (BIO_write(servlet->bio, response_buffer, response_length) != response_length)
-  {
-    g_free(response_header);
-    xr_call_free_buffer(response_buffer);
-    return -1;
-  }
-#ifdef DEBUG
-  printf("%s", response_header);
-  fwrite(response_buffer, response_length, 1, stdout);
-  fflush(stdout);
-#endif
-  g_free(response_header);
-  xr_call_free_buffer(response_buffer);
+  xr_http_setup_response(http, 200);
+  rs = xr_http_send(http, XR_HTTP_RESPONSE, buffer, length);
+  xr_call_free_buffer(buffer);
+  if (rs < 0)
+    goto err;
 
-  return 0;
+  retval = 0;
  err:
-  return -1;
+  xr_http_free(http);
+  return retval;
 }
 
 static int _xr_server_servlet_run(xr_servlet* servlet, xr_server* server)
@@ -401,6 +257,8 @@ xr_server* xr_server_new(const char* port, const char* cert)
   g_assert(port != NULL);
   GError* err = NULL;
 
+  xr_ssl_init();
+
   xr_server* server = g_new0(xr_server, 1);
   server->secure = !!cert;
 
@@ -418,24 +276,18 @@ xr_server* xr_server_new(const char* port, const char* cert)
       goto err2;
   }
 
-  server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, 20, TRUE, &err);
+  server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, 100, TRUE, &err);
   if (err)
     goto err2;
 
   server->bio_in = BIO_new_accept((char*)port);
   if (server->bio_in == NULL)
     goto err3;
-#ifdef DEBUG
-  BIO_set_callback(server->bio_in, BIO_debug_callback);
-#endif
 
   if (server->secure)
   {
     SSL* ssl;
     server->bio_ssl = BIO_new_ssl(server->ctx, 0);
-#ifdef DEBUG
-    BIO_set_callback(server->bio_ssl, BIO_debug_callback);
-#endif
     BIO_get_ssl(server->bio_ssl, &ssl);
     SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
     BIO_set_accept_bios(server->bio_in, server->bio_ssl);
@@ -444,12 +296,7 @@ xr_server* xr_server_new(const char* port, const char* cert)
   if (BIO_do_accept(server->bio_in) <= 0)
     goto err4;
 
-  // disable John Nagle's algo
-  int flag = 1;
-  int sock = -1;
-  BIO_get_fd(server->bio_in, &sock);
-  if (sock >= 0)
-    setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(flag));
+  xr_set_nodelay(server->bio_in);
 
   return server;
  err4:
@@ -471,47 +318,4 @@ void xr_server_free(xr_server* server)
   SSL_CTX_free(server->ctx);
   g_slist_free(server->servlet_types);
   g_free(server);
-}
-
-static GMutex** _mutexes = NULL;
-
-static void _ssl_locking_callback(int mode, int type, char *file, int line)
-{
-  if (mode & CRYPTO_LOCK)
-    g_mutex_lock(_mutexes[type]);
-  else
-    g_mutex_unlock(_mutexes[type]);
-}
-
-static unsigned long _ssl_thread_id_callback()
-{
-  unsigned long ret;
-  ret = (unsigned long)g_thread_self();
-  return ret;
-}
-
-void xr_server_init()
-{
-  int i;
-  if (!g_thread_supported())
-    g_thread_init(NULL);
-  SSL_library_init();
-  ERR_load_crypto_strings();
-  SSL_load_error_strings();
-  ERR_load_SSL_strings();
-  _mutexes = g_new(GMutex*, CRYPTO_num_locks());
-  for (i=0; i<CRYPTO_num_locks(); i++)
-    _mutexes[i] = g_mutex_new();
-  CRYPTO_set_id_callback(_ssl_thread_id_callback);
-  CRYPTO_set_locking_callback(_ssl_locking_callback);
-}
-
-void xr_server_fini()
-{
-  CRYPTO_set_id_callback(NULL);
-  CRYPTO_set_locking_callback(NULL);
-  int i;
-  for (i=0; i<CRYPTO_num_locks(); i++)
-    g_mutex_free(_mutexes[i]);
-  g_free(_mutexes);
 }

@@ -22,11 +22,6 @@
  */
 typedef struct _xr_client_conn xr_client_conn;
 
-/** Initialize libxr client library. This must be first function called
- * in the client code.
- */
-void xr_client_init();
-
 /** Create new connection object.
  *
  * @return New connection object.
