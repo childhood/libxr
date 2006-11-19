@@ -390,66 +390,55 @@ that implement client and server interfaces.
 Here is description of two sample servlets:
 
 @code
-namespace EEE;
+namespace ES;
 
-struct Item
+struct ToplevelStruct
 {
-    string      uid;
-    string      type;
-    time    from_date;
-    time    to_date;
-    blob    ical;
+    string  str;
+    blob    data;
 }
 
-struct Calendar
+struct TopArray
 {
-    string      uid;
-    time    create_date;
-    blob    ical;
-    array<array<Item>> items;
-}
-
-struct User
-{
-    string      uid;
-    time        create_date;
-    blob        ical;
-    Calendar    maincal;
-    array<Calendar> calendars;
+    string                uid;
+    array<ToplevelStruct> tls;
 }
 
 servlet Client
 {
-    struct Date
+    /* Client types */
+    struct ClientOnlyStruct
     {
       int day;
-      int month;
-      int year;
-      int weekday;
-    }
-    struct Time
-    {
-      int hour;
-      int minute;
-    }
-    struct DateTime
-    {
-      Date date;
-      Time time;
     }
 
-    DateTime getTime();
+    /* Servlet Implementaion */
+
+    __attrs__
+    <%
+    %>
+
+    __init__
+    <%
+    %>
+
+    __fini__
+    <%
+    %>
+
+    /* Stubs Implementaion */
+
+    DateTime getTime()
+    <%
+    %>
     
-    User getUserData(string name);
-    boolean setUserData(User data);
-}
+    User getUserData(string name)
+    <%
+    %>
 
-servlet Server
-{
-    boolean auth(string username, string password);
-    array<boolean> getList();
-    array<array<boolean>> getListList();
-    boolean setList(array<User> list);
+    boolean setUserData(User data)
+    <%
+    %>
 }
 @endcode
 
