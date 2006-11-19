@@ -21,7 +21,7 @@ struct _xr_http
 };
 
 #define READ_STEP 128
-#define DEBUG
+//#define DEBUG
 
 static int _xr_http_parse_status_line(xr_http* http, char* line)
 {
