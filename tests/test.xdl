@@ -40,6 +40,12 @@ servlet Client
       int hour;
       int minute;
     }
+
+    /** Get user data.
+     *
+     * @param name Name of the user.
+     * @return User struct.
+     */
     struct DateTime
     {
       Date date;
@@ -48,8 +54,35 @@ servlet Client
 
     DateTime getTime();
     
-    User getUserData(string name);
-    boolean setUserData(User data);
+    /** Get user data.
+     *
+     * @param name Name of the user.
+     * @return User struct.
+     */
+    User getUserData(string name)
+    <%
+        printf("User data set!\n");
+    %>
+
+    boolean setUserData(User data)
+    <%
+        printf("User data set!\n");
+    %>
+
+    __attrs__
+    <%
+        char* username;
+    %>
+    
+    __init__
+    <%
+        printf("Init!\n");
+    %>
+
+    __fini__
+    <%
+        printf("Fini!\n");
+    %>
 }
 
 servlet Server
