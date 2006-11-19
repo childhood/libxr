@@ -1,10 +1,6 @@
 - blobs: check that they are passed around sanely (ref counting)
 - any type: make xdl compiler understand any type
-- sigpipe: ignore SIGPIPE signal internally on per thread basis in client and server
-
-- allow documentation comments in XDL and emit doc comments into C code
 - audit code
 - testsuite
-
 - client codegen:
   doubles in lists? -- too long to fit into i->data
