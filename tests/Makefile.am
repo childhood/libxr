@@ -41,10 +41,19 @@ LDADD = $(XR_LIBS) $(top_builddir)/lib/libxr.la
 
 noinst_PROGRAMS = \
   client \
+  tclient \
   server
 
 client_SOURCES = \
   client.c \
+  EEECommon.c \
+  EEEServer.xrc.c \
+  EEEClient.xrc.c \
+  EEEServer.c \
+  EEEClient.c
+
+tclient_SOURCES = \
+  tclient.c \
   EEECommon.c \
   EEEServer.xrc.c \
   EEEClient.xrc.c \
