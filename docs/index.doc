@@ -389,58 +389,7 @@ that implement client and server interfaces.
 
 Here is description of two sample servlets:
 
-@code
-namespace ES;
-
-struct ToplevelStruct
-{
-    string  str;
-    blob    data;
-}
-
-struct TopArray
-{
-    string                uid;
-    array<ToplevelStruct> tls;
-}
-
-servlet Client
-{
-    /* Client types */
-    struct ClientOnlyStruct
-    {
-      int day;
-    }
-
-    /* Servlet Implementaion */
-
-    __attrs__
-    <%
-    %>
-
-    __init__
-    <%
-    %>
-
-    __fini__
-    <%
-    %>
-
-    /* Stubs Implementaion */
-
-    DateTime getTime()
-    <%
-    %>
-    
-    User getUserData(string name)
-    <%
-    %>
-
-    boolean setUserData(User data)
-    <%
-    %>
-}
-@endcode
+@include test.xdl
 
 */
 

@@ -4,9 +4,6 @@
  *
  * This API can be used to implement XML-RPC clients.
  *
- * In order to be able to use this API you must first call
- * @ref xr_client_init to initialize libxr.
- *
  * Then basically you just create (@ref xr_client_new) connection object
  * (@ref xr_client_conn) and open connection to given URI
  * (@ref xr_client_open). Now you are free to perform XML-RPC calls
