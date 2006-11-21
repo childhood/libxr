@@ -35,7 +35,8 @@ int BIO_write(BIO *b, const void *data, int len)
 static int receiveSimpleRequest()
 {
   int retval = -1;
-  xr_http* http = xr_http_new();
+  BIO* bio = (BIO*)1;
+  xr_http* http = xr_http_new(bio);
 
   _read_expect(
     "GET /test HTTP/1.1\r\n"
@@ -49,18 +50,28 @@ static int receiveSimpleRequest()
   int length;
   int rs = xr_http_receive(http, XR_HTTP_REQUEST, &buffer, &length);
 
+  TEST_ASSERT(rs == 0)
   if (rs < 0)
     goto err;
 
-  if (strcmp(xr_http_get_resource(http), "/test"))
+  rs = strcmp(xr_http_get_resource(http), "/test");
+  TEST_ASSERT(rs == 0)
+  if (rs)
     goto err;
 
   gchar* header = xr_http_get_header(http, "My-Header:");
+  TEST_ASSERT(header != NULL)
   if (!header || strcmp(header, "Hello"))
     goto err;
 
   header = xr_http_get_header(http, "my-header:");
+  TEST_ASSERT(header != NULL)
   if (!header || strcmp(header, "Hello"))
+    goto err;
+
+  header = xr_http_get_header(http, "header:");
+  TEST_ASSERT(header == NULL)
+  if (header)
     goto err;
 
   retval = 0;
@@ -72,7 +83,8 @@ static int receiveSimpleRequest()
 static int receiveSimpleRequestWithoutContentLength()
 {
   int retval = -1;
-  xr_http* http = xr_http_new();
+  BIO* bio = (BIO*)1;
+  xr_http* http = xr_http_new(bio);
 
   _read_expect(
     "GET /test HTTP/1.1\r\n"
@@ -84,6 +96,7 @@ static int receiveSimpleRequestWithoutContentLength()
   int length;
   int rs = xr_http_receive(http, XR_HTTP_REQUEST, &buffer, &length);
 
+  TEST_ASSERT(rs < 0)
   if (rs == 0)
     goto err;
 
