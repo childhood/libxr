@@ -142,7 +142,7 @@ int xr_http_receive(xr_http* http, int message_type, gchar** buffer, gint* lengt
   g_assert(buffer != NULL);
   g_assert(length != NULL);
 
-  char header[1025];
+  char header[2049];
   unsigned int header_length = 0;
   char* buffer_preread;
   int length_preread;
