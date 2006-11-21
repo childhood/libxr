@@ -1,3 +1,5 @@
+SUBDIRS = unit
+
 BUILT_SOURCES = \
   EEECommon.h \
   EEECommon.xrm.h \

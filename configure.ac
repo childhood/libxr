@@ -36,4 +36,5 @@ AC_OUTPUT([
 	tests/Makefile
 	docs/Makefile
 	libxr.pc
+	tests/unit/Makefile
 ])
