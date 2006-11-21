@@ -186,10 +186,11 @@ void xr_http_setup_response(xr_http* http, gint code);
 
 int main()
 {
+  int failed = 0;
   RUN_TEST(receiveRequestValid);
   RUN_TEST(receiveRequestWithoutContentLength);
   RUN_TEST(receiveRequestInvalidStartLine);
   RUN_TEST(receiveRequestUnterminatedHeader);
   RUN_TEST(receiveRequestVeryLongHeader);
-  return 0;
+  return failed;
 }

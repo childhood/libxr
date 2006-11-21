@@ -8,7 +8,7 @@
 
 #define RUN_TEST(func) { \
   g_print("Running " WHITE "%-70s\n" NORMAL, __FILE__ ": " G_STRINGIFY(func)); \
-  int rs = func(); \
+  int rs = func(); if (rs) failed = 1; \
   g_print("Done    " WHITE "%-70s[%s]\n" NORMAL, __FILE__ ": " G_STRINGIFY(func), rs ? RED "FAILED" NORMAL : GREEN "PASSED" NORMAL); }
 
 #define TEST_ASSERT(cond) \
