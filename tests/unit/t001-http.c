@@ -20,7 +20,7 @@ static void _read_expect(char* buf, int length)
 int BIO_read(BIO *b, void *data, int len)
 {
   int read_len = MIN(len, _read_expect_length-_read_expect_position);
-  memcpy(data, _read_expect_buffer, read_len);
+  memcpy(data, _read_expect_buffer+_read_expect_position, read_len);
   _read_expect_position += read_len;
   return read_len;
 }
@@ -32,7 +32,7 @@ int BIO_write(BIO *b, const void *data, int len)
 
 /* tests */
 
-static int receiveSimpleRequest()
+static int receiveRequestValid()
 {
   int retval = -1;
   BIO* bio = (BIO*)1;
@@ -80,22 +80,17 @@ static int receiveSimpleRequest()
   return retval;
 }
 
-static int receiveSimpleRequestWithoutContentLength()
+static int _expect_invalid_http(int message_type)
 {
   int retval = -1;
   BIO* bio = (BIO*)1;
   xr_http* http = xr_http_new(bio);
 
-  _read_expect(
-    "GET /test HTTP/1.1\r\n"
-    "\r\n",
-    -1
-  );
-
-  char* buffer;
+  char* buffer = NULL;
   int length;
-  int rs = xr_http_receive(http, XR_HTTP_REQUEST, &buffer, &length);
+  int rs = xr_http_receive(http, message_type, &buffer, &length);
 
+  TEST_ASSERT(buffer == NULL)
   TEST_ASSERT(rs < 0)
   if (rs == 0)
     goto err;
@@ -106,11 +101,95 @@ static int receiveSimpleRequestWithoutContentLength()
   return retval;
 }
 
+static int receiveRequestWithoutContentLength()
+{
+  _read_expect(
+    "GET /test HTTP/1.1\r\n"
+    "\r\n",
+    -1
+  );
+  return _expect_invalid_http(XR_HTTP_REQUEST);
+}
+
+static int receiveRequestInvalidStartLine()
+{
+  _read_expect(
+    "GET /test sfgsdfg dsfg  HTTP/1.1\r\n"
+    "Content-Length: 0\r\n"
+    "\r\n",
+    -1
+  );
+  return _expect_invalid_http(XR_HTTP_REQUEST);
+}
+
+static int receiveRequestUnterminatedHeader()
+{
+  _read_expect(
+    "GET /test HTTP/1.1\r\n"
+    "Content-Length: 0\r\n"
+    "Some-Crap: cr...",
+    -1
+  );
+  return _expect_invalid_http(XR_HTTP_REQUEST);
+}
+
+static int receiveRequestVeryLongHeader()
+{
+  _read_expect(
+    "GET /test HTTP/1.1\r\n"
+    "Content-Length: 0\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "Very-Long-Header: long long loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\r\n"
+    "\r\n",
+    -1
+  );
+  return _expect_invalid_http(XR_HTTP_REQUEST);
+}
+
+#if 0
+int xr_http_receive(xr_http* http, int message_type, gchar** buffer, gint* length);
+int xr_http_send(xr_http* http, int message_type, gchar* buffer, gint length);
+void xr_http_setup_request(xr_http* http, gchar* method, gchar* resource, gchar* host);
+void xr_http_setup_response(xr_http* http, gint code);
+#endif
+
 /* testsuite */
 
 int main()
 {
-  RUN_TEST(receiveSimpleRequest);
-  RUN_TEST(receiveSimpleRequestWithoutContentLength);
+  RUN_TEST(receiveRequestValid);
+  RUN_TEST(receiveRequestWithoutContentLength);
+  RUN_TEST(receiveRequestInvalidStartLine);
+  RUN_TEST(receiveRequestUnterminatedHeader);
+  RUN_TEST(receiveRequestVeryLongHeader);
   return 0;
 }
