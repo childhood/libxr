@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <regex.h>
+#include <sys/select.h>
 
 #ifndef WIN32
   #include <signal.h>
@@ -219,10 +220,24 @@ int xr_server_run(xr_server* server)
 {
   g_assert(server != NULL);
   GError* err = NULL;
-
+  fd_set set, setcopy;
+  struct timeval tv, tvcopy;
+  FD_ZERO(&setcopy);
+  FD_SET(server->sock, &setcopy);
+  int maxfd = server->sock + 1;
+  tvcopy.tv_sec = 0;
+  tvcopy.tv_usec = 100000;
+  
   server->running = 1;
   while (server->running)
   {
+    set = setcopy;
+    tv = tvcopy;
+    int rs = select(maxfd, &set, NULL, NULL, &tv);
+    if (rs < 0)
+      goto err;
+    if (rs == 0)
+      continue;
     if (BIO_do_accept(server->bio_in) <= 0)
       goto err;
     // new connection accepted
