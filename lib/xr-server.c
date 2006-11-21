@@ -28,6 +28,7 @@ struct _xr_server
 {
   SSL_CTX* ctx;
   BIO* bio_in;
+  int sock;
   BIO* bio_ssl;
   GThreadPool* pool;
   int secure;
@@ -296,6 +297,8 @@ xr_server* xr_server_new(const char* port, const char* cert)
   if (BIO_do_accept(server->bio_in) <= 0)
     goto err4;
 
+  server->sock = -1;
+  BIO_get_fd(server->bio_in, &server->sock);
   xr_set_nodelay(server->bio_in);
 
   return server;
