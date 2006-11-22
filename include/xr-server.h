@@ -59,26 +59,46 @@ struct _xr_servlet_def
   xr_servlet_method_def* methods;   /**< Methods descriptions. */
 };
 
+GQuark xr_server_error_quark();
+#define XR_SERVER_ERROR xr_server_error_quark()
+
+typedef enum
+{
+  XR_SERVER_ERROR_FAILED
+} XRServerError;
+
 /** Create new server object.
  *
- * @param port Port and IP address to bind to.
  * @param cert Combined PEM file with server certificate and private
  *   key. Use NULL to create non-secure server.
+ * @param threads Number of the threads in the pool.
+ * @param err Pointer to the variable to store error to on error.
  *
- * @return New server object.
+ * @return New server object on success.
  */
-xr_server* xr_server_new(const char* port, const char* cert);
+xr_server* xr_server_new(const char* cert, int threads, GError** err);
+
+/** Bind to the specified host/port.
+ *
+ * @param server Server object.
+ * @param port Port and IP address to bind to.
+ * @param err Pointer to the variable to store error to on error.
+ *
+ * @return Function returns -1 on error or 0 on success.
+ */
+int xr_server_bind(xr_server* server, const char* port, GError** err);
 
 /** Run server. This function will start listening for incomming
  * connections and push them to the thread pool where they are
  * handled individually.
  *
  * @param server Server object.
+ * @param err Pointer to the variable to store error to on error.
  *
  * @return Function returns -1 on fatal error or 0 on safe stop
  *   by @ref xr_server_stop. Otherwise it will block.
  */
-int xr_server_run(xr_server* server);
+int xr_server_run(xr_server* server, GError** err);
 
 /** Stop server.
  *

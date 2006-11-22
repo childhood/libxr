@@ -216,15 +216,19 @@ void xr_server_stop(xr_server* server)
   server->running = 0;
 }
 
-int xr_server_run(xr_server* server)
+int xr_server_run(xr_server* server, GError** err)
 {
-  g_assert(server != NULL);
-  GError* err = NULL;
+  GError* local_err = NULL;
   fd_set set, setcopy;
   struct timeval tv, tvcopy;
+  int maxfd;
+
+  g_assert(server != NULL);
+  g_return_val_if_fail(err == NULL || *err == NULL, -1);
+
   FD_ZERO(&setcopy);
   FD_SET(server->sock, &setcopy);
-  int maxfd = server->sock + 1;
+  maxfd = server->sock + 1;
   tvcopy.tv_sec = 0;
   tvcopy.tv_usec = 100000;
   
@@ -235,27 +239,40 @@ int xr_server_run(xr_server* server)
     tv = tvcopy;
     int rs = select(maxfd, &set, NULL, NULL, &tv);
     if (rs < 0)
-      goto err;
+    {
+      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "select failed: %s", g_strerror(errno));
+      goto err1;
+    }
     if (rs == 0)
       continue;
     if (BIO_do_accept(server->bio_in) <= 0)
-      goto err;
+    {
+      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
+      goto err1;
+    }
+
     // new connection accepted
     xr_servlet* servlet = g_new0(xr_servlet, 1);
     servlet->bio = BIO_pop(server->bio_in);
-    g_thread_pool_push(server->pool, servlet, &err);
-    if (err)
+
+    g_thread_pool_push(server->pool, servlet, &local_err);
+    if (local_err)
     {
-      // reject connection if thread pool is full
+      // cleanup
       BIO_free_all(servlet->bio);
       g_free(servlet);
-      g_error_free(err);
-      err = NULL;
+      if (!g_error_matches(local_err, G_THREAD_ERROR, G_THREAD_ERROR_AGAIN))
+      {
+        g_propagate_error(err, local_err);
+        goto err1;
+      }
+      // reject connection if thread pool is full
+      g_clear_error(&local_err);
     }
   }
 
   return 0;
- err:
+ err1:
   return -1;
 }
 
@@ -268,10 +285,12 @@ int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
   return 0;
 }
 
-xr_server* xr_server_new(const char* port, const char* cert)
+xr_server* xr_server_new(const char* cert, int threads, GError** err)
 {
-  g_assert(port != NULL);
-  GError* err = NULL;
+  GError* local_err = NULL;
+
+  g_assert(threads > 0 && threads < 1000);
+  g_return_val_if_fail (err == NULL || *err == NULL, NULL);
 
   xr_ssl_init();
 
@@ -280,25 +299,51 @@ xr_server* xr_server_new(const char* port, const char* cert)
 
   server->ctx = SSL_CTX_new(SSLv3_server_method());
   if (server->ctx == NULL)
+  {
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
     goto err1;
+  }
 
   if (server->secure)
   {
-    if (!SSL_CTX_use_certificate_file(server->ctx, cert, SSL_FILETYPE_PEM))
+    if (!SSL_CTX_use_certificate_file(server->ctx, cert, SSL_FILETYPE_PEM) ||
+        !SSL_CTX_use_PrivateKey_file(server->ctx, cert, SSL_FILETYPE_PEM) ||
+        !SSL_CTX_check_private_key(server->ctx))
+    {
+      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
       goto err2;
-    if (!SSL_CTX_use_PrivateKey_file(server->ctx, cert, SSL_FILETYPE_PEM))
-      goto err2;
-    if (!SSL_CTX_check_private_key(server->ctx))
-      goto err2;
+    }
   }
 
-  server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, 100, TRUE, &err);
-  if (err)
+  server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, threads, TRUE, &local_err);
+  if (local_err)
+  {
+    g_propagate_error(err, local_err);
     goto err2;
+  }
+
+  return server;
+
+ err2:
+  SSL_CTX_free(server->ctx);
+  server->ctx = NULL;
+ err1:
+  g_free(server);
+  return NULL;
+}
+
+int xr_server_bind(xr_server* server, const char* port, GError** err)
+{
+  g_assert(server != NULL);
+  g_assert(port != NULL);
+  g_return_val_if_fail (err == NULL || *err == NULL, -1);
 
   server->bio_in = BIO_new_accept((char*)port);
   if (server->bio_in == NULL)
-    goto err3;
+  {
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
+    goto err1;
+  }
 
   if (server->secure)
   {
@@ -310,22 +355,21 @@ xr_server* xr_server_new(const char* port, const char* cert)
   }
 
   if (BIO_do_accept(server->bio_in) <= 0)
-    goto err4;
+  {
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
+    goto err2;
+  }
 
   server->sock = -1;
   BIO_get_fd(server->bio_in, &server->sock);
   xr_set_nodelay(server->bio_in);
 
-  return server;
- err4:
-  BIO_free(server->bio_in);
- err3:
-  g_thread_pool_free(server->pool, TRUE, FALSE);
+  return 0;
  err2:
-  SSL_CTX_free(server->ctx);
+  BIO_free_all(server->bio_in);
+  server->bio_in = NULL;
  err1:
-  g_free(server);
-  return NULL;
+  return -1;
 }
 
 void xr_server_free(xr_server* server)
@@ -336,4 +380,10 @@ void xr_server_free(xr_server* server)
   SSL_CTX_free(server->ctx);
   g_slist_free(server->servlet_types);
   g_free(server);
+}
+
+GQuark xr_server_error_quark()
+{
+  static GQuark quark;
+  return quark ? quark : (quark = g_quark_from_static_string("xr_server_error"));
 }
