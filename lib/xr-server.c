@@ -216,6 +216,40 @@ void xr_server_stop(xr_server* server)
   server->running = 0;
 }
 
+static int _xr_server_accept_connection(xr_server* server, GError** err)
+{
+  GError* local_err = NULL;
+
+  g_assert(server != NULL);
+  g_return_val_if_fail(err == NULL || *err == NULL, -1);
+
+  if (BIO_do_accept(server->bio_in) <= 0)
+  {
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
+    return -1;
+  }
+
+  // new connection accepted
+  xr_servlet* servlet = g_new0(xr_servlet, 1);
+  servlet->bio = BIO_pop(server->bio_in);
+
+  g_thread_pool_push(server->pool, servlet, &local_err);
+  if (local_err)
+  {
+    // cleanup
+    BIO_free_all(servlet->bio);
+    g_free(servlet);
+    if (!g_error_matches(local_err, G_THREAD_ERROR, G_THREAD_ERROR_AGAIN))
+    {
+      g_propagate_error(err, local_err);
+      return -1;
+    }
+    // reject connection if thread pool is full
+    g_clear_error(&local_err);
+  }
+  return 0;
+}
+
 int xr_server_run(xr_server* server, GError** err)
 {
   GError* local_err = NULL;
@@ -241,39 +275,18 @@ int xr_server_run(xr_server* server, GError** err)
     if (rs < 0)
     {
       g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "select failed: %s", g_strerror(errno));
-      goto err1;
+      return -1;
     }
     if (rs == 0)
       continue;
-    if (BIO_do_accept(server->bio_in) <= 0)
+    if (_xr_server_accept_connection(server, &local_err) < 0)
     {
-      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
-      goto err1;
-    }
-
-    // new connection accepted
-    xr_servlet* servlet = g_new0(xr_servlet, 1);
-    servlet->bio = BIO_pop(server->bio_in);
-
-    g_thread_pool_push(server->pool, servlet, &local_err);
-    if (local_err)
-    {
-      // cleanup
-      BIO_free_all(servlet->bio);
-      g_free(servlet);
-      if (!g_error_matches(local_err, G_THREAD_ERROR, G_THREAD_ERROR_AGAIN))
-      {
-        g_propagate_error(err, local_err);
-        goto err1;
-      }
-      // reject connection if thread pool is full
-      g_clear_error(&local_err);
+      g_propagate_error(err, local_err);
+      return -1;
     }
   }
 
   return 0;
- err1:
-  return -1;
 }
 
 int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
@@ -386,4 +399,62 @@ GQuark xr_server_error_quark()
 {
   static GQuark quark;
   return quark ? quark : (quark = g_quark_from_static_string("xr_server_error"));
+}
+
+/* GSource stuff for integration with glib mainloop */
+
+typedef struct _xr_server_watch xr_server_watch;
+struct _xr_server_watch
+{
+  GSource       source;
+  GPollFD       pollfd;
+  xr_server*    server;
+};
+
+static gboolean _xr_swatch_prepare(GSource *source, gint *timeout)
+{
+  xr_server_watch *watch = (xr_server_watch*)source;
+  *timeout = -1;
+  return FALSE;
+}
+
+static gboolean _xr_swatch_check(GSource *source)
+{
+  xr_server_watch *watch = (xr_server_watch*)source;
+  return watch->pollfd.revents & G_IO_IN;
+}
+
+static gboolean _xr_swatch_dispatch(GSource *source, GSourceFunc callback, gpointer user_data)
+{
+  xr_server_watch *watch = (xr_server_watch*)source;
+  _xr_server_accept_connection(watch->server, NULL);
+  return TRUE;
+}
+
+static void _xr_swatch_finalize(GSource *source)
+{
+  xr_server_watch *watch = (xr_server_watch*)source;
+}
+
+static GSourceFuncs _xr_server_watch_funcs = {
+  .prepare = _xr_swatch_prepare,
+  .check = _xr_swatch_check,
+  .dispatch = _xr_swatch_dispatch,
+  .finalize = _xr_swatch_finalize
+};
+
+GSource* xr_server_source(xr_server* server)
+{
+  GSource *source;
+  xr_server_watch *watch;
+
+  source = g_source_new(&_xr_server_watch_funcs, sizeof(xr_server_watch));
+  watch = (xr_server_watch*)source;
+
+  watch->server = server;
+  watch->pollfd.fd = server->sock;
+  watch->pollfd.events = G_IO_IN;
+
+  g_source_add_poll(source, &watch->pollfd);
+  return source;
 }

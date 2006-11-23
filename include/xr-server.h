@@ -100,6 +100,15 @@ int xr_server_bind(xr_server* server, const char* port, GError** err);
  */
 int xr_server_run(xr_server* server, GError** err);
 
+/** Get event source for this server. Pass this to the GMainContext
+ * and run g_main_loop_run().
+ *
+ * @param server Server object.
+ *
+ * @return Function returns event source.
+ */
+GSource* xr_server_source(xr_server* server);
+
 /** Stop server.
  *
  * @param server Server object.
