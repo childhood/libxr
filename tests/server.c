@@ -10,7 +10,6 @@ static xr_server* server = NULL;
 
 static void _sig_stop(int signum)
 {
-  printf("Sigpath\n");
   xr_server_stop(server);
   xr_server_free(server);
   exit(0);
