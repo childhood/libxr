@@ -84,7 +84,7 @@ xdl_typedef* xdl_typedef_new_array(xdl_model *xdl, xdl_servlet *servlet, xdl_typ
     "GSList*", "NULL", NULL, NULL,
     g_strdup_printf("Array_%s_free", item->cname));
   a->item_type = item;
-  if (servlet != NULL)
+  if (servlet != NULL && item->type == TD_STRUCT)
     servlet->types = g_slist_append(servlet->types, a);
   else
     xdl->types = g_slist_append(xdl->types, a);
