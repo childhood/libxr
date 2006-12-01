@@ -192,16 +192,36 @@ void gen_type_defs(FILE* f, GSList* types)
   }
 }
 
+void gen_marchalizers(FILE* f, xdl_model* xdl, xdl_servlet* s)
+{
+  GSList *j;
+
+  for (j=xdl->types; j; j=j->next)
+  {
+    xdl_typedef* t = j->data;
+    gen_type_marchalizers(f, t);
+  }
+  for (j=s->types; j; j=j->next)
+  {
+    xdl_typedef* t = j->data;
+    gen_type_marchalizers(f, t);
+  }
+}
+
 /* main() */
 
 static gchar* out_dir = NULL;
 static gchar* xdl_file = NULL;
+static gchar* mode = "all";
 static GOptionEntry entries[] = 
 {
   { "xdl", 'i', 0, G_OPTION_ARG_STRING, &xdl_file, "Interface description file.", "FILE" },
   { "out", 'o', 0, G_OPTION_ARG_STRING, &out_dir, "Output directory.", "DIR" },
+  { "mode", 'm', 0, G_OPTION_ARG_STRING, &mode, "Compiler mode (all, server-impl, pub-headers, pub-impl).", "MODE" },
   { NULL }
 };
+
+#define MODE_IS(str) !strcmp(mode, G_STRINGIFY(str))
 
 int main(int ac, char* av[])
 {
@@ -228,10 +248,17 @@ int main(int ac, char* av[])
 
   FILE* f = NULL;
   GSList *i, *j, *k;
+  
+  int pub_headers = !strcmp(mode, "all") || !strcmp(mode, "pub-headers");
+  int pub_impl = !strcmp(mode, "all") || !strcmp(mode, "pub-impl");
+  int server_impl = !strcmp(mode, "all") || !strcmp(mode, "server-impl");
 
   /***********************************************************
    * common types header                                     *
    ***********************************************************/
+
+  if (pub_headers)
+  {
 
   OPEN("%s/%sCommon.h", out_dir, xdl->name);
 
@@ -253,9 +280,14 @@ int main(int ac, char* av[])
 
   EL(0, "#endif");
 
+  }
+
   /***********************************************************
    * common types implementation                             *
    ***********************************************************/
+
+  if (pub_impl)
+  {
 
   OPEN("%s/%sCommon.c", out_dir, xdl->name);
 
@@ -268,26 +300,7 @@ int main(int ac, char* av[])
     gen_type_freealloc(f, t, 0);
   }
 
-  /***********************************************************
-   * common types private implementation                     *
-   ***********************************************************/
-
-  OPEN("%s/%sCommon.xrm.h", out_dir, xdl->name);
-
-  EL(0, "#ifndef __%s_Common_XRM_H__", xdl->name);
-  EL(0, "#define __%s_Common_XRM_H__", xdl->name);
-  NL;
-
-  EL(0, "#include \"%sCommon.h\"", xdl->name);
-  NL;
-
-  for (j=xdl->types; j; j=j->next)
-  {
-    xdl_typedef* t = j->data;
-    gen_type_marchalizers(f, t);
   }
-
-  EL(0, "#endif");
 
   /* client/servlet implementations for specific interfaces */
 
@@ -298,6 +311,9 @@ int main(int ac, char* av[])
     /***********************************************************
      * servlet types header                                    *
      ***********************************************************/
+
+    if (pub_headers)
+    {
 
     OPEN("%s/%s%s.h", out_dir, xdl->name, s->name);
 
@@ -319,9 +335,14 @@ int main(int ac, char* av[])
 
     EL(0, "#endif");
 
+    }
+
     /***********************************************************
      * servlet types implementation                            *
      ***********************************************************/
+
+    if (pub_impl)
+    {
 
     OPEN("%s/%s%s.c", out_dir, xdl->name, s->name);
 
@@ -333,32 +354,15 @@ int main(int ac, char* av[])
       xdl_typedef* t = j->data;
       gen_type_freealloc(f, t, 0);
     }
-
-    /***********************************************************
-     * servlet types private implementation                    *
-     ***********************************************************/
-
-    OPEN("%s/%s%s.xrm.h", out_dir, xdl->name, s->name);
-
-    EL(0, "#ifndef __%s_%s_XRM_H__", xdl->name, s->name);
-    EL(0, "#define __%s_%s_XRM_H__", xdl->name, s->name);
-    NL;
-
-    EL(0, "#include \"%s%s.h\"", xdl->name, s->name);
-    EL(0, "#include \"%sCommon.xrm.h\"", xdl->name);
-    NL;
-
-    for (j=s->types; j; j=j->next)
-    {
-      xdl_typedef* t = j->data;
-      gen_type_marchalizers(f, t);
+    
     }
-
-    EL(0, "#endif");
 
     /***********************************************************
      * servlet client interface definition                     *
      ***********************************************************/
+
+    if (pub_headers)
+    {
 
     OPEN("%s/%s%s.xrc.h", out_dir, xdl->name, s->name);
 
@@ -397,15 +401,22 @@ int main(int ac, char* av[])
     }
 
     EL(0, "#endif");
+    
+    }
 
     /***********************************************************
      * servlet client interface implementation                 *
      ***********************************************************/
 
+    if (pub_impl)
+    {
+
     OPEN("%s/%s%s.xrc.c", out_dir, xdl->name, s->name);
 
     EL(0, "#include \"%s%s.xrc.h\"", xdl->name, s->name);
-    EL(0, "#include \"%s%s.xrm.h\"", xdl->name, s->name);
+    NL;
+
+    gen_marchalizers(f, xdl, s);
     NL;
 
     for (j=s->methods; j; j=j->next)
@@ -441,9 +452,14 @@ int main(int ac, char* av[])
       NL;
     }
 
+    }
+
     /***********************************************************
      * servlet server stubs for implementation                 *
      ***********************************************************/
+
+    if (server_impl)
+    {
 
     OPEN("%s/%s%s.stubs.h", out_dir, xdl->name, s->name);
 
@@ -611,7 +627,9 @@ int main(int ac, char* av[])
     OPEN("%s/%s%s.xrs.c", out_dir, xdl->name, s->name);
 
     EL(0, "#include \"%s%s.xrs.h\"", xdl->name, s->name);
-    EL(0, "#include \"%s%s.xrm.h\"", xdl->name, s->name);
+    NL;
+
+    gen_marchalizers(f, xdl, s);
     NL;
 
     for (j=s->methods; j; j=j->next)
@@ -710,6 +728,8 @@ int main(int ac, char* av[])
     EL(1, "__servlet.size = __%s%sServlet_get_priv_size();", xdl->name, s->name);
     EL(1, "return &__servlet;");
     EL(0, "}");
+  }
+
   }
   
   fclose(f);

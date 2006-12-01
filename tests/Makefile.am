@@ -2,7 +2,6 @@ SUBDIRS = unit
 
 BUILT_SOURCES = \
   EEECommon.h \
-  EEECommon.xrm.h \
   EEECommon.c \
   EEEServer.xrs.c \
   EEEClient.xrs.c \
@@ -16,8 +15,6 @@ BUILT_SOURCES = \
   EEEClient.xrs.h \
   EEEServer.xrc.h \
   EEEClient.xrc.h \
-  EEEServer.xrm.h \
-  EEEClient.xrm.h \
   EEEServer.stubs.h \
   EEEClient.stubs.h \
   EEEServer.h \
