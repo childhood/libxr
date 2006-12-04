@@ -15,8 +15,8 @@
 static __inline__ gchar* xml_get_prop_str(xmlNodePtr n, const gchar* name)
 {
   xmlChar* prop = xmlGetProp(n, BAD_CAST name);
-  if (prop == 0)
-    return 0;
+  if (prop == NULL)
+    return NULL;
   gchar* dup = g_strdup((gchar*)prop);
   xmlFree(prop);
   return dup;
@@ -25,7 +25,7 @@ static __inline__ gchar* xml_get_prop_str(xmlNodePtr n, const gchar* name)
 static __inline__ int xml_get_prop_int(xmlNodePtr n, const gchar* name)
 {
   xmlChar* prop = xmlGetProp(n, BAD_CAST name);
-  if (prop == 0)
+  if (prop == NULL)
     return -1;
   int v = atoi((const char*)prop);
   xmlFree(prop);
@@ -35,8 +35,8 @@ static __inline__ int xml_get_prop_int(xmlNodePtr n, const gchar* name)
 static __inline__ char* xml_get_cont_str(xmlNodePtr n)
 {
   xmlChar* str = xmlNodeListGetString(n->doc, n->xmlChildrenNode, 1);
-  if (str == 0)
-    return 0;
+  if (str == NULL)
+    return NULL;
   char* dup = g_strdup((char*)str);
   xmlFree(str);
   return dup;
@@ -45,7 +45,7 @@ static __inline__ char* xml_get_cont_str(xmlNodePtr n)
 static __inline__ int xml_get_cont_int(xmlNodePtr n)
 {
   xmlChar* str = xmlNodeListGetString(n->doc, n->xmlChildrenNode, 1);
-  if (str == 0)
+  if (str == NULL)
     return 0;
   int dup = atoi((const char*)str);
   xmlFree(str);
@@ -55,8 +55,8 @@ static __inline__ int xml_get_cont_int(xmlNodePtr n)
 static __inline__ double xml_get_cont_double(xmlNodePtr n)
 {
   xmlChar* str = xmlNodeListGetString(n->doc, n->xmlChildrenNode, 1);
-  if (str == 0)
-    return 0;
+  if (str == NULL)
+    return 0.0;
   double v = atof((const char*)str);
   xmlFree(str);
   return v;
@@ -65,7 +65,7 @@ static __inline__ double xml_get_cont_double(xmlNodePtr n)
 static __inline__ int xml_get_cont_bool(xmlNodePtr n)
 {
   xmlChar* str = xmlNodeListGetString(n->doc, n->xmlChildrenNode, 1);
-  if (str == 0)
+  if (str == NULL)
     return 0;
   int retval = -1;
   if (!strcmp(str, "false"))
@@ -102,7 +102,7 @@ static __inline__ struct nodeset* xp_eval_nodes(xmlXPathContextPtr ctx, const gc
 
 static __inline__ void xp_free_nodes(struct nodeset* ns)
 {
-  if (ns == 0)
+  if (ns == NULL)
     return;
   if (ns->obj)
     xmlXPathFreeObject(ns->obj);
@@ -132,7 +132,7 @@ static __inline__ gint xp_eval_cont_int(xmlXPathContextPtr ctx, const gchar* pat
 }
 
 #define for_each_node(parent, child) \
-  for (xmlNodePtr child = parent->xmlChildrenNode; child != 0; child = child->next)
+  for (xmlNodePtr child = parent->xmlChildrenNode; child != NULL; child = child->next)
 
 #define match_node(_node, _name) \
   (_node->type == XML_ELEMENT_NODE && !strcmp((gchar*)_node->name, _name))
