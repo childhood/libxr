@@ -1,7 +1,7 @@
 EXTRA_DIST = \
   tests.h
 
-AM_CPPFLAGS = \
+AM_CFLAGS = \
   -std=gnu99 \
   $(XR_CFLAGS) \
   -I$(top_srcdir)/include \
@@ -13,17 +13,30 @@ AM_LDFLAGS = -static
 
 LDADD = $(XR_LIBS)
 
-noinst_PROGRAMS = \
-  t001-http
+TESTS = \
+  t001-http \
+  t002-call
 
-TESTS = $(noinst_PROGRAMS)
+noinst_PROGRAMS = \
+  $(TESTS)
 
 # t001
 
 t001_http_CFLAGS = \
+  $(AM_CFLAGS) \
   -DBIO_read=BIO_read_phony \
   -DBIO_write=BIO_write_phony
 
 t001_http_SOURCES = \
   t001-http.c \
   $(top_srcdir)/lib/xr-http.c
+
+# t002
+
+t002_call_CFLAGS = \
+  $(AM_CFLAGS)
+
+t002_call_SOURCES = \
+  t002-call.c \
+  $(top_srcdir)/lib/xr-call.c \
+  $(top_srcdir)/lib/xr-value.c
