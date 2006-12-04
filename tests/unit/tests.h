@@ -11,5 +11,8 @@
   int rs = func(); if (rs) failed = 1; \
   g_print("Done    " WHITE "%-70s[%s]\n" NORMAL, __FILE__ ": " G_STRINGIFY(func), rs ? RED "FAILED" NORMAL : GREEN "PASSED" NORMAL); }
 
-#define TEST_ASSERT(cond) \
-  g_print("        " WHITE "%-70s[%s]\n" NORMAL, __FILE__ "[" G_STRINGIFY(__LINE__) "]: " G_STRINGIFY(cond), !(cond) ? RED "FAILED" NORMAL : GREEN "PASSED" NORMAL);
+#define TEST_ASSERT(cond) { \
+  int result = (cond); \
+  g_print("        " WHITE "%-70s[%s]\n" NORMAL, __FILE__ "[" G_STRINGIFY(__LINE__) "]: " G_STRINGIFY(cond), !(result) ? RED "FAILED" NORMAL : GREEN "PASSED" NORMAL); \
+  if (!result) \
+    return -1; }
