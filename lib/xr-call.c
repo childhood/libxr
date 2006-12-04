@@ -312,7 +312,9 @@ int xr_call_unserialize_request(xr_call* call, char* buf, int len)
 {
   g_assert(call != NULL);
   g_assert(buf != NULL);
-  g_assert(len > 0);
+  
+  if (len < 0)
+    len = strlen(buf);
 
   xmlDoc* doc = xmlReadMemory(buf, len, 0, 0, XML_PARSE_NOWARNING|XML_PARSE_NOERROR|XML_PARSE_NONET);
   if (doc == NULL)
@@ -369,7 +371,9 @@ int xr_call_unserialize_response(xr_call* call, char* buf, int len)
 {
   g_assert(call != NULL);
   g_assert(buf != NULL);
-  g_assert(len > 0);
+
+  if (len < 0)
+    len = strlen(buf);
 
   xmlDoc* doc = xmlReadMemory(buf, len, 0, 0, XML_PARSE_NOWARNING|XML_PARSE_NOERROR|XML_PARSE_NONET);
   if (doc == NULL)
