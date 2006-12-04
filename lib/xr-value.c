@@ -249,6 +249,8 @@ void xr_value_free(xr_value* val)
 int xr_value_is_error_retval(xr_value* v, int* errcode, char** errmsg)
 {
   g_assert(v != NULL);
+  g_assert(errcode != NULL);
+  g_assert(errmsg != NULL);
   if (v->type != XRV_STRUCT)
     return 0;
   xr_value* faultCode = xr_value_get_member(v, "faultCode");
