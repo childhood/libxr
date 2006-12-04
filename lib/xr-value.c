@@ -38,10 +38,9 @@ void xr_blob_free(xr_blob* b)
 /* base types */
 xr_value* xr_value_string_new(char* val)
 {
-  g_assert(val != NULL);
   xr_value* v = g_new0(xr_value, 1);
   v->type = XRV_STRING;
-  v->str_val = g_strdup(val);
+  v->str_val = g_strdup(val != NULL ? val : "");
   return v;
 }
 
@@ -71,10 +70,9 @@ xr_value* xr_value_double_new(double val)
 
 xr_value* xr_value_time_new(char* val)
 {
-  g_assert(val != NULL);
   xr_value* v = g_new0(xr_value, 1);
   v->type = XRV_TIME;
-  v->str_val = g_strdup(val);
+  v->str_val = g_strdup(val != NULL ? val : "");
   return v;
 }
 
