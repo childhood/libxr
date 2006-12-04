@@ -9,7 +9,7 @@ static int _read_expect_position;
 
 static void _read_expect(char* buf, int length)
 {
-  g_assert(buf != NULL);
+  g_assert(buf != 0);
   if (length < 0)
     length = strlen(buf);
   _read_expect_buffer = buf;
@@ -60,17 +60,17 @@ static int receiveRequestValid()
     goto err;
 
   gchar* header = xr_http_get_header(http, "My-Header:");
-  TEST_ASSERT(header != NULL)
+  TEST_ASSERT(header != 0)
   if (!header || strcmp(header, "Hello"))
     goto err;
 
   header = xr_http_get_header(http, "my-header:");
-  TEST_ASSERT(header != NULL)
+  TEST_ASSERT(header != 0)
   if (!header || strcmp(header, "Hello"))
     goto err;
 
   header = xr_http_get_header(http, "header:");
-  TEST_ASSERT(header == NULL)
+  TEST_ASSERT(header == 0)
   if (header)
     goto err;
 
@@ -86,11 +86,11 @@ static int _expect_invalid_http(int message_type)
   BIO* bio = (BIO*)1;
   xr_http* http = xr_http_new(bio);
 
-  char* buffer = NULL;
+  char* buffer = 0;
   int length;
   int rs = xr_http_receive(http, message_type, &buffer, &length);
 
-  TEST_ASSERT(buffer == NULL)
+  TEST_ASSERT(buffer == 0)
   TEST_ASSERT(rs < 0)
   if (rs == 0)
     goto err;
