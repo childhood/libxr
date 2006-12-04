@@ -40,13 +40,13 @@ string_literal              \"{string_character}*\"
 <IN_DOC_COMMENT>"*"         { uploc; yymore (); }
 <IN_DOC_COMMENT>\n          { yylloc->first_line = yylloc->last_line = yylineno; yylloc->first_column = 1; yylloc->last_column = 0; yymore (); }
 
-"/*"                        { uploc; BEGIN(IN_COMMENT); }
+"/*"                        { uploc; BEGIN(IN_COMMENT); yymore (); }
 <IN_COMMENT>"*/"            { uploc; BEGIN(INITIAL); yytext[strlen(yytext) - 2] = '\0'; }
 <IN_COMMENT>[^*\n]+         { uploc; yymore (); }
 <IN_COMMENT>"*"             { uploc; yymore (); }
 <IN_COMMENT>\n              { yylloc->first_line = yylloc->last_line = yylineno; yylloc->first_column = 1; yylloc->last_column = 0; yymore (); }
 
-"<%"                        { uploc; BEGIN(IN_CODE); }
+"<%"                        { uploc; BEGIN(IN_CODE); yymore (); }
 <IN_CODE>"%>"               { uploc; BEGIN(INITIAL); yylval->str = g_strstrip(g_strndup(yytext+2, strlen(yytext+2)-2)); return INLINE_CODE; }
 <IN_CODE>[^%\n]+            { uploc; yymore (); }
 <IN_CODE>"%"                { uploc; yymore (); }
