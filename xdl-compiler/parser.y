@@ -74,10 +74,7 @@ xdl_servlet* cur_servlet = NULL;
 %%
 
 compilation_unit
-  : opt_namespace_decl opt_inline_code toplevel_decls
-    {
-      xdl->stub_header = $2;
-    }
+  : opt_namespace_decl toplevel_decls
   ;
 
 opt_inline_code
@@ -169,9 +166,10 @@ servlet_decl
       cur_servlet->name = g_strdup($3);
       cur_servlet->doc = $1;
     }
-    "{" servlet_body_decls "}"
+    "{" opt_inline_code servlet_body_decls "}"
     {
       $$ = cur_servlet;
+      $$->stub_header = $6;
       cur_servlet = NULL;
     }
   ;

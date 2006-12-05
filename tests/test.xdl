@@ -28,6 +28,10 @@ struct User
 
 servlet Client
 {
+    <%
+#include <stdio.h>
+    %>
+
     struct Date
     {
       int day;

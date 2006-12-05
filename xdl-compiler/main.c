@@ -548,6 +548,12 @@ int main(int ac, char* av[])
     EL(0, "#include \"%s%s.stubs.h\"", xdl->name, s->name);
     NL;
 
+    if (s->stub_header)
+    {
+      EL(1, "%s", s->stub_header);
+      NL;
+    }
+
     EL(0, "struct _%s%sServlet", xdl->name, s->name);
     EL(0, "{");
     if (s->stub_attrs)

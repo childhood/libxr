@@ -74,6 +74,7 @@ struct _xdl_servlet
   GSList* types;    /* servlet types */
   GSList* methods;  /* methods */
 
+  char* stub_header;
   char* stub_init;
   char* stub_fini;
   char* stub_attrs;
@@ -85,7 +86,6 @@ struct _xdl_servlet
 struct _xdl_model
 {
   char* name;
-  char* stub_header;
   GSList* servlets;
   GSList* types;    /* global types */
 };
