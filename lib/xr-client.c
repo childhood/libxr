@@ -34,15 +34,18 @@ static void _xr_client_set_error(xr_client_conn* conn, int code, char* msg)
   conn->errmsg = g_strdup(msg);
 }
 
-xr_client_conn* xr_client_new()
+xr_client_conn* xr_client_new(GError** err)
 {
+  g_return_val_if_fail(err == NULL || *err == NULL, NULL);
+
   xr_ssl_init();
   xr_client_conn* conn = g_new0(xr_client_conn, 1);
   conn->ctx = SSL_CTX_new(SSLv3_client_method());
-  //XXX: setup certificates
+  //XXX: setup certificates?
   if (conn->ctx == NULL)
   {
     g_free(conn);
+    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "ssl context creation failed: %s", ERR_reason_error_string(ERR_get_error()));
     return NULL;
   }
   return conn;
@@ -108,11 +111,13 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
   return 0;
 }
 
-int xr_client_open(xr_client_conn* conn, char* uri)
+int xr_client_open(xr_client_conn* conn, char* uri, GError** err)
 {
   g_assert(conn != NULL);
   g_assert(uri != NULL);
   g_assert(!conn->is_open);
+
+  g_return_val_if_fail(err == NULL || *err == NULL, -1);
 
   // parse URI format: http://host:8080/RES
   g_free(conn->host);
@@ -121,7 +126,7 @@ int xr_client_open(xr_client_conn* conn, char* uri)
   conn->resource = NULL;
   if (_parse_uri(uri, &conn->secure, &conn->host, &conn->resource))
   {
-    fprintf(stderr, "Invalid URI format (%s).\n", uri);
+    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "invalid URI format: %s", uri);
     return -1;
   }
 
@@ -139,8 +144,7 @@ int xr_client_open(xr_client_conn* conn, char* uri)
 
   if (BIO_do_connect(conn->bio) <= 0)
   {
-    fprintf(stderr, "Error connecting to server\n");
-    ERR_print_errors_fp(stderr);
+    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_connect failed: %s", ERR_reason_error_string(ERR_get_error()));
     BIO_free_all(conn->bio);
     return -1;
   }
@@ -151,12 +155,12 @@ int xr_client_open(xr_client_conn* conn, char* uri)
   {
     if (BIO_do_handshake(conn->bio) <= 0)
     {
-      fprintf(stderr, "Error establishing SSL connection\n");
-      ERR_print_errors_fp(stderr);
+      g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_handshake failed: %s", ERR_reason_error_string(ERR_get_error()));
       BIO_free_all(conn->bio);
       return -1;
     }
   }
+
   conn->is_open = 1;
   return 0;
 }

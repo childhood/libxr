@@ -31,7 +31,7 @@ typedef struct _xr_client_conn xr_client_conn;
  *
  * @return New connection object.
  */
-xr_client_conn* xr_client_new();
+xr_client_conn* xr_client_new(GError** err);
 
 /** Free connection object. This function calls @ref xr_client_close if
  * necessary.
@@ -47,7 +47,7 @@ void xr_client_free(xr_client_conn* conn);
  *
  * @return Function returns -1 on failure and 0 on success.
  */
-int xr_client_open(xr_client_conn* conn, char* uri);
+int xr_client_open(xr_client_conn* conn, char* uri, GError** err);
 
 /** Close currently open connection.
  *

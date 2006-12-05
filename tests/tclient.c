@@ -4,7 +4,7 @@
 #include "EEEClient.xrc.h"
 #include "EEEServer.xrc.h"
 
-static int print_error(xr_client_conn* conn)
+static int _print_error(xr_client_conn* conn)
 {
   if (xr_client_get_error_code(conn))
   {
@@ -15,32 +15,47 @@ static int print_error(xr_client_conn* conn)
   return 0;
 }
 
+static int _check_err(GError* err)
+{
+  if (err)
+  {
+    g_print("\n** ERROR **: %s\n\n", err->message);
+    return 1;
+  }
+  return 0;
+}
+
 static int _run = 0;
 
 static gpointer _thread_func(gpointer data)
 {
+  GError *err = NULL;
   char* uri = data;
-  xr_client_conn* conn = xr_client_new();
-  g_assert(conn != NULL);
+
+  xr_client_conn* conn = xr_client_new(&err);
+  if (_check_err(err))
+    return NULL;
 
   while (!_run)
     g_thread_yield();
 
-  if (xr_client_open(conn, uri))
+  xr_client_open(conn, uri, &err);
+  if (_check_err(err))
   {
     xr_client_free(conn);
-    return 1;
+    return NULL;
   }
 
   for (int i=0; i<10; i++)
   {
     EEEDateTime* t = EEEClient_getTime(conn);
-    print_error(conn);
+    _print_error(conn);
     EEEDateTime_free(t);
   }
   
   xr_client_close(conn);
   xr_client_free(conn);
+  return NULL;
 }
 
 int main(int ac, char* av[])

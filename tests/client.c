@@ -6,7 +6,7 @@
 
 /* this function prints client error if any and resets error so that futher calls to client funcs work */
 
-static int print_error(xr_client_conn* conn)
+static int _print_error(xr_client_conn* conn)
 {
   if (xr_client_get_error_code(conn))
   {
@@ -17,16 +17,29 @@ static int print_error(xr_client_conn* conn)
   return 0;
 }
 
+static int _check_err(GError* err)
+{
+  if (err)
+  {
+    g_print("\n** ERROR **: %s\n\n", err->message);
+    return 1;
+  }
+  return 0;
+}
+
 int main(int ac, char* av[])
 {
+  GError* err = NULL;
   char* uri = ac == 2 ? av[1] : "https://localhost:4444/EEEClient";
 
   /* create object for performing client connections */
-  xr_client_conn* conn = xr_client_new();
-  g_assert(conn != NULL);
+  xr_client_conn* conn = xr_client_new(&err);
+  if (_check_err(err))
+    return 1;
 
   /* connect to the servlet on the server specified by uri */
-  if (xr_client_open(conn, uri))
+  xr_client_open(conn, uri, &err);
+  if (_check_err(err))
   {
     xr_client_free(conn);
     return 1;
@@ -34,12 +47,12 @@ int main(int ac, char* av[])
 
   /* call some servlet methods */
   EEEDateTime* t = EEEClient_getTime(conn);
-  print_error(conn);
+  _print_error(conn);
   EEEDateTime_free(t);
   
   /* call some more methods */
   EEEUser* u = EEEClient_getUserData(conn, "bob");
-  if (!print_error(conn))
+  if (!_print_error(conn))
     EEEClient_setUserData(conn, u);
   EEEUser_free(u);
 
