@@ -232,3 +232,9 @@ void xr_client_free(xr_client_conn* conn)
   SSL_CTX_free(conn->ctx);
   g_free(conn);
 }
+
+GQuark xr_client_error_quark()
+{
+  static GQuark quark;
+  return quark ? quark : (quark = g_quark_from_static_string("xr_client_error"));
+}
