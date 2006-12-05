@@ -39,7 +39,7 @@ int main(int ac, char* av[])
   server = xr_server_new("server.pem", 10, &err);
   if (_check_err(err))
     goto err;
-  xr_server_bind(server, "*:444", &err);
+  xr_server_bind(server, "*:4444", &err);
   if (_check_err(err))
     goto err;
 

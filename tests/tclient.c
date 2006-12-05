@@ -48,7 +48,7 @@ int main(int ac, char* av[])
   GError* err = NULL;
   GThread* t[1024];
   int count = 100, i;
-  char* uri = ac == 2 ? av[1] : "https://localhost:444/EEEClient";
+  char* uri = ac == 2 ? av[1] : "https://localhost:4444/EEEClient";
 
   if (!g_thread_supported())
     g_thread_init(NULL);
