@@ -225,7 +225,7 @@ static int _xr_server_accept_connection(xr_server* server, GError** err)
 
   if (BIO_do_accept(server->bio_in) <= 0)
   {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept failed: %s", ERR_reason_error_string(ERR_get_error()));
     return -1;
   }
 
@@ -241,7 +241,8 @@ static int _xr_server_accept_connection(xr_server* server, GError** err)
     g_free(servlet);
     if (!g_error_matches(local_err, G_THREAD_ERROR, G_THREAD_ERROR_AGAIN))
     {
-      g_propagate_error(err, local_err);
+      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "thread push failed: %s", local_err->message);
+      g_clear_error(&local_err);
       return -1;
     }
     // reject connection if thread pool is full
@@ -313,7 +314,7 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
   server->ctx = SSL_CTX_new(SSLv3_server_method());
   if (server->ctx == NULL)
   {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "ssl context creation failed: %s", ERR_reason_error_string(ERR_get_error()));
     goto err1;
   }
 
@@ -323,7 +324,7 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
         !SSL_CTX_use_PrivateKey_file(server->ctx, cert, SSL_FILETYPE_PEM) ||
         !SSL_CTX_check_private_key(server->ctx))
     {
-      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
+      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "ssl cert load failed: %s", ERR_reason_error_string(ERR_get_error()));
       goto err2;
     }
   }
@@ -331,7 +332,8 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
   server->pool = g_thread_pool_new((GFunc)_xr_server_servlet_run, server, threads, TRUE, &local_err);
   if (local_err)
   {
-    g_propagate_error(err, local_err);
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "thread pool creation failed: %s", local_err->message);
+    g_clear_error(&local_err);
     goto err2;
   }
 
@@ -354,7 +356,7 @@ int xr_server_bind(xr_server* server, const char* port, GError** err)
   server->bio_in = BIO_new_accept((char*)port);
   if (server->bio_in == NULL)
   {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept bio creation failed: %s", ERR_reason_error_string(ERR_get_error()));
     goto err1;
   }
 
