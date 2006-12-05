@@ -90,7 +90,7 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
 
       EL(0, "static int %s(xr_value* v, %s* val)", t->demarch_name, t->ctype);
       EL(0, "{");
-      EL(1, "GSList *a, *i;");
+      EL(1, "GSList *a = NULL, *i;");
       EL(1, "%s ival;", t->item_type->ctype);
       EL(1, "if (v == NULL)");
       EL(2, "return -1;");
@@ -218,7 +218,7 @@ static GOptionEntry entries[] =
   { "xdl", 'i', 0, G_OPTION_ARG_STRING, &xdl_file, "Interface description file.", "FILE" },
   { "out", 'o', 0, G_OPTION_ARG_STRING, &out_dir, "Output directory.", "DIR" },
   { "mode", 'm', 0, G_OPTION_ARG_STRING, &mode, "Compiler mode (all, server-impl, pub-headers, pub-impl).", "MODE" },
-  { NULL }
+  { NULL, 0, 0, 0, NULL, NULL, NULL }
 };
 
 #define MODE_IS(str) !strcmp(mode, G_STRINGIFY(str))
