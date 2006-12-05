@@ -27,6 +27,8 @@ AC_SUBST(XR_LIBS)
 # Checks for header files.
 AC_HEADER_STDC
 
+CFLAGS="$CFLAGS -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+
 # Output
 AC_OUTPUT([
 	Makefile
