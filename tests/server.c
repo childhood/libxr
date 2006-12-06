@@ -19,7 +19,7 @@ int _check_err(GError* err)
 {
   if (err)
   {
-    g_print("\n** ERROR **: %s\n\n", err->message);
+    g_print("** ERROR **: %s\n", err->message);
     return -1;
   }
   return 0;
