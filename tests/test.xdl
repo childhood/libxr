@@ -1,74 +1,57 @@
-namespace EEE;
+namespace T;
 
-struct Item
+error ERR1;
+error ERR2;
+
+struct Struct
 {
-    string      uid;
-    string      type;
-    time        from_date;
-    time        to_date;
-    blob        ical;
+    string      v_string;
 }
 
-struct Calendar
+struct AllArrays
 {
-    string      uid;
-    time        create_date;
-    blob        ical;
-    array<array<Item>> items;
+    array<string>      a_string;
+    array<time>        a_time;
+    array<blob>        a_blob;
+    array<int>         a_int;
+    array<boolean>     a_boolean;
+//    array<double>      a_double;
+//    array<any>         a_any;
+    array<Struct>      a_struct;
+    array<array<string>> aa_string;
+    array<array<array<string>>> aaa_string;
 }
 
-struct User
+struct AllTypes
 {
-    string          uid;
-    time            create_date;
-    blob            ical;
-    Calendar        maincal;
-    array<Calendar> calendars;
+    string      v_string;
+    time        v_time;
+    blob        v_blob;
+    int         v_int;
+    boolean     v_boolean;
+    double      v_double;
+//    any         v_any;
+    Struct      v_struct;
+    AllArrays   v_arrays;
 }
 
-servlet Client
+servlet Test1
 {
-    <%
+<%
 #include <stdio.h>
+%>
+
+    AllTypes getAll()
+    <%
+        printf("User data set!\n");
     %>
-
-    struct Date
-    {
-      int day;
-      int month;
-      int year;
-      int weekday;
-    }
-    struct Time
-    {
-      int hour;
-      int minute;
-    }
-
-    /** Get user data.
-     *
-     * @param name Name of the user.
-     * @return User struct.
-     */
-    struct DateTime
-    {
-      Date date;
-      Time time;
-    }
-
-    DateTime getTime();
     
     /** Get user data.
      *
      * @param name Name of the user.
      * @return User struct.
      */
-    User getUserData(string name)
-    <%
-        printf("User data set!\n");
-    %>
-
-    boolean setUserData(User data)
+    boolean setAll(AllTypes all)
     <%
         printf("User data set!\n");
     %>
@@ -87,12 +70,4 @@ servlet Client
     <%
         printf("Fini!\n");
     %>
-}
-
-servlet Server
-{
-    boolean auth(string username, string password);
-    array<boolean> getList();
-    array<array<boolean>> getListList();
-    boolean setList(array<User> list);
 }

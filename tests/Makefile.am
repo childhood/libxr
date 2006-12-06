@@ -1,24 +1,16 @@
 SUBDIRS = unit
 
 BUILT_SOURCES = \
-  EEECommon.h \
-  EEECommon.c \
-  EEEServer.xrs.c \
-  EEEClient.xrs.c \
-  EEEServer.xrc.c \
-  EEEClient.xrc.c \
-  EEEServer.stubs.c \
-  EEEClient.stubs.c \
-  EEEServer.c \
-  EEEClient.c \
-  EEEServer.xrs.h \
-  EEEClient.xrs.h \
-  EEEServer.xrc.h \
-  EEEClient.xrc.h \
-  EEEServer.stubs.h \
-  EEEClient.stubs.h \
-  EEEServer.h \
-  EEEClient.h
+  TCommon.h \
+  TCommon.c \
+  TTest1.xrs.c \
+  TTest1.xrc.c \
+  TTest1.stubs.c \
+  TTest1.c \
+  TTest1.xrs.h \
+  TTest1.xrc.h \
+  TTest1.stubs.h \
+  TTest1.h
 
 EXTRA_DIST = \
   bench.h \
@@ -39,46 +31,36 @@ AM_LDFLAGS = -static
 LDADD = $(XR_LIBS) $(top_builddir)/lib/libxr.la
 
 noinst_PROGRAMS = \
-  client \
   tclient \
+  client \
   server \
   mlserver
 
 client_SOURCES = \
   client.c \
-  EEECommon.c \
-  EEEServer.xrc.c \
-  EEEClient.xrc.c \
-  EEEServer.c \
-  EEEClient.c
+  TCommon.c \
+  TTest1.xrc.c \
+  TTest1.c
 
 tclient_SOURCES = \
   tclient.c \
-  EEECommon.c \
-  EEEServer.xrc.c \
-  EEEClient.xrc.c \
-  EEEServer.c \
-  EEEClient.c
+  TCommon.c \
+  TTest1.xrc.c \
+  TTest1.c
 
 server_SOURCES = \
   server.c \
-  EEECommon.c \
-  EEEServer.xrs.c \
-  EEEClient.xrs.c \
-  EEEServer.stubs.c \
-  EEEClient.stubs.c \
-  EEEServer.c \
-  EEEClient.c
+  TCommon.c \
+  TTest1.xrs.c \
+  TTest1.stubs.c \
+  TTest1.c
 
 mlserver_SOURCES = \
   mlserver.c \
-  EEECommon.c \
-  EEEServer.xrs.c \
-  EEEClient.xrs.c \
-  EEEServer.stubs.c \
-  EEEClient.stubs.c \
-  EEEServer.c \
-  EEEClient.c
+  TCommon.c \
+  TTest1.xrs.c \
+  TTest1.stubs.c \
+  TTest1.c
 
 $(BUILT_SOURCES): $(srcdir)/test.xdl
 	$(top_builddir)/xdl-compiler/xdl-compiler -i $(srcdir)/test.xdl -o $(top_builddir)/tests/

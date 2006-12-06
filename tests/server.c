@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <signal.h>
 
-#include "EEEClient.xrs.h"
-#include "EEEServer.xrs.h"
+#include "TTest1.xrs.h"
 
 static xr_server* server = NULL;
 
@@ -44,8 +43,7 @@ int main(int ac, char* av[])
   if (_check_err(err))
     goto err;
 
-  xr_server_register_servlet(server, __EEEClientServlet_def());
-  xr_server_register_servlet(server, __EEEServerServlet_def());
+  xr_server_register_servlet(server, __TTest1Servlet_def());
 
   /* run server */
   xr_server_run(server, &err);

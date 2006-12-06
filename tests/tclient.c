@@ -1,14 +1,13 @@
 #include <stdio.h>
 #include <signal.h>
 
-#include "EEEClient.xrc.h"
-#include "EEEServer.xrc.h"
+#include "TTest1.xrc.h"
 
 static int _check_err(GError* err)
 {
   if (err)
   {
-    g_print("\n** ERROR **: %s\n\n", err->message);
+    g_print("** ERROR **: %s\n", err->message);
     return 1;
   }
   return 0;
@@ -37,10 +36,11 @@ static gpointer _thread_func(gpointer data)
 
   for (int i=0; i<10; i++)
   {
-    EEEDateTime* t = EEEClient_getTime(conn, &err);
+    /* call some servlet methods */
+    TAllTypes* t = TTest1_getAll(conn, &err);
     if (_check_err(err))
       g_clear_error(&err);
-    EEEDateTime_free(t);
+    TAllTypes_free(t);
   }
   
   xr_client_close(conn);
@@ -53,7 +53,7 @@ int main(int ac, char* av[])
   GError* err = NULL;
   GThread* t[1024];
   int count = 100, i;
-  char* uri = ac == 2 ? av[1] : "https://localhost:4444/EEEClient";
+  char* uri = ac == 2 ? av[1] : "https://localhost:4444/TTest1";
 
   if (!g_thread_supported())
     g_thread_init(NULL);
