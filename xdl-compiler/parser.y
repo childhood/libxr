@@ -48,6 +48,7 @@ xdl_servlet* cur_servlet = NULL;
 %token ARRAY "array"
 %token SERVLET "servlet"
 %token NAMESPACE "namespace"
+%token ERROR "error"
 
 %token KW_INIT "__init__"
 %token KW_FINI "__fini__"
@@ -115,9 +116,19 @@ toplevel_decl
     {
       xdl->types = g_slist_append(xdl->types, $1);
     }
+  | error_decl
   | servlet_decl
     {
       xdl->servlets = g_slist_append(xdl->servlets, $1);
+    }
+  ;
+
+/* error */
+
+error_decl
+  : "error" IDENTIFIER ";"
+    {
+      xdl_error_new(xdl, cur_servlet, $2);
     }
   ;
 
@@ -205,6 +216,7 @@ servlet_body_decl
     {
       cur_servlet->stub_attrs = $2;
     }
+  | error_decl
   ;
 
 /* type use */

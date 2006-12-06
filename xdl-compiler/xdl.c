@@ -106,3 +106,21 @@ xdl_typedef* xdl_typedef_new_struct(xdl_model *xdl, xdl_servlet *servlet, char* 
 void xdl_process(xdl_model *xdl)
 {
 }
+
+xdl_error_code* xdl_error_new(xdl_model *xdl, xdl_servlet *servlet, char* name)
+{
+  xdl_error_code* e = g_new0(xdl_error_code, 1);
+  e->name = name;
+
+  if (servlet != NULL)
+  {
+    e->cenum = g_strdup_printf("%s_%s_SERVLET_%s", g_ascii_strup(xdl->name, -1), g_ascii_strup(servlet->name, -1), g_ascii_strup(name, -1));
+    servlet->errors = g_slist_append(servlet->errors, e);
+  }
+  else
+  {
+    e->cenum = g_strdup_printf("%s_COMMON_SERVLET_%s", g_ascii_strup(xdl->name, -1), g_ascii_strup(name, -1));
+    xdl->errors = g_slist_append(xdl->errors, e);
+  }
+  return e;
+}

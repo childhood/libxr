@@ -23,6 +23,7 @@ typedef struct _xdl_method_param xdl_method_param;
 typedef struct _xdl_method xdl_method;
 typedef struct _xdl_servlet xdl_servlet;
 typedef struct _xdl_model xdl_model;
+typedef struct _xdl_error_code xdl_error_code;
 
 struct _xdl_typedef
 {
@@ -73,6 +74,7 @@ struct _xdl_servlet
 
   GSList* types;    /* servlet types */
   GSList* methods;  /* methods */
+  GSList* errors;
 
   char* stub_header;
   char* stub_init;
@@ -81,11 +83,21 @@ struct _xdl_servlet
   char* doc;
 };
 
+/* error */
+
+struct _xdl_error_code
+{
+  char* name;
+  char* cenum; /* C enum value */
+  char* doc;
+};
+
 /* parser */
 
 struct _xdl_model
 {
   char* name;
+  GSList* errors;
   GSList* servlets;
   GSList* types;    /* global types */
 };
@@ -93,6 +105,8 @@ struct _xdl_model
 xdl_model* xdl_new();
 
 int xdl_load(xdl_model *ctx, const char* path);
+
+xdl_error_code* xdl_error_new(xdl_model *xdl, xdl_servlet *servlet, char* name);
 
 xdl_typedef* xdl_typedef_new_array(xdl_model *xdl, xdl_servlet *servlet, xdl_typedef* item);
 xdl_typedef* xdl_typedef_new_struct(xdl_model *xdl, xdl_servlet *servlet, char* name);

@@ -66,6 +66,7 @@ struct                      { uploc; return STRUCT; }
 array                       { uploc; return ARRAY; }
 servlet                     { uploc; return SERVLET; }
 namespace                   { uploc; return NAMESPACE; }
+error                       { uploc; return ERROR; }
 __init__                    { uploc; return KW_INIT; }
 __fini__                    { uploc; return KW_FINI; }
 __attrs__                   { uploc; return KW_ATTRS; }
