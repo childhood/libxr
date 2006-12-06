@@ -1,6 +1,6 @@
-- blobs: check that they are passed around sanely (ref counting)
+- array<double>: too long to fit into i->data
+- blob: fix it (ref counting, serialization, etc.)
 - any type: make xdl compiler understand any type
+
 - audit code
 - testsuite
-- client codegen:
-  doubles in lists? -- too long to fit into i->data
