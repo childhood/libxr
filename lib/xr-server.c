@@ -43,12 +43,6 @@ void* xr_servlet_get_priv(xr_servlet* servlet)
   return servlet->priv;
 }
 
-void xr_servlet_return_error(xr_servlet* servlet, int code, char* msg)
-{
-  g_assert(servlet != NULL);
-  xr_call_set_error(servlet->call, code, msg);
-}
-
 xr_servlet_def* _find_servlet_def(xr_server* server, char* name)
 {
   GSList* i;

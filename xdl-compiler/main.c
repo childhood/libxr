@@ -579,7 +579,7 @@ int main(int ac, char* av[])
         xdl_method_param* p = k->data;
         E(0, ", %s %s", p->type->ctype, p->name);
       }
-      EL(0, ");");
+      EL(0, ", GError** _error);");
       NL;
     }
 
@@ -640,14 +640,14 @@ int main(int ac, char* av[])
         xdl_method_param* p = k->data;
         E(0, ", %s %s", p->type->ctype, p->name);
       }
-      EL(0, ")");
+      EL(0, ", GError** _error)");
       EL(0, "{");
       EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
       EL(1, "%s retval = %s;", m->return_type->ctype, m->return_type->cnull);
       if (m->stub_impl)
         EL(1, "%s", m->stub_impl);
       else
-        EL(1, "xr_servlet_return_error(_servlet, 100, \"%s is not implemented!\");", m->name);
+        EL(1, "g_set_error(_error, 0, 1, \"Method is not implemented. (%s)\");", m->name);
       EL(1, "return retval;");
       EL(0, "}");
       NL;
@@ -687,69 +687,70 @@ int main(int ac, char* av[])
     for (j=s->methods; j; j=j->next)
     {
       xdl_method* m = j->data;
+      int n = 0;
 
-      EL(0, "static int __method_%s(xr_servlet* _s, xr_call* _call)", m->name);
+      EL(0, "static int __method_%s(xr_servlet* _servlet, xr_call* _call)", m->name);
       EL(0, "{");
-      // prepare parameters
-      if (m->params)
+      // forward declarations
+      EL(1, "int _retval = -1;");
+      EL(1, "%s _nreturn_value = %s;", m->return_type->ctype, m->return_type->cnull);
+      EL(1, "xr_value* _return_value;");
+      EL(1, "GError* _error = NULL;");
+      for (k=m->params; k; k=k->next)
       {
-        for (k=m->params; k; k=k->next)
-        {
         xdl_method_param* p = k->data;
-          EL(1, "%s %s = %s;", p->type->ctype, p->name, p->type->cnull);
-        }
-        int n = 0;
-        EL(1, "if (");
-        for (k=m->params; k; k=k->next)
-        {
-          xdl_method_param* p = k->data;
-          EL(2, "%s(xr_call_get_param(_call, %d), &%s)%s", p->type->demarch_name, n++, p->name, k->next ? " ||" : "");
-        }
-        EL(1, ")");
+        EL(1, "%s %s = %s;", p->type->ctype, p->name, p->type->cnull);
+      }
+      EL(1, "g_assert(_servlet != NULL);");
+      EL(1, "g_assert(_call != NULL);");
+      // prepare parameters
+      for (k=m->params; k; k=k->next)
+      {
+        xdl_method_param* p = k->data;
+        EL(1, "if (%s(xr_call_get_param(_call, %d), &%s))", p->type->demarch_name, n++, p->name);
         EL(1, "{");
-        for (k=m->params; k; k=k->next)
-        {
-          xdl_method_param* p = k->data;
-           if (p->type->free_func)
-            EL(2, "%s(%s);", p->type->free_func, p->name);
-        }
-        EL(2, "xr_call_set_error(_call, 100, \"Invalid parameters passed to the %s method.\");", m->name);
-        EL(2, "return -1;");
+        EL(2, "xr_call_set_error(_call, -1, \"Stub parameter value demarchalization failed. (%s:%s)\");", m->name, p->name);
+        EL(2, "goto out;");
         EL(1, "}");
       }
 
       // call stub
-      E(1, "%s _retval = %s%sServlet_%s(_s", m->return_type->ctype, xdl->name, s->name, m->name);
+      E(1, "_nreturn_value = %s%sServlet_%s(_servlet", xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
         E(0, ", %s", p->name);
       }
-      EL(0, ");");
+      EL(0, ", &_error);");
 
-      // free params
+      // check for errors
+      EL(1, "if (_error)");
+      EL(1, "{");
+      EL(2, "xr_call_set_error(_call, _error->code, _error->message);");
+      EL(2, "g_error_free(_error);");
+      EL(2, "goto out;");
+      EL(1, "}");
+
+      // prepare retval
+      EL(1, "_return_value = %s(_nreturn_value);", m->return_type->march_name);
+      EL(1, "if (_return_value == NULL)");
+      EL(1, "{");
+      EL(2, "xr_call_set_error(_call, -1, \"Stub return value marchalization failed. (%s)\");", m->name);
+      EL(2, "goto out;");
+      EL(1, "}");
+      EL(1, "xr_call_set_retval(_call, _return_value);");
+
+      // free native types and return
+      EL(0, "out:");
+      if (m->return_type->free_func)
+        EL(1, "%s(_nreturn_value);", m->return_type->free_func);
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
         if (p->type->free_func)
           EL(1, "%s(%s);", p->type->free_func, p->name);
       }
-
-      EL(1, "if (xr_call_get_error_code(_call))");
-      EL(2, "return 1;");
-      if (!strcmp("NULL", m->return_type->cnull))
-      {
-        EL(1, "if (_retval == NULL)");
-        EL(1, "{");
-        EL(2, "xr_call_set_error(_call, 100, \"%s returned NULL!\");", m->name);
-        EL(2, "return 1;");
-        EL(1, "}");
-      }
-      // prepare retval
-      EL(1, "xr_call_set_retval(_call, %s(_retval));", m->return_type->march_name);
-      if (m->return_type->free_func)
-        EL(1, "%s(_retval);", m->return_type->free_func);
-      EL(1, "return 0;");
+      EL(1, "return _retval;");
       EL(0, "}");
       NL;
     }

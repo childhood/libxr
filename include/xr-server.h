@@ -138,12 +138,4 @@ int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet);
  */
 void* xr_servlet_get_priv(xr_servlet* servlet);
 
-/** Set error return value on the current call.
- *
- * @param servlet Servlet object.
- * @param code Error code.
- * @param msg Error message.
- */
-void xr_servlet_return_error(xr_servlet* servlet, int code, char* msg);
-
 #endif

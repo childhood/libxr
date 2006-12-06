@@ -10,6 +10,7 @@ struct _xr_call
   GSList* params;
   xr_value* retval;
 
+  gboolean error_set;
   int errcode;    /* this must be > 0 for errors */
   char* errmsg;   /* Non-NULL on error. */
 };
@@ -76,6 +77,7 @@ xr_value* xr_call_get_retval(xr_call* call)
 void xr_call_set_error(xr_call* call, int code, char* msg)
 {
   g_assert(call != NULL);
+  call->error_set = TRUE;
   call->errcode = code;
   g_free(call->errmsg);
   call->errmsg = g_strdup(msg);
@@ -199,7 +201,6 @@ void xr_call_free_buffer(char* buf)
 void xr_call_serialize_response(xr_call* call, char** buf, int* len)
 {
   g_assert(call != NULL);
-  g_assert(call->errcode > 0 || call->retval != NULL);
   g_assert(buf != NULL);
   g_assert(len != NULL);
 
@@ -208,7 +209,7 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len)
   xmlDocSetRootElement(doc, root);
   xmlNode* params = xmlNewChild(root, NULL, BAD_CAST "params", NULL);
   xmlNode* param = xmlNewChild(params, NULL, BAD_CAST "param", NULL);
-  if (call->errcode > 0)
+  if (call->error_set)
   {
     xr_value* v = xr_value_struct_new();
     xr_value_struct_set_member(v, "faultCode", xr_value_int_new(call->errcode));
