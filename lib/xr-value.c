@@ -23,6 +23,8 @@ struct _xr_value
 
 xr_blob* xr_blob_new(char* buf, int len)
 {
+  if (buf == NULL || len < 0)
+    return NULL;
   xr_blob* b = g_new0(xr_blob, 1);
   b->buf = buf;
   b->len = len;
@@ -31,6 +33,8 @@ xr_blob* xr_blob_new(char* buf, int len)
 
 void xr_blob_free(xr_blob* b)
 {
+  if (b == NULL)
+    return;
   g_free(b->buf);
   g_free(b);
 }
@@ -78,7 +82,8 @@ xr_value* xr_value_time_new(char* val)
 
 xr_value* xr_value_blob_new(xr_blob* val)
 {
-  g_assert(val != NULL);
+  if (val == NULL)
+    return NULL;
   xr_value* v = g_new0(xr_value, 1);
   v->type = XRV_BLOB;
   v->blob_val = val;
