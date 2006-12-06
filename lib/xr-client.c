@@ -20,19 +20,7 @@ struct _xr_client_conn
   int secure;
 
   int is_open;
-
-  int errcode;    /* this must be > 0 for errors */
-  char* errmsg;   /* Non-NULL on error. */
 };
-
-static void _xr_client_set_error(xr_client_conn* conn, int code, char* msg)
-{
-  g_assert(conn != NULL);
-
-  conn->errcode = code;
-  g_free(conn->errmsg);
-  conn->errmsg = g_strdup(msg);
-}
 
 xr_client_conn* xr_client_new(GError** err)
 {
@@ -49,23 +37,6 @@ xr_client_conn* xr_client_new(GError** err)
     return NULL;
   }
   return conn;
-}
-
-int xr_client_get_error_code(xr_client_conn* conn)
-{
-  g_assert(conn != NULL);
-  return conn->errcode;
-}
-
-char* xr_client_get_error_message(xr_client_conn* conn)
-{
-  g_assert(conn != NULL);
-  return conn->errmsg;
-}
-
-void xr_client_reset_error(xr_client_conn* conn)
-{
-  _xr_client_set_error(conn, 0, NULL);
 }
 
 static int _parse_uri(const char* uri, int* secure, char** host, char** resource)
@@ -168,69 +139,77 @@ int xr_client_open(xr_client_conn* conn, char* uri, GError** err)
 void xr_client_close(xr_client_conn* conn)
 {
   g_assert(conn != NULL);
-  g_assert(conn->is_open);
+
+  if (!conn->is_open)
+    return;
 
   if (conn->secure)
     BIO_ssl_shutdown(conn->bio);
+
   BIO_free_all(conn->bio);
   conn->ssl = NULL;
   conn->bio = NULL;
-  conn->is_open = 0;
+  conn->is_open = FALSE;
 }
 
-int xr_client_call(xr_client_conn* conn, xr_call* call)
+int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
 {
-  g_assert(conn != NULL);
-  g_assert(conn->is_open);
-  g_assert(call != NULL);
-  g_assert(conn->errcode == 0);
-
   char* buffer;
   int length, rs;
+
+  g_assert(conn != NULL);
+  g_assert(call != NULL);
+
+  g_return_val_if_fail(err == NULL || *err == NULL, -1);
+
+  if (!conn->is_open)
+  {
+    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_CLOSED, "Can't perform RPC on closed connection.");
+    goto err1;
+  }
 
   xr_http* http = xr_http_new(conn->bio);
   xr_call_serialize_request(call, &buffer, &length);
   xr_http_setup_request(http, "POST", conn->resource, conn->host);
   rs = xr_http_send(http, XR_HTTP_REQUEST, buffer, length);
   xr_call_free_buffer(buffer);
+
   if (rs < 0)
-    goto err;
-  
+  {
+    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_IO, "HTTP send failed.");
+    xr_client_close(conn);
+    goto err2;
+  }
+
   if (xr_http_receive(http, XR_HTTP_RESPONSE, &buffer, &length) < 0)
-    goto err;
+  {
+    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_IO, "HTTP receive failed.");
+    xr_client_close(conn);
+    goto err2;
+  }
+
   rs = xr_call_unserialize_response(call, buffer, length);
   g_free(buffer);
   xr_http_free(http);
 
   if (rs)
   {
-    _xr_client_set_error(conn, xr_call_get_error_code(call), xr_call_get_error_message(call));
-    return 1;
+    g_set_error(err, 0, xr_call_get_error_code(call), "%s", xr_call_get_error_message(call));
+    goto err1;
   }
-  xr_client_reset_error(conn);
 
   return 0;
- err:
-  xr_http_free(http);
-  return -1;
-}
 
-int xr_client_call_ex(xr_client_conn* conn, xr_call* call, xr_demarchalizer_t dem, void** retval)
-{
-  int rs = xr_client_call(conn, call);
-  if (rs == 0)
-  {
-    if (dem(xr_call_get_retval(call), retval) < 0)
-      _xr_client_set_error(conn, 100, "Retval demarchalziation failed!");
-  }
-  return rs;
+ err2:
+  xr_http_free(http);
+ err1:
+  return -1;
 }
 
 void xr_client_free(xr_client_conn* conn)
 {
   g_assert(conn != NULL);
-  if (conn->is_open)
-    xr_client_close(conn);
+  xr_client_close(conn);
   g_free(conn->host);
   g_free(conn->resource);
   SSL_CTX_free(conn->ctx);

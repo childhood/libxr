@@ -6,22 +6,12 @@
 
 /* this function prints client error if any and resets error so that futher calls to client funcs work */
 
-static int _print_error(xr_client_conn* conn)
-{
-  if (xr_client_get_error_code(conn))
-  {
-    fprintf(stderr, "error[%d]: %s\n", xr_client_get_error_code(conn), xr_client_get_error_message(conn));
-    xr_client_reset_error(conn);
-    return 1;
-  }
-  return 0;
-}
-
 static int _check_err(GError* err)
 {
   if (err)
   {
     g_print("\n** ERROR **: %s\n\n", err->message);
+    g_error_free(err);
     return 1;
   }
   return 0;
@@ -46,14 +36,18 @@ int main(int ac, char* av[])
   }
 
   /* call some servlet methods */
-  EEEDateTime* t = EEEClient_getTime(conn);
-  _print_error(conn);
+  EEEDateTime* t = EEEClient_getTime(conn, &err);
+  _check_err(err);
+  err = NULL;
   EEEDateTime_free(t);
   
   /* call some more methods */
-  EEEUser* u = EEEClient_getUserData(conn, "bob");
-  if (!_print_error(conn))
-    EEEClient_setUserData(conn, u);
+  EEEUser* u = EEEClient_getUserData(conn, "bob", &err);
+  if (!_check_err(err))
+  {
+    EEEClient_setUserData(conn, u, &err);
+    _check_err(err);
+  }
   EEEUser_free(u);
 
   /* disconnect */

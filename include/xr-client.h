@@ -20,6 +20,10 @@ GQuark xr_client_error_quark();
 
 typedef enum
 {
+  XR_CLIENT_ERROR_MARCHALIZER,
+  XR_CLIENT_ERROR_CLOSED,
+  XR_CLIENT_ERROR_CONNECT,
+  XR_CLIENT_ERROR_IO,
   XR_CLIENT_ERROR_FAILED
 } XRClientError;
 
@@ -55,38 +59,6 @@ int xr_client_open(xr_client_conn* conn, char* uri, GError** err);
  */
 void xr_client_close(xr_client_conn* conn);
 
-/** Get error code.
- *
- * Errors may of course occur during execution of the call or opening
- * connection. There are two types of errors: fatal and recoverable.
- * Recoverable errors are typically errors returned using stadard
- * XML-RPC error structure. User must check using this function that
- * XML-RPC call succeeded. If recoverable error occured, user must
- * call @ref xr_client_reset_error to indicate that it acknowledged
- * error and communication may continue. Recoverable errors have
- * error code > 0. Error code 0 means no error.
- *
- * @param conn Connection object.
- *
- * @return Error code.
- */
-int xr_client_get_error_code(xr_client_conn* conn);
-
-/** Get error message.
- *
- * @param conn Connection object.
- * 
- * @return Error message string. Owned by the conn object.
- */
-char* xr_client_get_error_message(xr_client_conn* conn);
-
-/** Reset error (see @ref xr_client_get_error_code for more details).
- *
- * @param conn Connection object.
- */
-void xr_client_reset_error(xr_client_conn* conn);
-
-
 /** Perform XML-RPC call over connection.
  *
  * @param conn Connection object.
@@ -100,27 +72,6 @@ void xr_client_reset_error(xr_client_conn* conn);
  * @warning You must reset error if it occured or your program will
  *   abort on next call to this function.
  */
-int xr_client_call(xr_client_conn* conn, xr_call* call);
-
-/** Demarchalizer callback.
- */
-typedef int (*xr_demarchalizer_t)(xr_value* v, void** val);
-
-/** Wrapper around @ref xr_client_call to simplify client stubs.
- *
- * @param conn Connection object.
- * @param call Call object.
- * @param dem Retval demarchalizer.
- * @param retval Pointer to the native type variable.
- *
- * @return Function returns -1 on fatal error, 0 on success and 1 on
- *   XML-RPC error. Error code and message can be retrieved using
- *   @ref xr_client_get_error_code and @ref xr_client_get_error_message
- *   functions.
- *
- * @warning You must reset error if it occured or your program will
- *   abort on next call to this function.
- */
-int xr_client_call_ex(xr_client_conn* conn, xr_call* call, xr_demarchalizer_t dem, void** retval);
+int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err);
 
 #endif

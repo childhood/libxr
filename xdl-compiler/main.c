@@ -424,6 +424,7 @@ int main(int ac, char* av[])
         xdl_method_param* p = k->data;
         EL(0, " * @param %s", p->name);
       }
+      EL(0, " * @param _error Error variable pointer (may be NULL).");
       EL(0, " * ");
       EL(0, " * @return ");
       EL(0, " */ ");
@@ -434,7 +435,7 @@ int main(int ac, char* av[])
         xdl_method_param* p = k->data;
         E(0, ", %s %s", p->type->ctype, p->name);
       }
-      EL(0, ");");
+      EL(0, ", GError** _error);");
       NL;
     }
 
@@ -467,25 +468,32 @@ int main(int ac, char* av[])
         xdl_method_param* p = k->data;
         E(0, ", %s %s", p->type->ctype, p->name);
       }
-      EL(0, ")");
+      EL(0, ", GError** _error)");
       EL(0, "{");
-      EL(1, "%s retval = %s;", m->return_type->ctype, m->return_type->cnull);
+      EL(1, "%s _retval = %s;", m->return_type->ctype, m->return_type->cnull);
+      EL(1, "xr_value* _param_value;");
       EL(1, "g_assert(_conn != NULL);");
+      EL(1, "g_return_val_if_fail(_error == NULL || *_error == NULL, _retval);");
+      EL(1, "xr_call* _call = xr_call_new(\"%s\");", m->name);
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
-        if (!strcmp(p->type->cnull, "NULL"))
-          EL(1, "g_assert(%s != NULL);", p->name);
+        EL(1, "_param_value = %s(%s);", p->type->march_name, p->name);
+        EL(1, "if (_param_value == NULL)");
+        EL(1, "{");
+        EL(2, "g_set_error(_error, XR_CLIENT_ERROR, XR_CLIENT_ERROR_MARCHALIZER, \"Call parameter value marchalization failed (param=%s).\");", p->name);
+        EL(2, "xr_call_free(_call);");
+        EL(2, "return _retval;");
+        EL(1, "}");
+        EL(1, "xr_call_add_param(_call, _param_value);");
       }
-      EL(1, "xr_call* call = xr_call_new(\"%s\");", m->name);
-      for (k=m->params; k; k=k->next)
-      {
-        xdl_method_param* p = k->data;
-        EL(1, "xr_call_add_param(call, %s(%s));", p->type->march_name, p->name);
-      }
-      EL(1, "xr_client_call_ex(_conn, call, (xr_demarchalizer_t)%s, (void**)&retval);", m->return_type->demarch_name);
-      EL(1, "xr_call_free(call);");
-      EL(1, "return retval;");
+      EL(1, "if (xr_client_call(_conn, _call, _error) == 0)");
+      EL(1, "{");
+      EL(2, "if (%s(xr_call_get_retval(_call), &_retval) < 0)", m->return_type->demarch_name);
+      EL(3, "g_set_error(_error, XR_CLIENT_ERROR, XR_CLIENT_ERROR_MARCHALIZER, \"Call return value demarchalization failed.\");");
+      EL(1, "}");
+      EL(1, "xr_call_free(_call);");
+      EL(1, "return _retval;");
       EL(0, "}");
       NL;
     }

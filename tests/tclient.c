@@ -4,17 +4,6 @@
 #include "EEEClient.xrc.h"
 #include "EEEServer.xrc.h"
 
-static int _print_error(xr_client_conn* conn)
-{
-  if (xr_client_get_error_code(conn))
-  {
-//    fprintf(stderr, "error[%d]: %s\n", xr_client_get_error_code(conn), xr_client_get_error_message(conn));
-    xr_client_reset_error(conn);
-    return 1;
-  }
-  return 0;
-}
-
 static int _check_err(GError* err)
 {
   if (err)
@@ -48,8 +37,9 @@ static gpointer _thread_func(gpointer data)
 
   for (int i=0; i<10; i++)
   {
-    EEEDateTime* t = EEEClient_getTime(conn);
-    _print_error(conn);
+    EEEDateTime* t = EEEClient_getTime(conn, &err);
+    if (_check_err(err))
+      g_clear_error(&err);
     EEEDateTime_free(t);
   }
   
