@@ -12,7 +12,7 @@ struct AllArrays
 {
     array<string>      a_string;
     array<time>        a_time;
-    array<blob>        a_blob;
+//    array<blob>        a_blob;
     array<int>         a_int;
     array<boolean>     a_boolean;
 //    array<double>      a_double;
@@ -26,7 +26,7 @@ struct AllTypes
 {
     string      v_string;
     time        v_time;
-    blob        v_blob;
+//    blob        v_blob;
     int         v_int;
     boolean     v_boolean;
     double      v_double;
@@ -43,7 +43,17 @@ servlet Test1
 
     AllTypes getAll()
     <%
-        printf("User data set!\n");
+        printf("getAll()\n");
+        retval = TAllTypes_new();
+        retval->v_string = g_strdup("Hi!");
+        retval->v_time = g_strdup("2006-04-04");
+//        retval->v_blob = xr_blob_new(g_strdup("Hi all!"), strlen("Hi all!"));
+        retval->v_int = 5645;
+        retval->v_boolean = FALSE;
+        retval->v_double = 123.123e-3;
+        retval->v_struct = TStruct_new();
+        retval->v_struct->v_string = g_strdup("some str");
+        retval->v_arrays = TAllArrays_new();
     %>
     
     /** Get user data.
@@ -53,7 +63,7 @@ servlet Test1
      */
     boolean setAll(AllTypes all)
     <%
-        printf("User data set!\n");
+        printf("setAll()\n");
     %>
 
     __attrs__
