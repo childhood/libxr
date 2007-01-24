@@ -550,6 +550,26 @@ int main(int ac, char* av[])
     EL(0, "void %s%sServlet_fini(xr_servlet* _servlet);", xdl->name, s->name);
     NL;
 
+    EL(0, "/** Pre-call hook.");
+    EL(0, " * ");
+    EL(0, " * @param _servlet Servlet object.");
+    EL(0, " * @param _call Call object.");
+    EL(0, " * ");
+    EL(0, " * @return TRUE if you want to continue execution of the call.");
+    EL(0, " */ ");
+    EL(0, "int %s%sServlet_pre_call(xr_servlet* _servlet, xr_call* _call);", xdl->name, s->name);
+    NL;
+
+    EL(0, "/** Post-call hook.");
+    EL(0, " * ");
+    EL(0, " * @param _servlet Servlet object.");
+    EL(0, " * @param _call Call object.");
+    EL(0, " * ");
+    EL(0, " * @return TRUE if you want to continue execution of the call.");
+    EL(0, " */ ");
+    EL(0, "int %s%sServlet_post_call(xr_servlet* _servlet, xr_call* _call);", xdl->name, s->name);
+    NL;
+
     for (j=s->methods; j; j=j->next)
     {
       xdl_method* m = j->data;
@@ -637,6 +657,30 @@ int main(int ac, char* av[])
       EL(0, "#line %d \"%s\"", s->stub_fini_line, xdl_file);
       EL(1, "%s", s->stub_fini);
     }
+    EL(0, "}");
+    NL;
+
+    EL(0, "int %s%sServlet_pre_call(xr_servlet* _servlet, xr_call* _call)", xdl->name, s->name);
+    EL(0, "{");
+    EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
+    if (s->stub_pre_call)
+    {
+      EL(0, "#line %d \"%s\"", s->stub_pre_call_line, xdl_file);
+      EL(1, "%s", s->stub_pre_call);
+    }
+    EL(1, "return TRUE;");
+    EL(0, "}");
+    NL;
+
+    EL(0, "int %s%sServlet_post_call(xr_servlet* _servlet, xr_call* _call)", xdl->name, s->name);
+    EL(0, "{");
+    EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
+    if (s->stub_post_call)
+    {
+      EL(0, "#line %d \"%s\"", s->stub_post_call_line, xdl_file);
+      EL(1, "%s", s->stub_post_call);
+    }
+    EL(1, "return TRUE;");
     EL(0, "}");
     NL;
 
@@ -784,6 +828,8 @@ int main(int ac, char* av[])
     EL(1, ".name = \"%s%s\",", xdl->name, s->name);
     EL(1, ".init = %s%sServlet_init,", xdl->name, s->name);
     EL(1, ".fini = %s%sServlet_fini,", xdl->name, s->name);
+    EL(1, ".pre_call = %s%sServlet_pre_call,", xdl->name, s->name);
+    EL(1, ".post_call = %s%sServlet_post_call,", xdl->name, s->name);
     EL(1, ".methods_count = %d,", g_slist_length(s->methods));
     EL(1, ".methods = __servlet_methods");
     EL(0, "};");

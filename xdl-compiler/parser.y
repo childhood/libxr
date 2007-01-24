@@ -53,6 +53,8 @@ xdl_servlet* cur_servlet = NULL;
 %token KW_INIT "__init__"
 %token KW_FINI "__fini__"
 %token KW_ATTRS "__attrs__"
+%token KW_PRE_CALL "__pre_call__"
+%token KW_POST_CALL "__post_call__"
 
 %token <str> DOC_COMMENT
 %token <str> STRING_LITERAL
@@ -223,6 +225,16 @@ servlet_body_decl
     {
       cur_servlet->stub_attrs = $2;
       cur_servlet->stub_attrs_line = yylloc.first_line-2;
+    }
+  | "__pre_call__" INLINE_CODE
+    {
+      cur_servlet->stub_pre_call = $2;
+      cur_servlet->stub_pre_call_line = yylloc.first_line;
+    }
+  | "__post_call__" INLINE_CODE
+    {
+      cur_servlet->stub_post_call = $2;
+      cur_servlet->stub_post_call_line = yylloc.first_line;
     }
   | error_decl
   ;

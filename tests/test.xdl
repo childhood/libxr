@@ -80,4 +80,14 @@ servlet Test1
     <%
         printf("Fini!\n");
     %>
+
+    __pre_call__
+    <%
+        printf("Pre-call!\n");
+    %>
+
+    __post_call__
+    <%
+        printf("Post-call!\n");
+    %>
 }

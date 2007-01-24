@@ -55,6 +55,8 @@ struct _xr_servlet_def
   int size;                         /**< Size of the private object. */
   servlet_init_t init;              /**< Servlet constructor. */
   servlet_fini_t fini;              /**< Servlet destructor. */
+  servlet_method_t pre_call;        /**< Pre-call hook. */
+  servlet_method_t post_call;       /**< Post-call hook. */
   int methods_count;                /**< Count of the methods implemented by the server. */
   xr_servlet_method_def* methods;   /**< Methods descriptions. */
 };

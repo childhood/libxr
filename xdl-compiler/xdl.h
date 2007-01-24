@@ -81,10 +81,14 @@ struct _xdl_servlet
   char* stub_init;
   char* stub_fini;
   char* stub_attrs;
+  char* stub_pre_call;
+  char* stub_post_call;
   int stub_header_line;
   int stub_init_line;
   int stub_fini_line;
   int stub_attrs_line;
+  int stub_pre_call_line;
+  int stub_post_call_line;
   char* doc;
 };
 

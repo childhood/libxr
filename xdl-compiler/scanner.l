@@ -70,6 +70,8 @@ error                       { uploc; return ERROR; }
 __init__                    { uploc; return KW_INIT; }
 __fini__                    { uploc; return KW_FINI; }
 __attrs__                   { uploc; return KW_ATTRS; }
+__pre_call__                { uploc; return KW_PRE_CALL; }
+__post_call__               { uploc; return KW_POST_CALL; }
 
 {integer_literal}           { uploc; yylval->num = atoi(yytext); return INTEGER_LITERAL; }
 
