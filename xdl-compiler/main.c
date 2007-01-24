@@ -32,7 +32,7 @@ static void line_fprintf(FILE* f, int indent, const char* fmt, ...)
   va_list ap;
   int i;
   for (i=0;i<indent;i++)
-    fprintf(f, "\t");
+    fprintf(f, "    ");
   va_start(ap, fmt);
   vfprintf(f, fmt, ap);
   va_end(ap);
