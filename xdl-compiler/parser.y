@@ -68,7 +68,6 @@ xdl_servlet* cur_servlet = NULL;
 %type <list> params opt_params
 %type <param> param
 %type <method> method_decl
-%type <servlet> servlet_decl
 
 %start compilation_unit
 
@@ -118,9 +117,6 @@ toplevel_decl
     }
   | error_decl
   | servlet_decl
-    {
-      xdl->servlets = g_slist_append(xdl->servlets, $1);
-    }
   ;
 
 /* error */
@@ -171,16 +167,24 @@ struct_member
 /* servlets */
 
 servlet_decl
+  : servlet_decl_head servlet_decl_body
+  ;
+
+servlet_decl_head
   : opt_doc_comment "servlet" IDENTIFIER
     {
       cur_servlet = g_new0(xdl_servlet, 1);
+      xdl->servlets = g_slist_append(xdl->servlets, cur_servlet);
       cur_servlet->name = g_strdup($3);
       cur_servlet->doc = $1;
     }
-    "{" opt_inline_code servlet_body_decls "}"
+  ;
+
+servlet_decl_body
+  : "{" opt_inline_code servlet_body_decls "}"
     {
-      $$ = cur_servlet;
-      $$->stub_header = $6;
+      cur_servlet->stub_header = $2;
+      cur_servlet->stub_header_line = yylloc.first_line-2;
       cur_servlet = NULL;
     }
   ;
@@ -199,6 +203,7 @@ servlet_body_decl
     {
       cur_servlet->methods = g_slist_append(cur_servlet->methods, $1);
       $1->stub_impl = $2;
+      $1->stub_impl_line = yylloc.first_line-2;
     }
   | method_decl ";"
     {
@@ -207,14 +212,17 @@ servlet_body_decl
   | "__init__" INLINE_CODE
     {
       cur_servlet->stub_init = $2;
+      cur_servlet->stub_init_line = yylloc.first_line-2;
     }
   | "__fini__" INLINE_CODE
     {
       cur_servlet->stub_fini = $2;
+      cur_servlet->stub_fini_line = yylloc.first_line-2;
     }
   | "__attrs__" INLINE_CODE
     {
       cur_servlet->stub_attrs = $2;
+      cur_servlet->stub_attrs_line = yylloc.first_line-2;
     }
   | error_decl
   ;

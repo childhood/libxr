@@ -63,6 +63,7 @@ struct _xdl_method
   GSList* params;
   xdl_typedef* return_type;
   char* stub_impl;
+  int stub_impl_line;
   char* doc;
 };
 
@@ -80,6 +81,10 @@ struct _xdl_servlet
   char* stub_init;
   char* stub_fini;
   char* stub_attrs;
+  int stub_header_line;
+  int stub_init_line;
+  int stub_fini_line;
+  int stub_attrs_line;
   char* doc;
 };
 
