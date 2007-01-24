@@ -98,7 +98,6 @@ char* xr_call_get_error_message(xr_call* call)
 static void _xr_value_serialize(xmlNode* node, xr_value* val)
 {
   xmlNode* value;
-  char* data;
   char buf[50];
   GSList* i;
   if (xr_value_get_type(val) != XRV_MEMBER)
@@ -160,9 +159,11 @@ static void _xr_value_serialize(xmlNode* node, xr_value* val)
     }
     case XRV_BLOB:
     {
+      char* data = NULL;
       xr_blob* b = NULL;
       xr_value_to_blob(val, &b);
-      data = g_base64_encode(b->buf, b->len); //XXX: not exactly efficient
+      if (b)
+        data = g_base64_encode(b->buf, b->len); //XXX: not exactly efficient
       value = xmlNewChild(node, NULL, BAD_CAST "base64", BAD_CAST data);
       g_free(data);
       break;
