@@ -63,6 +63,7 @@ void xr_call_set_retval(xr_call* call, xr_value* val)
 {
   g_assert(call != NULL);
   g_assert(val != NULL);
+  xr_value_free(call->retval);
   call->retval = val;
 }
 
