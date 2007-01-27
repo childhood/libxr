@@ -538,7 +538,7 @@ int main(int ac, char* av[])
     EL(0, " * ");
     EL(0, " * @param _servlet Servlet object.");
     EL(0, " * ");
-    EL(0, " * @return ");
+    EL(0, " * @return TRUE if all is ok.");
     EL(0, " */ ");
     EL(0, "int %s%sServlet_init(xr_servlet* _servlet);", xdl->name, s->name);
     NL;
