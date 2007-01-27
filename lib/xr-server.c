@@ -120,16 +120,28 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_servlet* servlet
   printf("Pre method call:\n");
   xr_call_dump(call, 0);
 #endif
+
+  if (servlet->def->pre_call)
+  {
+    if (!servlet->def->pre_call(servlet, call))
+    {
+      // FALSE returned
+      if (xr_call_get_retval(call) == NULL && !xr_call_get_error_code(call))
+        xr_call_set_error(call, -1, "Pre-call did not returned value or set error.");
+      goto done;
+    }
+  }
+
   retval = method->cb(servlet, call);
+
+  if (servlet->def->post_call)
+    servlet->def->post_call(servlet, call);
+
+ done:
 #ifdef DEBUG
   printf("Post method call:\n");
   xr_call_dump(call, 0);
 #endif
-  if (retval)
-    goto done;
-
-  retval = 0;
- done:
   servlet->call = NULL;
   return retval;
 }
