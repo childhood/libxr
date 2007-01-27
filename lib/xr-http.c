@@ -274,8 +274,6 @@ gchar* xr_http_get_header(xr_http* http, const gchar* name)
 void xr_http_setup_request(xr_http* http, gchar* method, gchar* resource, gchar* host)
 {
   g_assert(http != NULL);
-  g_assert(method != NULL);
-  g_assert(resource != NULL);
 
   g_free(http->req_method);
   http->req_method = g_strdup(method);
