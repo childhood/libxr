@@ -25,13 +25,28 @@ Makefile.in
 /tests/client
 /tests/server
 /tests/test
+/tests/mlserver
+/tests/tclient
+/tests/unit/t001-http
+/tests/unit/t002-call
 
 /xdl-compiler/parser.c
 /xdl-compiler/parser.h
 /xdl-compiler/scanner.c
 /xdl-compiler/xdl-compiler
 
-/tests/EEE*
+/libxr.pc
 
 /docs/html
 /docs/man3
+
+/.*
+/compile
+/libxr-*.tgz
+*~
+
+tests/TCommon.c
+tests/TCommon.h
+tests/TTest*.c
+tests/TTest*.h
+
