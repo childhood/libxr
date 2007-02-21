@@ -411,19 +411,23 @@ int xr_call_unserialize_response(xr_call* call, char* buf, int len)
   }
   xp_free_nodes(ns);
 
+  xmlXPathFreeContext(ctx);
+  xmlFreeDoc(doc);
+
+  // check if client returned standard XML-RPC error message, we want to process
+  // it differently than normal retval
   int errcode = 0;
   char* errmsg = NULL;
   if (xr_value_is_error_retval(call->retval, &errcode, &errmsg))
   {
     xr_call_set_error(call, errcode, errmsg);
+    g_free(errmsg);
     xr_value_free(call->retval);
     call->retval = NULL;
+    return -1;
   }
-  g_free(errmsg);
 
-  xmlXPathFreeContext(ctx);
-  xmlFreeDoc(doc);
-  return xr_call_get_error_code(call) != 0 ? -1 : 0;
+  return 0;
 
  err_2:
   xp_free_nodes(ns);
