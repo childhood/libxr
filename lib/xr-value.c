@@ -258,15 +258,10 @@ int xr_value_is_error_retval(xr_value* v, int* errcode, char** errmsg)
   g_assert(errmsg != NULL);
   if (v->type != XRV_STRUCT)
     return 0;
-  xr_value* faultCode = xr_value_get_member(v, "faultCode");
-  xr_value* faultString = xr_value_get_member(v, "faultString");
-  if (faultCode && faultCode->type == XRV_INT && faultString && faultString->type == XRV_STRING)
-  {
-    xr_value_to_int(faultCode, errcode);
-    xr_value_to_string(faultString, errmsg);
-    return 1;
-  }
-  return 0;
+  if (xr_value_to_int(xr_value_get_member(v, "faultCode"), errcode) < 0 ||
+      xr_value_to_string(xr_value_get_member(v, "faultString"), errmsg) < 0)
+    return 0;
+  return 1;
 }
 
 void xr_value_dump(xr_value* v, int indent)
