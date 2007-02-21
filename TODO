@@ -1,6 +1,6 @@
+- blob: check it, fix it (ref counting, serialization, etc.)
+- implement error codes in xdl-compiler (so that you can define errors in one
+  place for whole interface)
 - array<double>: too long to fit into i->data
-- blob: fix it (ref counting, serialization, etc.)
 - any type: make xdl compiler understand any type
-
-- audit code
-- testsuite
+- extend testsuite
