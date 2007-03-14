@@ -27,7 +27,7 @@ AC_SUBST(XR_LIBS)
 # Checks for header files.
 AC_HEADER_STDC
 
-CFLAGS="$CFLAGS -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+CFLAGS="$CFLAGS -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-pointer-sign -Wno-sign-compare"
 
 # Output
 AC_OUTPUT([
