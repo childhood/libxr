@@ -281,6 +281,8 @@ int xr_server_run(xr_server* server, GError** err)
     int rs = select(maxfd, &set, NULL, NULL, &tv);
     if (rs < 0)
     {
+      if (errno == EINTR)
+        return 0;
       g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "select failed: %s", g_strerror(errno));
       return -1;
     }
