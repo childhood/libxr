@@ -13,8 +13,6 @@ static int _check_err(GError* err)
   return 0;
 }
 
-static int _run = 0;
-
 static gpointer _thread_func(gpointer data)
 {
   GError *err = NULL;
@@ -23,9 +21,6 @@ static gpointer _thread_func(gpointer data)
   xr_client_conn* conn = xr_client_new(&err);
   if (_check_err(err))
     return NULL;
-
-  while (!_run)
-    g_thread_yield();
 
   xr_client_open(conn, uri, &err);
   if (_check_err(err))
@@ -63,8 +58,6 @@ int main(int ac, char* av[])
     t[i] = g_thread_create(_thread_func, uri, TRUE, &err);
     g_assert(err == NULL);
   }
-
-  _run = 1;
 
   for (i=0; i<count; i++)
     g_thread_join(t[i]);
