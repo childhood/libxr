@@ -25,6 +25,7 @@ Makefile.in
 /libxr.pc
 /tags
 /.test
+/.vimrc
 
 /tests/client
 /tests/server
