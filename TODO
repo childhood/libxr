@@ -1,6 +1,8 @@
 - blob: check it, fix it (ref counting, serialization, etc.)
+- drop dep on glib>=2.12.0 (due to base64)
+- any type: make xdl compiler understand any type
+
 - implement error codes in xdl-compiler (so that you can define errors in one
   place for whole interface)
 - array<double>: too long to fit into i->data
-- any type: make xdl compiler understand any type
 - extend testsuite
