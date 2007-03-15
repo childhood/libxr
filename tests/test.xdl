@@ -43,7 +43,7 @@ servlet Test1
 
     AllTypes getAll()
     <%
-        printf("getAll()\n");
+        //printf("getAll()\n");
         retval = TAllTypes_new();
         retval->v_string = g_strdup("Hi!");
         retval->v_time = g_strdup("2006-04-04");
@@ -63,7 +63,7 @@ servlet Test1
      */
     boolean setAll(AllTypes all)
     <%
-        printf("setAll()\n");
+        //printf("setAll()\n");
     %>
 
     __attrs__
@@ -73,21 +73,21 @@ servlet Test1
     
     __init__
     <%
-        printf("Init!\n");
+        //printf("Init!\n");
     %>
 
     __fini__
     <%
-        printf("Fini!\n");
+        //printf("Fini!\n");
     %>
 
     __pre_call__
     <%
-        printf("Pre-call!\n");
+        //printf("Pre-call!\n");
     %>
 
     __post_call__
     <%
-        printf("Post-call!\n");
+        //printf("Post-call!\n");
     %>
 }
