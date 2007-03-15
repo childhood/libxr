@@ -368,6 +368,8 @@ int xr_server_bind(xr_server* server, const char* port, GError** err)
     goto err1;
   }
 
+  BIO_set_bind_mode(server->bio_in, BIO_BIND_REUSEADDR);
+
   if (server->secure)
   {
     SSL* ssl;
