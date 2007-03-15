@@ -22,7 +22,7 @@ void xr_set_nodelay(BIO* bio)
 static GMutex** _ssl_mutexes = NULL;
 static int _ssl_initialized = 0;
 
-static void _ssl_locking_callback(int mode, int type, char *file, int line)
+static void _ssl_locking_callback(int mode, int type, const char *file, int line)
 {
   if (mode & CRYPTO_LOCK)
     g_mutex_lock(_ssl_mutexes[type]);
