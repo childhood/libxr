@@ -36,7 +36,7 @@ int main(int ac, char* av[])
 
   /* create new server and bind it to the port 444 */
   xr_server* server = NULL;
-  server = xr_server_new("server.pem", 10, &err);
+  server = xr_server_new("server.pem", 20, &err);
   if (_check_err(err))
     goto err;
   xr_server_bind(server, "*:4444", &err);
