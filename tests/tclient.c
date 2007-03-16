@@ -29,12 +29,17 @@ static gpointer _thread_func(gpointer data)
     return NULL;
   }
 
-  for (int i=0; i<10; i++)
+  int stop = 0;
+  for (int i=0; i<100 && !stop; i++)
   {
     /* call some servlet methods */
     TAllTypes* t = TTest1_getAll(conn, &err);
     if (_check_err(err))
+    {
+      if (err->domain == XR_CLIENT_ERROR)
+        stop = 1;
       g_clear_error(&err);
+    }
     TAllTypes_free(t);
   }
   
