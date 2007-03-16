@@ -396,7 +396,7 @@ int xr_server_bind(xr_server* server, const char* port, GError** err)
 void xr_server_free(xr_server* server)
 {
   g_assert(server != NULL);
-  g_thread_pool_free(server->pool, TRUE, FALSE);
+  g_thread_pool_free(server->pool, TRUE, TRUE);
   BIO_free_all(server->bio_in);
   SSL_CTX_free(server->ctx);
   g_slist_free(server->servlet_types);
