@@ -2,10 +2,6 @@
 #include <regex.h>
 #include <sys/select.h>
 
-#ifndef WIN32
-  #include <signal.h>
-#endif
-
 #include "xr-server.h"
 #include "xr-http.h"
 #include "xr-utils.h"

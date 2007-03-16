@@ -1,10 +1,6 @@
 #include <stdlib.h>
 #include <regex.h>
 
-#ifndef WIN32
-  #include <signal.h>
-#endif
-
 #include "xr-client.h"
 #include "xr-http.h"
 #include "xr-utils.h"
