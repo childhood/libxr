@@ -53,6 +53,7 @@ void xr_ssl_init()
 
   if (_ssl_initialized)
     return;
+  _ssl_initialized = 1;
 
   signal(SIGPIPE, SIG_IGN);
 
@@ -69,8 +70,6 @@ void xr_ssl_init()
     _ssl_mutexes[i] = g_mutex_new();
   CRYPTO_set_id_callback(_ssl_thread_id_callback);
   CRYPTO_set_locking_callback(_ssl_locking_callback);
-  
-  _ssl_initialized = 1;
 }
 
 void xr_ssl_fini()
