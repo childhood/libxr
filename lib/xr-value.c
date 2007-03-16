@@ -28,15 +28,26 @@ xr_blob* xr_blob_new(char* buf, int len)
   xr_blob* b = g_new0(xr_blob, 1);
   b->buf = buf;
   b->len = len;
+  b->refs = 1;
   return b;
 }
 
-void xr_blob_free(xr_blob* b)
+xr_blob* xr_blob_ref(xr_blob* b)
 {
   if (b == NULL)
     return;
-  g_free(b->buf);
-  g_free(b);
+  b->refs++;
+}
+
+void xr_blob_unref(xr_blob* b)
+{
+  if (b == NULL)
+    return;
+  if (--b->refs == 0)
+  {
+    g_free(b->buf);
+    g_free(b);
+  }
 }
 
 /* base types */
@@ -86,7 +97,7 @@ xr_value* xr_value_blob_new(xr_blob* val)
     return NULL;
   xr_value* v = g_new0(xr_value, 1);
   v->type = XRV_BLOB;
-  v->blob_val = val;
+  v->blob_val = xr_blob_ref(val);
   return v;
 }
 
@@ -140,7 +151,7 @@ int xr_value_to_blob(xr_value* val, xr_blob** nval)
   g_assert(nval != NULL);
   if (val == NULL || val->type != XRV_BLOB)
     return -1;
-  *nval = val->blob_val;
+  *nval = xr_blob_ref(val->blob_val);
   return 0;
 }
 
@@ -243,7 +254,7 @@ void xr_value_free(xr_value* val)
   if (val->type == XRV_STRING || val->type == XRV_TIME)
     g_free(val->str_val);
   if (val->type == XRV_BLOB)
-    xr_blob_free(val->blob_val);
+    xr_blob_unref(val->blob_val);
   g_free(val->member_name);
   xr_value_free(val->member_value);
   for (i=val->children; i; i=i->next)

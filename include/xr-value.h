@@ -48,12 +48,13 @@ struct _xr_blob
 {
   char* buf;   /**< Buffer. */
   int len;     /**< Buffer length. */
+  char refs;   /**< Number of references. */
 };
 
 /** Create new blob.
  *
  * @param buf Buffer with blob data. Ownership of the buffer is transferred.
- *   Buffer will be freed using g_free when @ref xr_blob_free is called.
+ *   Buffer will be freed using g_free when @ref xr_blob_unref is called.
  * @param len Lenght of the data in the buffer.
  *
  * @return New blob.
@@ -67,7 +68,7 @@ xr_blob* xr_blob_new(char* buf, int len);
  *
  * @param blob Blob.
  */
-void xr_blob_free(xr_blob* blob);
+void xr_blob_unref(xr_blob* blob);
 
 /** Create new @ref xr_value node of type @ref XRV_STRING.
  *
@@ -113,7 +114,7 @@ xr_value* xr_value_time_new(char* val);
  *
  * @param val Value to be contained in the node. Ownership of the val
  *   is transferred to the @ref xr_value. Val will be freed using
- *   xr_blob_free when @ref xr_value_free is called.
+ *   xr_blob_unref when @ref xr_value_free is called.
  *
  * @return New @ref xr_value node.
  */
