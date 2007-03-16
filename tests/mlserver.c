@@ -19,7 +19,8 @@ GMainLoop* mainloop;
 
 static void _sig_stop(int signum)
 {
-  g_main_loop_quit(mainloop);
+  if (g_main_loop_is_running(mainloop))
+    g_main_loop_quit(mainloop);
 }
 
 int main(int ac, char* av[])
@@ -38,10 +39,10 @@ int main(int ac, char* av[])
   xr_server* server = NULL;
   server = xr_server_new("server.pem", 20, &err);
   if (_check_err(err))
-    goto err;
+    goto err1;
   xr_server_bind(server, "*:4444", &err);
   if (_check_err(err))
-    goto err;
+    goto err1;
 
   xr_server_register_servlet(server, __TTest1Servlet_def());
 
@@ -54,9 +55,12 @@ int main(int ac, char* av[])
 
   /* free server after it is stopped */
   xr_server_free(server);
+  g_main_loop_unref(mainloop);
   return 0;
 
- err:
+ err1:
   xr_server_free(server);
+ err0:
+  g_main_loop_unref(mainloop);
   return 1;
 }
