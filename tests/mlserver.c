@@ -31,8 +31,14 @@ int main(int ac, char* av[])
 
   /* hookup signals to stop server, see above */
 #ifndef WIN32
-  signal(SIGINT, _sig_stop);
-  signal(SIGHUP, _sig_stop);
+  struct sigaction act;
+  act.sa_handler = _sig_stop;
+  act.sa_flags = SA_RESTART;
+  sigemptyset(&act.sa_mask);
+  if (sigaction(SIGINT, &act, NULL) < 0
+   || sigaction(SIGHUP, &act, NULL) < 0
+   || sigaction(SIGTERM, &act, NULL) < 0)
+    goto err0;
 #endif
 
   /* create new server and bind it to the port 444 */
