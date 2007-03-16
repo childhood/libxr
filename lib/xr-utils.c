@@ -19,6 +19,16 @@ void xr_set_nodelay(BIO* bio)
     fprintf(stderr, "Error disabling Nagle.\n");
 }
 
+const char* xr_get_bio_error_string()
+{
+  const char* str;
+  if ((str = ERR_reason_error_string(ERR_get_error())))
+    return str;
+  if ((str = g_strerror(errno)))
+    return str;
+  return "Unknown or no error.";
+}
+
 static GMutex** _ssl_mutexes = NULL;
 static int _ssl_initialized = 0;
 

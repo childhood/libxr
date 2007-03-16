@@ -227,7 +227,7 @@ static int _xr_server_accept_connection(xr_server* server, GError** err)
 
   if (BIO_do_accept(server->bio_in) <= 0)
   {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept failed: %s", ERR_reason_error_string(ERR_get_error()));
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept failed: %s", xr_get_bio_error_string());
     return -1;
   }
 
@@ -360,7 +360,7 @@ int xr_server_bind(xr_server* server, const char* port, GError** err)
   server->bio_in = BIO_new_accept((char*)port);
   if (server->bio_in == NULL)
   {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept bio creation failed: %s", ERR_reason_error_string(ERR_get_error()));
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept bio creation failed: %s", xr_get_bio_error_string());
     goto err1;
   }
 
@@ -377,7 +377,7 @@ int xr_server_bind(xr_server* server, const char* port, GError** err)
 
   if (BIO_do_accept(server->bio_in) <= 0)
   {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", ERR_reason_error_string(ERR_get_error()));
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", xr_get_bio_error_string());
     goto err2;
   }
 

@@ -111,7 +111,7 @@ int xr_client_open(xr_client_conn* conn, char* uri, GError** err)
 
   if (BIO_do_connect(conn->bio) <= 0)
   {
-    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_connect failed: %s", ERR_reason_error_string(ERR_get_error()));
+    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_connect failed: %s", xr_get_bio_error_string());
     BIO_free_all(conn->bio);
     return -1;
   }
@@ -122,7 +122,7 @@ int xr_client_open(xr_client_conn* conn, char* uri, GError** err)
   {
     if (BIO_do_handshake(conn->bio) <= 0)
     {
-      g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_handshake failed: %s", ERR_reason_error_string(ERR_get_error()));
+      g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_handshake failed: %s", xr_get_bio_error_string());
       BIO_free_all(conn->bio);
       return -1;
     }

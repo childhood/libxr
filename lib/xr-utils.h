@@ -10,6 +10,8 @@
  */
 
 void xr_set_nodelay(BIO* bio);
+const char* xr_get_bio_error_string();
+
 void xr_ssl_init();
 void xr_ssl_fini();
 
