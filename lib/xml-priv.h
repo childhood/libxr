@@ -68,9 +68,9 @@ static __inline__ int xml_get_cont_bool(xmlNodePtr n)
   if (str == NULL)
     return 0;
   int retval = -1;
-  if (!strcmp(str, "false"))
+  if (!strcmp(str, "0"))
     retval = 0;
-  if (!strcmp(str, "true"))
+  if (!strcmp(str, "1"))
     retval = 1;
   xmlFree(str);
   return retval;

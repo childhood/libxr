@@ -140,7 +140,7 @@ static void _xr_value_serialize(xmlNode* node, xr_value* val)
     {
       int bool_val = -1;
       xr_value_to_bool(val, &bool_val);
-      value = xmlNewChild(node, NULL, BAD_CAST "boolean", BAD_CAST (bool_val ? "true" : "false"));
+      value = xmlNewChild(node, NULL, BAD_CAST "boolean", BAD_CAST (bool_val ? "1" : "0"));
       break;
     }
     case XRV_DOUBLE:
