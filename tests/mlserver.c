@@ -62,10 +62,12 @@ int main(int ac, char* av[])
   /* free server after it is stopped */
   xr_server_free(server);
   g_main_loop_unref(mainloop);
+  xr_ssl_fini();
   return 0;
 
  err1:
   xr_server_free(server);
+  xr_ssl_fini();
  err0:
   g_main_loop_unref(mainloop);
   return 1;
