@@ -163,8 +163,8 @@ static void _xr_value_serialize(xmlNode* node, xr_value* val)
       char* data = NULL;
       xr_blob* b = NULL;
       xr_value_to_blob(val, &b);
-      if (b)
-        data = g_base64_encode(b->buf, b->len); //XXX: not exactly efficient
+      data = g_base64_encode(b->buf, b->len);
+      xr_blob_unref(b);
       value = xmlNewChild(node, NULL, BAD_CAST "base64", BAD_CAST data);
       g_free(data);
       break;
@@ -246,11 +246,16 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
       return xr_value_time_new(xml_get_cont_str(tn));
     else if (match_node(tn, "base64"))
     {
+      xr_blob* b;
+      xr_value* bv;
       char* base64 = xml_get_cont_str(tn);
       gsize len = 0;
       char* buf = g_base64_decode(base64, &len);
       g_free(base64);
-      return xr_value_blob_new(xr_blob_new(buf, len));
+      b = xr_blob_new(buf, len);
+      bv = xr_value_blob_new(b);
+      xr_blob_unref(b);
+      return bv;
     }
     else if (match_node(tn, "array"))
     {
