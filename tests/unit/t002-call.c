@@ -141,6 +141,7 @@ static int requestUnserialize4()
 
 int main()
 {
+  xr_debug_enabled = 0;
   int failed = 0;
   RUN_TEST(constructCall);
   RUN_TEST(constructCallNoMethod);

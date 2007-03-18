@@ -17,6 +17,7 @@ static gpointer _thread_func(gpointer data)
 {
   GError *err = NULL;
   char* uri = data;
+  xr_debug_enabled = XR_DEBUG_ALL;
 
   xr_client_conn* conn = xr_client_new(&err);
   if (_check_err(err))

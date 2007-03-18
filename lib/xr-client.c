@@ -22,6 +22,8 @@ xr_client_conn* xr_client_new(GError** err)
 {
   g_return_val_if_fail(err == NULL || *err == NULL, NULL);
 
+  xr_trace(XR_DEBUG_CLIENT_TRACE, "(err=%p)", err);
+
   xr_ssl_init();
   xr_client_conn* conn = g_new0(xr_client_conn, 1);
   conn->ctx = SSL_CTX_new(SSLv3_client_method());
@@ -86,6 +88,8 @@ int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 
   g_return_val_if_fail(err == NULL || *err == NULL, -1);
 
+  xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p, uri=%s)", conn, uri);
+
   // parse URI format: http://host:8080/RES
   g_free(conn->host);
   g_free(conn->resource);
@@ -139,6 +143,8 @@ void xr_client_close(xr_client_conn* conn)
   if (!conn->is_open)
     return;
 
+  xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p)", conn);
+
   if (conn->secure)
     BIO_ssl_shutdown(conn->bio);
 
@@ -157,6 +163,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   g_assert(call != NULL);
 
   g_return_val_if_fail(err == NULL || *err == NULL, -1);
+  xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p, call=%p)", conn, call);
 
   if (!conn->is_open)
   {
@@ -204,6 +211,8 @@ int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
 
 void xr_client_free(xr_client_conn* conn)
 {
+  xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p)", conn);
+
   g_assert(conn != NULL);
   xr_client_close(conn);
   g_free(conn->host);

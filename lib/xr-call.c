@@ -20,6 +20,7 @@ struct _xr_call
 xr_call* xr_call_new(char* method)
 {
   xr_call* c = g_new0(xr_call, 1);
+  xr_trace(XR_DEBUG_CALL_TRACE, "(method=%s) = %p", method, c);
   c->method = g_strdup(method);
   return c;
 }
@@ -27,6 +28,7 @@ xr_call* xr_call_new(char* method)
 void xr_call_free(xr_call* call)
 {
   GSList* i;
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_free(call->method);
   for (i = call->params; i; i = i->next)
     xr_value_free(i->data);
@@ -37,6 +39,7 @@ void xr_call_free(xr_call* call)
 
 char* xr_call_get_method(xr_call* call)
 {
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_assert(call != NULL);
   return call->method;
 }
@@ -45,6 +48,7 @@ char* xr_call_get_method(xr_call* call)
 
 void xr_call_add_param(xr_call* call, xr_value* val)
 {
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, val=%p)", call, val);
   g_assert(call != NULL);
   g_assert(val != NULL);
   call->params = g_slist_append(call->params, val);
@@ -52,6 +56,7 @@ void xr_call_add_param(xr_call* call, xr_value* val)
 
 xr_value* xr_call_get_param(xr_call* call, unsigned int pos)
 {
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, pos=%u)", call, pos);
   g_assert(call != NULL);
   xr_value* v = g_slist_nth_data(call->params, pos);
   return v;
@@ -61,6 +66,7 @@ xr_value* xr_call_get_param(xr_call* call, unsigned int pos)
 
 void xr_call_set_retval(xr_call* call, xr_value* val)
 {
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, val=%p)", call, val);
   g_assert(call != NULL);
   g_assert(val != NULL);
   xr_value_free(call->retval);
@@ -69,6 +75,7 @@ void xr_call_set_retval(xr_call* call, xr_value* val)
 
 xr_value* xr_call_get_retval(xr_call* call)
 {
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_assert(call != NULL);
   return call->retval;
 }
@@ -77,6 +84,7 @@ xr_value* xr_call_get_retval(xr_call* call)
 
 void xr_call_set_error(xr_call* call, int code, char* msg)
 {
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, code=%d, msg=%s)", call, code, msg);
   g_assert(call != NULL);
   call->error_set = TRUE;
   call->errcode = code;
@@ -86,12 +94,14 @@ void xr_call_set_error(xr_call* call, int code, char* msg)
 
 int xr_call_get_error_code(xr_call* call)
 {
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_assert(call != NULL);
   return call->errcode;
 }
 
 char* xr_call_get_error_message(xr_call* call)
 {
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_assert(call != NULL);
   return call->errmsg;
 }
@@ -179,6 +189,8 @@ void xr_call_serialize_request(xr_call* call, char** buf, int* len)
   g_assert(buf != NULL);
   g_assert(len != NULL);
 
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, *buf=%p, *len=%d)", call, *buf, *len);
+
   xmlDoc* doc = xmlNewDoc(BAD_CAST "1.0");
   xmlNode* root = xmlNewNode(NULL, BAD_CAST "methodCall");
   xmlDocSetRootElement(doc, root);
@@ -205,6 +217,8 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len)
   g_assert(call != NULL);
   g_assert(buf != NULL);
   g_assert(len != NULL);
+
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, *buf=%p, *len=%d)", call, *buf, *len);
 
   xmlDoc* doc = xmlNewDoc(BAD_CAST "1.0");
   xmlNode* root = xmlNewNode(NULL, BAD_CAST "methodResponse");
@@ -321,6 +335,8 @@ int xr_call_unserialize_request(xr_call* call, char* buf, int len)
 {
   g_assert(call != NULL);
   g_assert(buf != NULL);
+
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, buf=%p, len=%d)", call, buf, len);
   
   if (len < 0)
     len = strlen(buf);
@@ -380,6 +396,8 @@ int xr_call_unserialize_response(xr_call* call, char* buf, int len)
 {
   g_assert(call != NULL);
   g_assert(buf != NULL);
+
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, buf=%p, len=%d)", call, buf, len);
 
   if (len < 0)
     len = strlen(buf);
