@@ -225,6 +225,7 @@ int xr_http_send(xr_http* http, int message_type, gchar* buffer, gint length)
   {
     header = g_strdup_printf(
       "HTTP/1.1 %d %s\r\n"
+      "Connection: keep-alive\r\n"
       "Content-Type: text/xml\r\n"
       "Content-Length: %d\r\n\r\n",
       http->res_code,
