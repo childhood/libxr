@@ -18,7 +18,7 @@
 #ifndef __XR_VALUE_H__
 #define __XR_VALUE_H__
 
-#include <glib.h>
+#include "xr-lib.h"
 
 /** Value Node Types.
  */
