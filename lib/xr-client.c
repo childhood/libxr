@@ -78,7 +78,7 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
   return 0;
 }
 
-int xr_client_open(xr_client_conn* conn, char* uri, GError** err)
+int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 {
   g_assert(conn != NULL);
   g_assert(uri != NULL);

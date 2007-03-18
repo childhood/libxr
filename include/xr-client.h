@@ -51,7 +51,7 @@ void xr_client_free(xr_client_conn* conn);
  *
  * @return Function returns -1 on failure and 0 on success.
  */
-int xr_client_open(xr_client_conn* conn, char* uri, GError** err);
+int xr_client_open(xr_client_conn* conn, const char* uri, GError** err);
 
 /** Close currently open connection.
  *
