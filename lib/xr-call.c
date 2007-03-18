@@ -209,18 +209,19 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len)
   xmlDoc* doc = xmlNewDoc(BAD_CAST "1.0");
   xmlNode* root = xmlNewNode(NULL, BAD_CAST "methodResponse");
   xmlDocSetRootElement(doc, root);
-  xmlNode* params = xmlNewChild(root, NULL, BAD_CAST "params", NULL);
-  xmlNode* param = xmlNewChild(params, NULL, BAD_CAST "param", NULL);
   if (call->error_set)
   {
+    xmlNode* fault = xmlNewChild(root, NULL, BAD_CAST "fault", NULL);
     xr_value* v = xr_value_struct_new();
     xr_value_struct_set_member(v, "faultCode", xr_value_int_new(call->errcode));
     xr_value_struct_set_member(v, "faultString", xr_value_string_new(call->errmsg));
-    _xr_value_serialize(param, v);
+    _xr_value_serialize(fault, v);
     xr_value_free(v);
   }
   else if (call->retval)
   {
+    xmlNode* params = xmlNewChild(root, NULL, BAD_CAST "params", NULL);
+    xmlNode* param = xmlNewChild(params, NULL, BAD_CAST "param", NULL);
     _xr_value_serialize(param, call->retval);
   }
 
@@ -400,16 +401,52 @@ int xr_call_unserialize_response(xr_call* call, char* buf, int len)
   xmlXPathContext* ctx = xmlXPathNewContext(doc);
 
   struct nodeset* ns = xp_eval_nodes(ctx, "/methodResponse/params/param/value");
-  if (ns->count != 1)
+  if (ns->count == 1)
   {
-    if (ns->count == 0)
-      xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. No return value.");
-    else
-      xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Too many return values.");
+    call->retval = _xr_value_unserialize(ns->nodes[0]);
+    if (call->retval == NULL)
+    {
+      xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Failed to unserialize retval.");
+      goto err_2;
+    }
+    xp_free_nodes(ns);
+    xmlXPathFreeContext(ctx);
+    xmlFreeDoc(doc);
+    return 0;
+  }
+  else if (ns->count > 1)
+  {
+    xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Too many return values.");
     goto err_2;
   }
-  call->retval = _xr_value_unserialize(ns->nodes[0]);
-  if (call->retval == NULL)
+  xp_free_nodes(ns);
+
+  ns = xp_eval_nodes(ctx, "/methodResponse/fault/value");
+  if (ns->count == 1)
+  {
+    call->retval = _xr_value_unserialize(ns->nodes[0]);
+    if (call->retval == NULL)
+    {
+      xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Failed to unserialize retval.");
+      goto err_2;
+    }
+    // check if client returned standard XML-RPC error message, we want to process
+    // it differently than normal retval
+    int errcode = 0;
+    char* errmsg = NULL;
+    if (xr_value_is_error_retval(call->retval, &errcode, &errmsg))
+    {
+      xr_call_set_error(call, errcode, errmsg);
+      g_free(errmsg);
+      xr_value_free(call->retval);
+      call->retval = NULL;
+      xp_free_nodes(ns);
+      xmlXPathFreeContext(ctx);
+      xmlFreeDoc(doc);
+      return -1;
+    }
+  }
+  else
   {
     xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Failed to unserialize retval.");
     goto err_2;
@@ -418,19 +455,6 @@ int xr_call_unserialize_response(xr_call* call, char* buf, int len)
 
   xmlXPathFreeContext(ctx);
   xmlFreeDoc(doc);
-
-  // check if client returned standard XML-RPC error message, we want to process
-  // it differently than normal retval
-  int errcode = 0;
-  char* errmsg = NULL;
-  if (xr_value_is_error_retval(call->retval, &errcode, &errmsg))
-  {
-    xr_call_set_error(call, errcode, errmsg);
-    g_free(errmsg);
-    xr_value_free(call->retval);
-    call->retval = NULL;
-    return -1;
-  }
 
   return 0;
 
