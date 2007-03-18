@@ -315,7 +315,7 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
   xr_server* server = g_new0(xr_server, 1);
   server->secure = !!cert;
 
-  server->ctx = SSL_CTX_new(TLSv1_server_method());
+  server->ctx = SSL_CTX_new(SSLv3_server_method());
   if (server->ctx == NULL)
   {
     g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "ssl context creation failed: %s", ERR_reason_error_string(ERR_get_error()));
