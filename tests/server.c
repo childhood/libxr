@@ -41,6 +41,8 @@ int main(int ac, char* av[])
     goto err;
 #endif
 
+  xr_debug_enabled = XR_DEBUG_ALL;
+
   /* create new server and bind it to the port 444 */
   server = xr_server_new("server.pem", 10, &err);
   if (_check_err(err))
