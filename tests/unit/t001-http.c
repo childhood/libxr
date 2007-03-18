@@ -1,4 +1,5 @@
 #include "tests.h"
+#include "xr-lib.h"
 #include "xr-http.h"
 
 /* phony functions */
@@ -187,6 +188,7 @@ void xr_http_setup_response(xr_http* http, gint code);
 int main()
 {
   int failed = 0;
+  xr_debug_enabled = 0;
   RUN_TEST(receiveRequestValid);
   RUN_TEST(receiveRequestWithoutContentLength);
   RUN_TEST(receiveRequestInvalidStartLine);
