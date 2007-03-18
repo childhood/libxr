@@ -409,25 +409,23 @@ int xr_call_unserialize_response(xr_call* call, char* buf, int len)
       xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Failed to unserialize retval.");
       goto err_2;
     }
-    xp_free_nodes(ns);
-    xmlXPathFreeContext(ctx);
-    xmlFreeDoc(doc);
-    return 0;
+    goto done;
   }
-  else if (ns->count > 1)
+  else if (ns->count > 1) // more than one param is bad
   {
     xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Too many return values.");
     goto err_2;
   }
   xp_free_nodes(ns);
 
+  // ok no params/param, check for fault
   ns = xp_eval_nodes(ctx, "/methodResponse/fault/value");
   if (ns->count == 1)
   {
     call->retval = _xr_value_unserialize(ns->nodes[0]);
     if (call->retval == NULL)
     {
-      xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Failed to unserialize retval.");
+      xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Failed to unserialize fault response.");
       goto err_2;
     }
     // check if client returned standard XML-RPC error message, we want to process
@@ -438,26 +436,29 @@ int xr_call_unserialize_response(xr_call* call, char* buf, int len)
     {
       xr_call_set_error(call, errcode, errmsg);
       g_free(errmsg);
-      xr_value_free(call->retval);
-      call->retval = NULL;
-      xp_free_nodes(ns);
-      xmlXPathFreeContext(ctx);
-      xmlFreeDoc(doc);
-      return -1;
+      goto err_3;
+    }
+    else
+    {
+      xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Invalid fault response.");
+      goto err_3;
     }
   }
-  else
+  else // no fault either
   {
     xr_call_set_error(call, 100, "Can't parse XML-RPC XML response. Failed to unserialize retval.");
     goto err_2;
   }
-  xp_free_nodes(ns);
 
+done:
+  xp_free_nodes(ns);
   xmlXPathFreeContext(ctx);
   xmlFreeDoc(doc);
-
   return 0;
 
+ err_3:
+  xr_value_free(call->retval);
+  call->retval = NULL;
  err_2:
   xp_free_nodes(ns);
   xmlXPathFreeContext(ctx);
