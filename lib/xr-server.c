@@ -144,6 +144,7 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_servlet* servlet
 
 static int _xr_server_servlet_call(xr_server* server, xr_servlet* servlet)
 {
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, servlet=%p)", server, servlet);
   g_assert(server != NULL);
   g_assert(servlet != NULL);
 
@@ -181,6 +182,7 @@ static int _xr_server_servlet_call(xr_server* server, xr_servlet* servlet)
 
 static int _xr_server_servlet_run(xr_servlet* servlet, xr_server* server)
 {
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(servlet=%p, server=%p)", servlet, server);
   g_assert(server != NULL);
   g_assert(servlet != NULL);
 
@@ -214,12 +216,14 @@ static int _xr_server_servlet_run(xr_servlet* servlet, xr_server* server)
 
 void xr_server_stop(xr_server* server)
 {
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p)", server);
   g_assert(server != NULL);
   server->running = 0;
 }
 
 static int _xr_server_accept_connection(xr_server* server, GError** err)
 {
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, err=%p)", server, err);
   GError* local_err = NULL;
 
   g_assert(server != NULL);
@@ -255,6 +259,7 @@ static int _xr_server_accept_connection(xr_server* server, GError** err)
 
 int xr_server_run(xr_server* server, GError** err)
 {
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, err=%p)", server, err);
   GError* local_err = NULL;
   fd_set set, setcopy;
   struct timeval tv, tvcopy;
@@ -296,6 +301,7 @@ int xr_server_run(xr_server* server, GError** err)
 
 int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
 {
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, servlet=%p)", server, servlet);
   g_assert(server != NULL);
   g_assert(servlet != NULL);
   if (!_find_servlet_def(server, servlet->name))
@@ -305,6 +311,7 @@ int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
 
 xr_server* xr_server_new(const char* cert, int threads, GError** err)
 {
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(cert=%s, threads=%d, err=%p)", cert, threads, err);
   GError* local_err = NULL;
 
   g_assert(threads > 0 && threads < 1000);
@@ -353,6 +360,7 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
 
 int xr_server_bind(xr_server* server, const char* port, GError** err)
 {
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, port=%s, err=%p)", server, port, err);
   g_assert(server != NULL);
   g_assert(port != NULL);
   g_return_val_if_fail (err == NULL || *err == NULL, -1);
@@ -395,6 +403,7 @@ int xr_server_bind(xr_server* server, const char* port, GError** err)
 
 void xr_server_free(xr_server* server)
 {
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p)", server);
   g_assert(server != NULL);
   g_thread_pool_free(server->pool, TRUE, TRUE);
   BIO_free_all(server->bio_in);
@@ -464,5 +473,6 @@ GSource* xr_server_source(xr_server* server)
   watch->pollfd.events = G_IO_IN;
 
   g_source_add_poll(source, &watch->pollfd);
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p) = %p", server, source);
   return source;
 }
