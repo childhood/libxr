@@ -1,7 +1,7 @@
 namespace T;
 
-error ERR1;
-error ERR2;
+error ERR1 = 1;
+error ERR2 = 2;
 
 struct Struct
 {
@@ -39,7 +39,11 @@ servlet Test1
 {
 <%
 #include <stdio.h>
+#include <string.h>
 %>
+
+  error NOTHING = 2;
+  error NO_DATA = 5;
 
     AllTypes getAll()
     <%
