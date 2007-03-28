@@ -246,6 +246,22 @@ void gen_marchalizers(FILE* f, xdl_model* xdl, xdl_servlet* s)
   }
 }
 
+void gen_errors_enum(FILE* f, GSList* errs)
+{
+  GSList* j;
+  if (errs == NULL)
+    return;
+  EL(0, "enum");
+  EL(0, "{");
+  for (j=errs; j; j=j->next)
+  {
+    xdl_error_code* e = j->data;
+    EL(1, "%s = %d,", e->cenum, e->code);
+  }
+  EL(0, "};");
+  NL;
+}
+
 /* main() */
 
 static gchar* out_dir = NULL;
@@ -307,6 +323,8 @@ int main(int ac, char* av[])
   EL(0, "#include <xr-value.h>");
   NL;
 
+  gen_errors_enum(f, xdl->errors);
+
   gen_type_defs(f, xdl->types);
 
   for (j=xdl->types; j; j=j->next)
@@ -361,6 +379,8 @@ int main(int ac, char* av[])
 
     EL(0, "#include \"%sCommon.h\"", xdl->name);
     NL;
+
+    gen_errors_enum(f, s->errors);
 
     gen_type_defs(f, s->types);
 
