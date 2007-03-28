@@ -35,8 +35,9 @@ xr_blob* xr_blob_new(char* buf, int len)
 xr_blob* xr_blob_ref(xr_blob* b)
 {
   if (b == NULL)
-    return;
+    return NULL;
   b->refs++;
+  return b;
 }
 
 void xr_blob_unref(xr_blob* b)
