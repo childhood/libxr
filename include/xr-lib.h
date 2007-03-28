@@ -29,7 +29,7 @@ enum
 extern int xr_debug_enabled;
 
 #define xr_debug(mask, fmt, args...) \
-  do { if (G_UNLIKELY(xr_debug_enabled & mask)) _xr_debug(G_STRFUNC, fmt, ## args); } while(0)
+  do { if (G_UNLIKELY(xr_debug_enabled & mask)) _xr_debug(G_STRFUNC, fmt ": ", ## args); } while(0)
 
 #define xr_trace(mask, fmt, args...) \
   do { if (G_UNLIKELY(xr_debug_enabled & mask)) _xr_debug(G_STRFUNC, fmt, ## args); } while(0)

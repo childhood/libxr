@@ -14,7 +14,7 @@ void _xr_debug(const char* loc, const char* fmt, ...)
     g_thread_init(NULL);
   g_static_mutex_lock(&mutex);
   if (loc != NULL)
-    fprintf(stderr, "%s: ", loc);
+    fprintf(stderr, "%s", loc);
   va_list ap;
   va_start(ap, fmt);
   vfprintf(stderr, fmt, ap);
