@@ -62,6 +62,7 @@ string_literal              \"{string_character}*\"
 ">"                         { uploc; return CLOSE_SBRACE; }
 ";"                         { uploc; return SEMICOLON; }
 ","                         { uploc; return COMMA; }
+"="                         { uploc; return EQUAL; }
 struct                      { uploc; return STRUCT; }
 array                       { uploc; return ARRAY; }
 servlet                     { uploc; return SERVLET; }

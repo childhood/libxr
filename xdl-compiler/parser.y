@@ -44,6 +44,7 @@ xdl_servlet* cur_servlet = NULL;
 %token CLOSE_RBRACE ")"
 %token SEMICOLON ";"
 %token COMMA ","
+%token EQUAL "="
 %token STRUCT "struct"
 %token ARRAY "array"
 %token SERVLET "servlet"
@@ -124,9 +125,9 @@ toplevel_decl
 /* error */
 
 error_decl
-  : "error" IDENTIFIER ";"
+  : "error" IDENTIFIER "=" INTEGER_LITERAL ";"
     {
-      xdl_error_new(xdl, cur_servlet, $2);
+      xdl_error_new(xdl, cur_servlet, $2, $4);
     }
   ;
 

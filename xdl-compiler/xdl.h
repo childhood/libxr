@@ -98,6 +98,7 @@ struct _xdl_error_code
 {
   char* name;
   char* cenum; /* C enum value */
+  int code;
   char* doc;
 };
 
@@ -115,7 +116,7 @@ xdl_model* xdl_new();
 
 int xdl_load(xdl_model *ctx, const char* path);
 
-xdl_error_code* xdl_error_new(xdl_model *xdl, xdl_servlet *servlet, char* name);
+xdl_error_code* xdl_error_new(xdl_model *xdl, xdl_servlet *servlet, char* name, int code);
 
 xdl_typedef* xdl_typedef_new_array(xdl_model *xdl, xdl_servlet *servlet, xdl_typedef* item);
 xdl_typedef* xdl_typedef_new_struct(xdl_model *xdl, xdl_servlet *servlet, char* name);
