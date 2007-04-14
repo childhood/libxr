@@ -1,3 +1,44 @@
+0.9.7 - 2006-12-01
+~~~~~~~~~~~~~~~~~~
+- Fix integer value encoding if passed as <value><i4>1<i4/></value>
+- 
+
+0.9.6 - 2006-12-01
+~~~~~~~~~~~~~~~~~~
+- Send Connection: keep-alive HTTP header. This is necessary for ruby XML-RPC
+  client to not drop connection after first request. You will also need this
+  patch to make it work:
+  http://rubyforge.org/tracker/?group_id=426&atid=1698&func=detail&aid=9353
+- Implement tracing infrastructure.
+- Allow to specify faults and their codes in XDL.
+
+0.9.5 - 2006-12-01
+~~~~~~~~~~~~~~~~~~
+- Get rid of bind error.
+- Get errors from OpenSSL BIO the right way.
+- Use safe signal handlers.
+- Blobs are now fully supported.
+- Fix compatibility with XML-RPC spec:
+  - boolean encoding
+  - fault encoding
+
+0.9.4 - 2006-12-01
+~~~~~~~~~~~~~~~~~~
+- Don't assume that exceptions with 0 means no error.
+
+0.9.3 - 2006-12-01
+~~~~~~~~~~~~~~~~~~
+- Improve error handling (use GError wherever possible).
+- Implement pre_call and post_call hooks.
+- Added some unit tests.
+- Improve error messages.
+- Support blobs (base64).
+
+0.9.2 - 2006-12-01
+~~~~~~~~~~~~~~~~~~
+- Allow to generate source code for client and server separately.
+  See xdl-compiler --mode option.
+
 0.9.1 - 2006-12-01
 ~~~~~~~~~~~~~~~~~~
 - Added some unit tests
