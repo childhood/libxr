@@ -249,7 +249,7 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
 {
   for_each_node(node, tn)
   {
-    if (match_node(tn, "int"))
+    if (match_node(tn, "int") || match_node(tn, "i4"))
       return xr_value_int_new(xml_get_cont_int(tn));
     else if (match_node(tn, "string"))
       return xr_value_string_new(xml_get_cont_str(tn));
