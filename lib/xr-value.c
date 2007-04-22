@@ -290,16 +290,14 @@ void xr_value_dump(xr_value* v, int indent)
   switch (xr_value_get_type(v))
   {
     case XRV_ARRAY:
-      printf("ARRAY\n");
+      printf("ARRAY:LENGTH=%d\n", g_slist_length(xr_value_get_items(v)));
       for (i = xr_value_get_items(v); i; i = i->next)
         xr_value_dump(i->data, indent+1);
-      printf("%sARRAY END\n", buf);
       break;
     case XRV_STRUCT:
-      printf("STRUCT\n");
+      printf("STRUCT:\n");
       for (i = xr_value_get_members(v); i; i = i->next)
         xr_value_dump(i->data, indent+1);
-      printf("%sSTRUCT END\n", buf);
       break;
     case XRV_MEMBER:
       printf("MEMBER:%s\n", xr_value_get_member_name(v));
@@ -332,7 +330,7 @@ void xr_value_dump(xr_value* v, int indent)
     }
     case XRV_BLOB:
     {
-      printf("BLOB:\n");
+      printf("BLOB:<NOT DUMPED>\n");
       break;
     }
   }

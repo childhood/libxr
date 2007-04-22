@@ -495,23 +495,22 @@ void xr_call_dump(xr_call* call, int indent)
   memset(buf, ' ', indent*2);
 
   printf("%sCALL:%s\n", buf, call->method ? call->method : "<NO METHOD>");
-  
   GSList* i;
   int n = 0;
+  printf("%s  PARAMS:\n", buf);
   for (i = call->params; i; i = i->next)
   {
-    printf("%s  PARAM:%d\n", buf, n);
     xr_value_dump(i->data, indent+2);
-    printf("%s  PARAM END\n", buf);
     n++;
   }
   if (call->retval)
   {
-    printf("%s  RETVAL\n", buf);
+    printf("%s  RETVAL:\n", buf);
     xr_value_dump(call->retval, indent+2);
-    printf("%s  RETVAL END\n", buf);
   }
-  printf("%s  ERR CODE:%d\n", buf, call->errcode);
-  printf("%s  ERR MSG:%s\n", buf, call->errmsg ? call->errmsg : "<NO MESSAGE>");
-  printf("%sCALL END\n", buf);
+  if (call->errcode || call->errmsg)
+  {
+    printf("%s  ERR CODE:%d\n", buf, call->errcode);
+    printf("%s  ERR MSG:%s\n", buf, call->errmsg ? call->errmsg : "<NO MESSAGE>");
+  }
 }
