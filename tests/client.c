@@ -39,6 +39,14 @@ int main(int ac, char* av[])
   _check_err(err);
   err = NULL;
 
+  int i;
+  arr = NULL;
+  for (i=0; i<5000; i++)
+    arr = g_slist_append(arr, g_strdup_printf("user.bob%d@zonio.net", i));
+  TTest1_putBigArray(conn, arr, &err);
+  _check_err(err);
+  err = NULL;
+
   /* call some servlet methods */
   TAllTypes* t = TTest1_getAll(conn, &err);
   _check_err(err);
