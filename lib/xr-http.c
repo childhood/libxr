@@ -3,6 +3,7 @@
 #include <regex.h>
 
 #include "xr-http.h"
+#include "xr-lib.h"
 
 struct _xr_http
 {
@@ -137,11 +138,14 @@ xr_http* xr_http_new(BIO* bio)
 
   xr_http* http = g_new0(xr_http, 1);
   http->bio = bio;
+
+  xr_trace(XR_DEBUG_HTTP_TRACE, "(bio=%p) = %p", bio, http);
   return http;
 }
 
 void xr_http_free(xr_http* http)
 {
+  xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
   g_strfreev(http->headers);
   g_free(http->req_resource);
   g_free(http->req_method);
@@ -210,6 +214,7 @@ int xr_http_receive(xr_http* http, int message_type, gchar** buffer, gint* lengt
   fflush(stdout);
 #endif
 
+  xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p, message_type=%d, *buffer=%p, *length=%d)", http, message_type, *buffer, *length);
   return 0;
 }
 
@@ -221,6 +226,8 @@ int xr_http_send(xr_http* http, int message_type, gchar* buffer, gint length)
   char* header;
   int header_length;
   int retval = -1;
+
+  xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p, message_type=%d, buffer=%p, length=%d)", http, message_type, buffer, length);
 
   if (message_type == XR_HTTP_REQUEST)
   {
@@ -275,6 +282,8 @@ gchar* xr_http_get_header(xr_http* http, const gchar* name)
   g_assert(http->headers != NULL);
   g_assert(name != NULL);
 
+  xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p, name=%s)", http, name);
+
   headers_count = g_strv_length(http->headers);
   for (i=1; i<headers_count; i++)
   {
@@ -291,6 +300,8 @@ void xr_http_setup_request(xr_http* http, gchar* method, gchar* resource, gchar*
 {
   g_assert(http != NULL);
 
+  xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p, method=%s, resource=%s, host=%s)", http, method, resource, host);
+
   g_free(http->req_method);
   http->req_method = g_strdup(method);
   g_free(http->req_resource);
@@ -302,6 +313,9 @@ void xr_http_setup_request(xr_http* http, gchar* method, gchar* resource, gchar*
 void xr_http_setup_response(xr_http* http, gint code)
 {
   g_assert(http != NULL);
+
+  xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p, code=%d)", http, code);
+
   http->res_code = code;
   switch (code)
   {
@@ -316,5 +330,6 @@ void xr_http_setup_response(xr_http* http, gint code)
 char* xr_http_get_resource(xr_http* http)
 {
   g_assert(http != NULL);
+  xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p) = %s", http, http->req_resource);
   return g_strdup(http->req_resource);
 }
