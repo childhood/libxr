@@ -22,7 +22,6 @@ struct _xr_http
 };
 
 #define READ_STEP 128
-//#define DEBUG
 
 static int _xr_http_parse_status_line(xr_http* http, char* line)
 {
@@ -187,10 +186,12 @@ int xr_http_receive(xr_http* http, int message_type, gchar** buffer, gint* lengt
     }
   }
 
-#ifdef DEBUG
-  fwrite(header, header_length, 1, stdout);
-  fflush(stdout);
-#endif
+  if (xr_debug_enabled & XR_DEBUG_HTTP)
+  {
+    printf(">>>>> HTTP RECEIVE START >>>>>\n");
+    fwrite(header, header_length, 1, stdout);
+    fflush(stdout);
+  }
 
   if (_xr_http_parse_headers(http, message_type, header) < 0)
     return -1;
@@ -209,10 +210,12 @@ int xr_http_receive(xr_http* http, int message_type, gchar** buffer, gint* lengt
   *buffer = _buffer;
   *length = _length;
 
-#ifdef DEBUG
-  fwrite(_buffer, _length, 1, stdout);
-  fflush(stdout);
-#endif
+  if (xr_debug_enabled & XR_DEBUG_HTTP)
+  {
+    fwrite(_buffer, _length, 1, stdout);
+    printf(">>>>> HTTP RECEIVE END >>>>>>>\n");
+    fflush(stdout);
+  }
 
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p, message_type=%d, *buffer=%p, *length=%d)", http, message_type, *buffer, *length);
   return 0;
@@ -262,11 +265,14 @@ int xr_http_send(xr_http* http, int message_type, gchar* buffer, gint length)
   if (BIO_write(http->bio, buffer, length) != length)
     goto err;
 
-#ifdef DEBUG
-  printf("%s", header);
-  fwrite(buffer, length, 1, stdout);
-  fflush(stdout);
-#endif
+  if (xr_debug_enabled & XR_DEBUG_HTTP)
+  {
+    printf("<<<<< HTTP SEND START <<<<<\n");
+    printf("%s", header);
+    fwrite(buffer, length, 1, stdout);
+    fflush(stdout);
+    printf("<<<<< HTTP SEND END <<<<<<<\n");
+  }
 
   retval = 0;
  err:
