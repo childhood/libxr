@@ -70,6 +70,13 @@ servlet Test1
         //printf("setAll()\n");
     %>
 
+    array<string> getBigArray()
+    <%
+      int i;
+      for (i=0; i<5000; i++)
+        retval = g_slist_append(retval, g_strdup_printf("user.bob%d@zonio.net", i));
+    %>
+
     __attrs__
     <%
         char* username;

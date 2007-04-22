@@ -35,6 +35,10 @@ int main(int ac, char* av[])
     return 1;
   }
 
+  GSList* arr = TTest1_getBigArray(conn, &err);
+  _check_err(err);
+  err = NULL;
+
   /* call some servlet methods */
   TAllTypes* t = TTest1_getAll(conn, &err);
   _check_err(err);
