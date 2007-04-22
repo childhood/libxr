@@ -116,6 +116,21 @@ static char* _find_eoh(char* buf, int len)
   return NULL;
 }
 
+int BIO_xread(BIO* bio, void* buf, int len)
+{
+  int bytes_read = 0;
+  while (bytes_read < len)
+  {
+    int rs = BIO_read(bio, buf+bytes_read, len-bytes_read);
+    if (rs < 0)
+      return -1;
+    if (rs == 0)
+      return bytes_read;
+    bytes_read += rs;
+  }
+  return len;
+}
+
 xr_http* xr_http_new(BIO* bio)
 {
   g_assert(bio != NULL);
@@ -153,7 +168,7 @@ int xr_http_receive(xr_http* http, int message_type, gchar** buffer, gint* lengt
   {
     if (header_length + READ_STEP > sizeof(header)-1)
       return -1;
-    int bytes_read = BIO_read(http->bio, header + header_length, READ_STEP);
+    int bytes_read = BIO_xread(http->bio, header + header_length, READ_STEP);
     if (bytes_read <= 0)
       return -1;
     char* eoh = _find_eoh(header + header_length, bytes_read);
@@ -180,7 +195,7 @@ int xr_http_receive(xr_http* http, int message_type, gchar** buffer, gint* lengt
   _buffer = g_malloc(_length);  
   memcpy(_buffer, buffer_preread, length_preread);
 
-  if (BIO_read(http->bio, _buffer + length_preread, _length - length_preread) 
+  if (BIO_xread(http->bio, _buffer + length_preread, _length - length_preread)
       != _length - length_preread)
   {
     g_free(_buffer);
