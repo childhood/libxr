@@ -194,6 +194,8 @@ int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   rs = xr_call_unserialize_response(call, buffer, length);
   g_free(buffer);
   xr_http_free(http);
+  if (xr_debug_enabled & XR_DEBUG_CALL)
+    xr_call_dump(call, 0);
 
   if (rs)
   {

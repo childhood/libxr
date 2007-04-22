@@ -166,6 +166,8 @@ static int _xr_server_servlet_call(xr_server* server, xr_servlet* servlet)
   else
     _xr_server_servlet_method_call(server, servlet, call);
   xr_call_serialize_response(call, &buffer, &length);
+  if (xr_debug_enabled & XR_DEBUG_CALL)
+    xr_call_dump(call, 0);
   xr_call_free(call);
 
   xr_http_setup_response(http, 200);
