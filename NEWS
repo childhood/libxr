@@ -1,9 +1,14 @@
-0.9.7 - 2006-12-01
+0.9.8 - 2007-04-22
+~~~~~~~~~~~~~~~~~~
+- Improve debugging options: runtime selectable dumping of HTTP
+  requests/responses and parsed RPC calls
+- Fix bug when receiving big response from the server.
+
+0.9.7 - 2007-04-14
 ~~~~~~~~~~~~~~~~~~
 - Fix integer value encoding if passed as <value><i4>1<i4/></value>
-- 
 
-0.9.6 - 2006-12-01
+0.9.6 - 2007-03-28
 ~~~~~~~~~~~~~~~~~~
 - Send Connection: keep-alive HTTP header. This is necessary for ruby XML-RPC
   client to not drop connection after first request. You will also need this
@@ -12,7 +17,7 @@
 - Implement tracing infrastructure.
 - Allow to specify faults and their codes in XDL.
 
-0.9.5 - 2006-12-01
+0.9.5 - 2007-03-18
 ~~~~~~~~~~~~~~~~~~
 - Get rid of bind error.
 - Get errors from OpenSSL BIO the right way.
@@ -22,11 +27,11 @@
   - boolean encoding
   - fault encoding
 
-0.9.4 - 2006-12-01
+0.9.4 - 2007-02-22
 ~~~~~~~~~~~~~~~~~~
 - Don't assume that exceptions with 0 means no error.
 
-0.9.3 - 2006-12-01
+0.9.3 - 2007-01-27
 ~~~~~~~~~~~~~~~~~~
 - Improve error handling (use GError wherever possible).
 - Implement pre_call and post_call hooks.
