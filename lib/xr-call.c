@@ -189,8 +189,6 @@ void xr_call_serialize_request(xr_call* call, char** buf, int* len)
   g_assert(buf != NULL);
   g_assert(len != NULL);
 
-  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, *buf=%p, *len=%d)", call, *buf, *len);
-
   xmlDoc* doc = xmlNewDoc(BAD_CAST "1.0");
   xmlNode* root = xmlNewNode(NULL, BAD_CAST "methodCall");
   xmlDocSetRootElement(doc, root);
@@ -205,6 +203,8 @@ void xr_call_serialize_request(xr_call* call, char** buf, int* len)
 
   xmlDocDumpFormatMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8", 1);
   xmlFreeDoc(doc);
+
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, *buf=%p, *len=%d)", call, *buf, *len);
 }
 
 void xr_call_free_buffer(char* buf)
@@ -217,8 +217,6 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len)
   g_assert(call != NULL);
   g_assert(buf != NULL);
   g_assert(len != NULL);
-
-  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, *buf=%p, *len=%d)", call, *buf, *len);
 
   xmlDoc* doc = xmlNewDoc(BAD_CAST "1.0");
   xmlNode* root = xmlNewNode(NULL, BAD_CAST "methodResponse");
@@ -241,6 +239,8 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len)
 
   xmlDocDumpFormatMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8", 1);
   xmlFreeDoc(doc);
+
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, *buf=%p, *len=%d)", call, *buf, *len);
 }
 
 // return NULL if some unrecognized XML elements are found
