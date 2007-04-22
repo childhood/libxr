@@ -12,17 +12,17 @@
 
 enum
 {
-  XR_DEBUG_HTTP             = (1 << 0),
-  XR_DEBUG_HTTP_TRACE       = (1 << 1),
-  XR_DEBUG_SERVER           = (1 << 2),
-  XR_DEBUG_SERVER_TRACE     = (1 << 3),
-  XR_DEBUG_CLIENT           = (1 << 4),
-  XR_DEBUG_CLIENT_TRACE     = (1 << 5),
-  XR_DEBUG_SERVLET          = (1 << 6),
-  XR_DEBUG_SERVLET_TRACE    = (1 << 7),
-  XR_DEBUG_CALL             = (1 << 8),
-  XR_DEBUG_CALL_TRACE       = (1 << 9),
-  XR_DEBUG_LIB              = (1 << 10),
+  XR_DEBUG_HTTP             = (1 << 0),  /**< Dump HTTP requests/responses. */
+  XR_DEBUG_HTTP_TRACE       = (1 << 1),  /**< Trace HTTP calls. */
+  XR_DEBUG_SERVER           = (1 << 2),  /**< Not implemented. */
+  XR_DEBUG_SERVER_TRACE     = (1 << 3),  /**< Trace xr-server.c code. */
+  XR_DEBUG_CLIENT           = (1 << 4),  /**< Not implemented. */
+  XR_DEBUG_CLIENT_TRACE     = (1 << 5),  /**< Trace xr-client.c code. */
+  XR_DEBUG_SERVLET          = (1 << 6),  /**< Not implemented. */
+  XR_DEBUG_SERVLET_TRACE    = (1 << 7),  /**< Not implemented. */
+  XR_DEBUG_CALL             = (1 << 8),  /**< Dump RPC calls. */
+  XR_DEBUG_CALL_TRACE       = (1 << 9),  /**< Trace xr-call.c code. */
+  XR_DEBUG_LIB              = (1 << 10), /**< Not implemented. */
   XR_DEBUG_ALL              = 0xffffffff
 };
 
