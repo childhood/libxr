@@ -1,3 +1,9 @@
+0.9.9 - 2007-04-28
+~~~~~~~~~~~~~~~~~~
+- Fix compatibility with XML-RPC spec:
+  - dateTime encoding
+  - <array> must contain <data>
+
 0.9.8 - 2007-04-22
 ~~~~~~~~~~~~~~~~~~
 - Improve debugging options: runtime selectable dumping of HTTP
