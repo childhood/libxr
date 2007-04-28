@@ -117,6 +117,7 @@ static void _xr_value_serialize(xmlNode* node, xr_value* val)
   {
     case XRV_ARRAY:
       value = xmlNewChild(node, NULL, BAD_CAST "array", NULL);
+      value = xmlNewChild(value, NULL, BAD_CAST "data", NULL);
       for (i = xr_value_get_items(val); i; i = i->next)
         _xr_value_serialize(value, i->data);
       break;
@@ -275,17 +276,24 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
     else if (match_node(tn, "array"))
     {
       xr_value* arr = xr_value_array_new();
-      for_each_node(tn, v)
+      for_each_node(tn, d)
       {
-        if (match_node(v, "value"))
+        if (match_node(d, "data"))
         {
-          xr_value* elem = _xr_value_unserialize(v);
-          if (elem == NULL)
+          for_each_node(d, v)
           {
-            xr_value_free(arr);
-            return NULL;
+            if (match_node(v, "value"))
+            {
+              xr_value* elem = _xr_value_unserialize(v);
+              if (elem == NULL)
+              {
+                xr_value_free(arr);
+                return NULL;
+              }
+              xr_value_array_append(arr, elem);
+            }
           }
-          xr_value_array_append(arr, elem);
+          return arr;
         }
       }
       return arr;
