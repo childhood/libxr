@@ -2,11 +2,13 @@
 #include "xr-call.h"
 
 #define REQUEST(method, params) \
-  "<methodCall><methodName>" method "</methodName><params>" params "</params></methodCall>"
+  "<methodCall><methodName>" method "</methodName><params>" params "</params></methodCall>\n"
 #define PARAM(value) \
-  "<param>" value "</param>"
+  "<param>" value "</param>\n"
 #define VALUE(type, value) \
   "<value><" G_STRINGIFY(type) ">" value "</" G_STRINGIFY(type) "></value>"
+#define ARRAY(value) \
+  "<value><array><data>" value "</data></array></value>"
 #define MEMBER(name, value) \
   "<member><name>" G_STRINGIFY(name) "</name>" value "</member>"
 
@@ -107,13 +109,13 @@ static int requestUnserialize4()
     PARAM(VALUE(int, "1"))
     PARAM(VALUE(int, "-1"))
     PARAM(VALUE(string, "some string"))
-    PARAM(VALUE(boolean, "true"))
+    PARAM(VALUE(boolean, "1"))
     PARAM(VALUE(double, "1.2323"))
-    PARAM(VALUE(time, "2006-04-04"))
+    PARAM(VALUE(dateTime.iso8601, "2006-04-04"))
     PARAM(VALUE(base64, "bGlieHJpbmNsdWRlZGlyID0gJChpbmNsdWRlZGlyKS9saWJ4cgoKbGlieHJpbmNsdWRlX0hF\n"
                         "QURFUlMgPSBcCiAgeHItdmFsdWUuaCBcCiAgeHItY2FsbC5oIFwKICB4ci1jbGllbnQuaCBc\n"
                         "CiAgeHItc2VydmVyLmgK"))
-    PARAM(VALUE(array,
+    PARAM(ARRAY(
       VALUE(string, "f1")
       VALUE(string, "f2")
     ))
@@ -122,6 +124,7 @@ static int requestUnserialize4()
       MEMBER(m2, VALUE(string, ""))
     ))
   );
+  g_print(call_value);
   int rs = xr_call_unserialize_request(call, call_value, -1);
 //  xr_call_dump(call, 0);
   TEST_ASSERT(rs == 0);
