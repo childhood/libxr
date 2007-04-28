@@ -166,7 +166,7 @@ static void _xr_value_serialize(xmlNode* node, xr_value* val)
     {
       char* str_val = NULL;
       xr_value_to_time(val, &str_val);
-      value = xmlNewChild(node, NULL, BAD_CAST "time", BAD_CAST str_val);
+      value = xmlNewChild(node, NULL, BAD_CAST "dateTime.iso8601", BAD_CAST str_val);
       break;
     }
     case XRV_BLOB:
@@ -258,7 +258,7 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
       return xr_value_bool_new(xml_get_cont_bool(tn));
     else if (match_node(tn, "double"))
       return xr_value_double_new(xml_get_cont_double(tn));
-    else if (match_node(tn, "time"))
+    else if (match_node(tn, "dateTime.iso8601"))
       return xr_value_time_new(xml_get_cont_str(tn));
     else if (match_node(tn, "base64"))
     {
