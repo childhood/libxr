@@ -39,7 +39,10 @@ AC_SUBST(WIN32LIBS)
 # Checks for header files.
 AC_HEADER_STDC
 
-CFLAGS="$CFLAGS -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-pointer-sign -Wno-sign-compare"
+CFLAGS="$CFLAGS -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare"
+if $CC --version | head -n1 | grep '(GCC) 4\.' &>/dev/null ; then
+  CFLAGS="$CFLAGS -Wno-pointer-sign"
+fi
 
 # Output
 AC_OUTPUT([
