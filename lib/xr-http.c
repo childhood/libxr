@@ -1,6 +1,9 @@
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef HAVE_GLIB_REGEXP
 #include <regex.h>
+#endif
 
 #include "xr-http.h"
 #include "xr-lib.h"
@@ -22,6 +25,8 @@ struct _xr_http
 };
 
 #define READ_STEP 128
+
+#ifndef HAVE_GLIB_REGEXP
 
 static int _xr_http_parse_status_line(xr_http* http, char* line)
 {
@@ -75,6 +80,63 @@ static int _xr_http_parse_request_line(xr_http* http, char* line)
 
   return 0;
 }
+
+#else
+
+static int _xr_http_parse_status_line(xr_http* http, char* line)
+{
+  static GRegex* regex = NULL;
+  GMatchInfo *match_info = NULL;
+  char* code;
+  
+  g_assert(http != NULL);
+  g_assert(line != NULL);
+
+  // precompile regexp
+  if (regex == NULL)
+  {
+    regex = g_regex_new("^HTTP/([0-9]+\\.[0-9]+) ([0-9]+) (.+)$", 0, 0, NULL);
+    g_assert(regex != NULL);
+  }
+
+  if (!g_regex_match(regex, line, 0, &match_info))
+    return -1;
+
+  code = g_match_info_fetch(match_info, 1);
+  http->res_code = atoi(code);
+  g_free(code);
+  http->res_reason = g_match_info_fetch(match_info, 2);
+  g_match_info_free(match_info);
+
+  return 0;
+}
+
+static int _xr_http_parse_request_line(xr_http* http, char* line)
+{
+  static GRegex* regex = NULL;
+  GMatchInfo *match_info = NULL;
+  
+  g_assert(http != NULL);
+  g_assert(line != NULL);
+
+  // precompile regexp
+  if (regex == NULL)
+  {
+    regex = g_regex_new("^([A-Z]+) ([^ ]+) HTTP/([0-9]+\\.[0-9]+)$", 0, 0, NULL);
+    g_assert(regex != NULL);
+  }
+
+  if (!g_regex_match(regex, line, 0, &match_info))
+    return -1;
+
+  http->req_method = g_match_info_fetch(match_info, 1);
+  http->req_resource = g_match_info_fetch(match_info, 2);
+  g_match_info_free(match_info);
+
+  return 0;
+}
+
+#endif
 
 static int _xr_http_parse_headers(xr_http* http, int message_type, char* buffer)
 {

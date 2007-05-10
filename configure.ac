@@ -24,6 +24,10 @@ PKG_CHECK_MODULES(XR, [$GLIB_REQUIRED $GTHREAD_REQUIRED $XMLRPC_REQUIRED])
 AC_SUBST(XR_CFLAGS)
 AC_SUBST(XR_LIBS)
 
+if pkg-config 'glib-2.0 >= 2.13.0' ; then
+  AC_DEFINE(HAVE_GLIB_REGEXP, 1, [whether glib supports regexps])
+fi
+
 # Checks for header files.
 AC_HEADER_STDC
 

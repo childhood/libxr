@@ -1,5 +1,8 @@
+#include <config.h>
 #include <stdlib.h>
+#ifndef HAVE_GLIB_REGEXP
 #include <regex.h>
+#endif
 
 #include "xr-client.h"
 #include "xr-http.h"
@@ -36,6 +39,8 @@ xr_client_conn* xr_client_new(GError** err)
   }
   return conn;
 }
+
+#ifndef HAVE_GLIB_REGEXP
 
 static int _parse_uri(const char* uri, int* secure, char** host, char** resource)
 {
@@ -79,6 +84,55 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
   
   return 0;
 }
+
+#else
+
+static int _parse_uri(const char* uri, int* secure, char** host, char** resource)
+{
+  static GRegex* regex = NULL;
+  GMatchInfo *match_info = NULL;
+
+  g_assert(uri != NULL);
+  g_assert(secure != NULL);
+  g_assert(host != NULL);
+  g_assert(resource != NULL);
+
+  // precompile regexp
+  if (regex == NULL)
+  {
+    regex = g_regex_new("^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", G_REGEX_CASELESS, 0, NULL);
+    g_assert(regex != NULL);
+  }
+
+  if (!g_regex_match(regex, uri, 0, &match_info))
+    return -1;
+  
+  // check schema
+  char* schema = g_match_info_fetch(match_info, 1);
+  if (!g_ascii_strcasecmp("eees", schema))
+    *secure = 1;
+  else if (!g_ascii_strcasecmp("eee", schema))
+    *secure = 0;
+  else if (!g_ascii_strcasecmp("http", schema))
+    *secure = 0;
+  else if (!g_ascii_strcasecmp("https", schema))
+    *secure = 1;
+  else
+  {
+    g_free(schema);
+    return -1;
+  }
+  g_free(schema);
+  
+  *host = g_match_info_fetch(match_info, 2);
+  *resource = g_match_info_fetch(match_info, 5);
+  if (*resource == NULL)
+    *resource = g_strdup("/RPC2");
+  
+  return 0;
+}
+
+#endif
 
 int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 {
