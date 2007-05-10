@@ -17,11 +17,13 @@ static int _check_err(GError* err)
 
 GMainLoop* mainloop;
 
+#ifndef WIN32
 static void _sig_stop(int signum)
 {
   if (g_main_loop_is_running(mainloop))
     g_main_loop_quit(mainloop);
 }
+#endif
 
 int main(int ac, char* av[])
 {

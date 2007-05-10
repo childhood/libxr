@@ -24,8 +24,13 @@ const char* xr_get_bio_error_string()
   const char* str;
   if ((str = ERR_reason_error_string(ERR_get_error())))
     return str;
+#ifndef WIN32
   if ((str = g_strerror(errno)))
     return str;
+#else
+  if (WSAGetLastError())
+    return "WSA ERROR.";
+#endif
   return "Unknown or no error.";
 }
 
@@ -55,7 +60,9 @@ void xr_ssl_init()
     return;
   _ssl_initialized = 1;
 
+#ifndef WIN32
   signal(SIGPIPE, SIG_IGN);
+#endif
 
   if (!g_thread_supported())
     g_thread_init(NULL);
@@ -77,7 +84,9 @@ void xr_ssl_fini()
   if (!_ssl_initialized)
     return;
 
+#ifndef WIN32
   signal(SIGPIPE, SIG_DFL);
+#endif
 
   if (_ssl_mutexes)
   {

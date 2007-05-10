@@ -1,6 +1,9 @@
+#ifdef WIN32
+  #include <winsock2.h>
+#else
+  #include <sys/select.h>
+#endif
 #include <stdlib.h>
-#include <regex.h>
-#include <sys/select.h>
 
 #include "xr-server.h"
 #include "xr-http.h"
@@ -284,8 +287,13 @@ int xr_server_run(xr_server* server, GError** err)
     int rs = select(maxfd, &set, NULL, NULL, &tv);
     if (rs < 0)
     {
+#ifdef WIN32
+      if (WSAGetLastError() == WSAEINTR)
+        continue;
+#else
       if (errno == EINTR)
         return 0;
+#endif
       g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "select failed: %s", g_strerror(errno));
       return -1;
     }

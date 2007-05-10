@@ -8,12 +8,14 @@ static xr_server* server = NULL;
 
 /* stop server on signal */
 
+#ifndef WIN32
 static void _sig_stop(int signum)
 {
   xr_server_stop(server);
   xr_server_free(server);
   exit(0);
 }
+#endif
 
 int _check_err(GError* err)
 {

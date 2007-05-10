@@ -13,8 +13,8 @@ AM_CFLAGS= \
 lib_LTLIBRARIES = \
   libxr.la
 
-libxr_la_LIBADD = $(XR_LIBS) -lssl -lcrypto
-libxr_la_LDFLAGS = -version-info 0:0:0 -no-undefined -z now
+libxr_la_LIBADD = $(XR_LIBS) -lssl -lcrypto $(WIN32LIBS)
+libxr_la_LDFLAGS = -version-info 0:0:0 -no-undefined
 
 libxr_la_SOURCES = \
   xr-lib.c \

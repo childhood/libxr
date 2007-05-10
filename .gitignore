@@ -8,6 +8,8 @@ Makefile.in
 *.la
 *~
 *.swp
+*.exe
+*.dll
 
 /aclocal.m4
 /autom4te.cache

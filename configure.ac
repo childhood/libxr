@@ -9,7 +9,8 @@ AM_MAINTAINER_MODE
 
 # Checks for programs.
 AC_PROG_CC
-AC_PROG_LIBTOOL
+AC_LIBTOOL_WIN32_DLL
+AM_PROG_LIBTOOL
 
 # for xdl
 AM_PROG_LEX
@@ -27,6 +28,13 @@ AC_SUBST(XR_LIBS)
 if pkg-config 'glib-2.0 >= 2.13.0' ; then
   AC_DEFINE(HAVE_GLIB_REGEXP, 1, [whether glib supports regexps])
 fi
+
+# on win32 we must link in wsock32
+WIN32LIBS=
+if [[ "$version_type" = windows ]] ; then
+  WIN32LIBS="-lwsock32"
+fi
+AC_SUBST(WIN32LIBS)
 
 # Checks for header files.
 AC_HEADER_STDC
