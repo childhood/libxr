@@ -22,6 +22,9 @@ int main(int ac, char* av[])
   char* uri = ac == 2 ? av[1] : "https://localhost:4444/TTest1";
   xr_debug_enabled = XR_DEBUG_ALL;
 
+  if (!g_thread_supported())
+    g_thread_init(NULL);
+
   /* create object for performing client connections */
   xr_client_conn* conn = xr_client_new(&err);
   if (_check_err(err))

@@ -27,6 +27,9 @@ int main(int ac, char* av[])
 {
   GError* err = NULL;
 
+  if (!g_thread_supported())
+    g_thread_init(NULL);
+
   mainloop = g_main_loop_new(NULL, FALSE);
 
   /* hookup signals to stop server, see above */
