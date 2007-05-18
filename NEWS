@@ -1,3 +1,9 @@
+0.9.10 - 2007-05-18
+~~~~~~~~~~~~~~~~~~~
+- Win32 port using mingw32 toolchain.
+- Use GRegex if glib >= 2.13.0 is detected. 
+- Improve gcc-3.x support
+
 0.9.9 - 2007-04-28
 ~~~~~~~~~~~~~~~~~~
 - Fix compatibility with XML-RPC spec:
