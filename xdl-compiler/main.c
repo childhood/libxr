@@ -14,7 +14,7 @@
   line_fprintf(f, i, fmt, ##args)
 
 #define NL \
-  fprintf(f, "\n")
+  line_fprintf(f, 0, "\n")
 
 #define S(args...) \
   g_strdup_printf(args)
@@ -22,21 +22,39 @@
 #define OPEN(fmt, args...) { \
   if (f) \
     fclose(f); \
-  f = fopen(S(fmt, ##args), "w"); \
+  f = fopen(current_file = S(fmt, ##args), "w"); \
   if (f == NULL) { \
     fprintf(stderr, "Can't open output file for writing."); exit(1); } \
-  }
+  } \
+  current_line = 1
+
+static int current_line;
+char* current_file = NULL;
 
 static void line_fprintf(FILE* f, int indent, const char* fmt, ...)
 {
-  va_list ap;
   int i;
-  for (i=0;i<indent;i++)
+  va_list ap;
+
+  for (i=0; i<indent; i++)
     fprintf(f, "    ");
+
   va_start(ap, fmt);
-  vfprintf(f, fmt, ap);
+  char* v = g_strdup_vprintf(fmt, ap);
   va_end(ap);
+
+  fprintf(f, "%s", v);
+
+  for (i=0; i<strlen(v); i++)
+    if (v[i] == '\n')
+      current_line++;
 }
+
+#define ORIG_LINE() \
+  EL(0, "#line %d \"%s\"", current_line+1, current_file)
+
+#define FILE_LINE(_line, _file) \
+  EL(0, "#line %d \"%s\"", _line, _file)
 
 void gen_type_marchalizers(FILE* f, xdl_typedef* t)
 {
@@ -636,8 +654,9 @@ int main(int ac, char* av[])
 
     if (s->stub_header)
     {
-      EL(0, "#line %d \"%s\"", s->stub_header_line, xdl_file);
+      FILE_LINE(s->stub_header_line, xdl_file);
       EL(1, "%s", s->stub_header);
+      ORIG_LINE();
       NL;
     }
 
@@ -645,8 +664,9 @@ int main(int ac, char* av[])
     EL(0, "{");
     if (s->stub_attrs)
     {
-      EL(0, "#line %d \"%s\"", s->stub_attrs_line, xdl_file);
+      FILE_LINE(s->stub_attrs_line, xdl_file);
       EL(1, "%s", s->stub_attrs);
+      ORIG_LINE();
     }
     EL(0, "};");
     NL;
@@ -662,8 +682,9 @@ int main(int ac, char* av[])
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
     if (s->stub_init)
     {
-      EL(0, "#line %d \"%s\"", s->stub_init_line, xdl_file);
+      FILE_LINE(s->stub_init_line, xdl_file);
       EL(1, "%s", s->stub_init);
+      ORIG_LINE();
     }
     EL(1, "return 0;");
     EL(0, "}");
@@ -674,8 +695,9 @@ int main(int ac, char* av[])
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
     if (s->stub_fini)
     {
-      EL(0, "#line %d \"%s\"", s->stub_fini_line, xdl_file);
+      FILE_LINE(s->stub_fini_line, xdl_file);
       EL(1, "%s", s->stub_fini);
+      ORIG_LINE();
     }
     EL(0, "}");
     NL;
@@ -685,8 +707,9 @@ int main(int ac, char* av[])
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
     if (s->stub_pre_call)
     {
-      EL(0, "#line %d \"%s\"", s->stub_pre_call_line, xdl_file);
+      FILE_LINE(s->stub_pre_call_line, xdl_file);
       EL(1, "%s", s->stub_pre_call);
+      ORIG_LINE();
     }
     EL(1, "return TRUE;");
     EL(0, "}");
@@ -697,8 +720,9 @@ int main(int ac, char* av[])
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
     if (s->stub_post_call)
     {
-      EL(0, "#line %d \"%s\"", s->stub_post_call_line, xdl_file);
+      FILE_LINE(s->stub_post_call_line, xdl_file);
       EL(1, "%s", s->stub_post_call);
+      ORIG_LINE();
     }
     EL(1, "return TRUE;");
     EL(0, "}");
@@ -720,8 +744,9 @@ int main(int ac, char* av[])
       EL(1, "%s retval = %s;", m->return_type->ctype, m->return_type->cnull);
       if (m->stub_impl)
       {
-        EL(0, "#line %d \"%s\"", m->stub_impl_line, xdl_file);
+        FILE_LINE(m->stub_impl_line, xdl_file);
         EL(1, "%s", m->stub_impl);
+        ORIG_LINE();
       }
       else
         EL(1, "g_set_error(_error, 0, 1, \"Method is not implemented. (%s)\");", m->name);
