@@ -29,13 +29,13 @@ xdl_typedef* xdl_typedef_new(int type, char* name, char* cname, char* ctype, cha
 xdl_model* xdl_new()
 {
   xdl_model* c = g_new0(xdl_model, 1);
-  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "int",      "int",      "int",    "-1",    "xr_value_to_int", "xr_value_int_new", NULL));
-  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "boolean",  "boolean",  "gboolean", "FALSE","xr_value_to_bool", "xr_value_bool_new", NULL));
-  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "string",   "string",   "char*",  "NULL",  "xr_value_to_string", "xr_value_string_new", "g_free"));
-  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "double",   "double",   "double", "0.0",   "xr_value_to_double", "xr_value_double_new", NULL));
-  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "time",     "time",     "char*",  "NULL",  "xr_value_to_time", "xr_value_time_new", "g_free"));
-  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BLOB, "blob",     "blob",     "xr_blob*",  "NULL",  "xr_value_to_blob", "xr_value_blob_new", "xr_blob_unref"));
-  c->types = g_slist_append(c->types, xdl_typedef_new(TD_ANY,  "any",      "any",      "xr_value*", "NULL", NULL, NULL, "xr_value_free"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "int",      "int",      "int",       "-1",    "xr_value_to_int",    "xr_value_int_new",    NULL));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "boolean",  "boolean",  "gboolean",  "FALSE", "xr_value_to_bool",   "xr_value_bool_new",   NULL));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "string",   "string",   "char*",     "NULL",  "xr_value_to_string", "xr_value_string_new", "g_free"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "double",   "double",   "double",    "0.0",   "xr_value_to_double", "xr_value_double_new", NULL));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BASE, "time",     "time",     "char*",     "NULL",  "xr_value_to_time",   "xr_value_time_new",   "g_free"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_BLOB, "blob",     "blob",     "xr_blob*",  "NULL",  "xr_value_to_blob",   "xr_value_blob_new",   "xr_blob_unref"));
+  c->types = g_slist_append(c->types, xdl_typedef_new(TD_ANY,  "any",      "any",      "xr_value*", "NULL",  NULL,                 NULL,                  "xr_value_free"));
   c->name = "";
   return c;
 }
