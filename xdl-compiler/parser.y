@@ -206,7 +206,7 @@ servlet_body_decl
     {
       cur_servlet->methods = g_slist_append(cur_servlet->methods, $1);
       $1->stub_impl = $2;
-      $1->stub_impl_line = yylloc.first_line-2;
+      $1->stub_impl_line = yylloc.first_line-1;
     }
   | method_decl ";"
     {
@@ -215,27 +215,27 @@ servlet_body_decl
   | "__init__" INLINE_CODE
     {
       cur_servlet->stub_init = $2;
-      cur_servlet->stub_init_line = yylloc.first_line-2;
+      cur_servlet->stub_init_line = yylloc.first_line-1;
     }
   | "__fini__" INLINE_CODE
     {
       cur_servlet->stub_fini = $2;
-      cur_servlet->stub_fini_line = yylloc.first_line-2;
+      cur_servlet->stub_fini_line = yylloc.first_line-1;
     }
   | "__attrs__" INLINE_CODE
     {
       cur_servlet->stub_attrs = $2;
-      cur_servlet->stub_attrs_line = yylloc.first_line-2;
+      cur_servlet->stub_attrs_line = yylloc.first_line-1;
     }
   | "__pre_call__" INLINE_CODE
     {
       cur_servlet->stub_pre_call = $2;
-      cur_servlet->stub_pre_call_line = yylloc.first_line;
+      cur_servlet->stub_pre_call_line = yylloc.first_line-1;
     }
   | "__post_call__" INLINE_CODE
     {
       cur_servlet->stub_post_call = $2;
-      cur_servlet->stub_post_call_line = yylloc.first_line;
+      cur_servlet->stub_post_call_line = yylloc.first_line-1;
     }
   | error_decl
   ;
