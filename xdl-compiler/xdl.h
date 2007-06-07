@@ -110,11 +110,15 @@ struct _xdl_model
   GSList* errors;
   GSList* servlets;
   GSList* types;    /* global types */
+
+  // parser helpers
+  xdl_servlet* cur_servlet;
 };
 
 xdl_model* xdl_new();
 
-int xdl_load(xdl_model *ctx, const char* path);
+xdl_model* xdl_parse_string(const char* str, GError** err);
+xdl_model* xdl_parse_file(const char* str, GError** err);
 
 xdl_error_code* xdl_error_new(xdl_model *xdl, xdl_servlet *servlet, char* name, int code);
 

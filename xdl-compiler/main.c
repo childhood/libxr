@@ -56,6 +56,16 @@ static void line_fprintf(FILE* f, int indent, const char* fmt, ...)
 #define FILE_LINE(_line, _file) \
   EL(0, "#line %d \"%s\"", _line, _file)
 
+#define STUB(s) \
+  do { \
+    if (s) \
+    { \
+      FILE_LINE(s##_line+1, xdl_file); \
+      EL(0, "%s", s); \
+      ORIG_LINE(); \
+    } \
+  } while(0)
+
 void gen_type_marchalizers(FILE* f, xdl_typedef* t)
 {
   GSList *i, *j, *k;
@@ -297,6 +307,7 @@ static GOptionEntry entries[] =
 
 int main(int ac, char* av[])
 {
+  GError* err = NULL;
   GOptionContext* ctx = g_option_context_new("- XML-RPC Interface Generator.");
   g_option_context_add_main_entries(ctx, entries, NULL);
   g_option_context_parse(ctx, &ac, &av, NULL);
@@ -314,8 +325,12 @@ int main(int ac, char* av[])
     return 1;
   }
   
-  xdl_model* xdl = xdl_new();
-  xdl_load(xdl, xdl_file);
+  xdl_model* xdl = xdl_parse_file(xdl_file, &err);
+  if (err)
+  {
+    printf("%s\n", err->message);
+    exit(1);
+  }
   xdl_process(xdl);
 
   FILE* f = NULL;
@@ -654,20 +669,13 @@ int main(int ac, char* av[])
 
     if (s->stub_header)
     {
-      FILE_LINE(s->stub_header_line, xdl_file);
-      EL(1, "%s", s->stub_header);
-      ORIG_LINE();
+      STUB(s->stub_header);
       NL;
     }
 
     EL(0, "struct _%s%sServlet", xdl->name, s->name);
     EL(0, "{");
-    if (s->stub_attrs)
-    {
-      FILE_LINE(s->stub_attrs_line, xdl_file);
-      EL(1, "%s", s->stub_attrs);
-      ORIG_LINE();
-    }
+    STUB(s->stub_attrs);
     EL(0, "};");
     NL;
 
@@ -680,12 +688,7 @@ int main(int ac, char* av[])
     EL(0, "int %s%sServlet_init(xr_servlet* _servlet)", xdl->name, s->name);
     EL(0, "{");
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
-    if (s->stub_init)
-    {
-      FILE_LINE(s->stub_init_line, xdl_file);
-      EL(1, "%s", s->stub_init);
-      ORIG_LINE();
-    }
+    STUB(s->stub_init);
     EL(1, "return 0;");
     EL(0, "}");
     NL;
@@ -693,24 +696,14 @@ int main(int ac, char* av[])
     EL(0, "void %s%sServlet_fini(xr_servlet* _servlet)", xdl->name, s->name);
     EL(0, "{");
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
-    if (s->stub_fini)
-    {
-      FILE_LINE(s->stub_fini_line, xdl_file);
-      EL(1, "%s", s->stub_fini);
-      ORIG_LINE();
-    }
+    STUB(s->stub_fini);
     EL(0, "}");
     NL;
 
     EL(0, "int %s%sServlet_pre_call(xr_servlet* _servlet, xr_call* _call)", xdl->name, s->name);
     EL(0, "{");
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
-    if (s->stub_pre_call)
-    {
-      FILE_LINE(s->stub_pre_call_line, xdl_file);
-      EL(1, "%s", s->stub_pre_call);
-      ORIG_LINE();
-    }
+    STUB(s->stub_pre_call);
     EL(1, "return TRUE;");
     EL(0, "}");
     NL;
@@ -718,12 +711,7 @@ int main(int ac, char* av[])
     EL(0, "int %s%sServlet_post_call(xr_servlet* _servlet, xr_call* _call)", xdl->name, s->name);
     EL(0, "{");
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
-    if (s->stub_post_call)
-    {
-      FILE_LINE(s->stub_post_call_line, xdl_file);
-      EL(1, "%s", s->stub_post_call);
-      ORIG_LINE();
-    }
+    STUB(s->stub_post_call);
     EL(1, "return TRUE;");
     EL(0, "}");
     NL;
@@ -743,11 +731,7 @@ int main(int ac, char* av[])
       EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
       EL(1, "%s retval = %s;", m->return_type->ctype, m->return_type->cnull);
       if (m->stub_impl)
-      {
-        FILE_LINE(m->stub_impl_line, xdl_file);
-        EL(1, "%s", m->stub_impl);
-        ORIG_LINE();
-      }
+        STUB(m->stub_impl);
       else
         EL(1, "g_set_error(_error, 0, 1, \"Method is not implemented. (%s)\");", m->name);
       EL(1, "return retval;");

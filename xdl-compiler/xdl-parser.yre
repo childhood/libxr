@@ -1,0 +1,282 @@
+/* vim: set ft=c : */
+
+%name xdlParser
+%token_prefix TK_
+%token_type {token*}
+%token_destructor {token_free($$);}
+%extra_argument {parser_context *ctx}
+%syntax_error {HANDLE_SYNTAX_ERROR(TOKEN);}
+%stack_overflow {HANDLE_STACK_OVERFLOW();}
+%include {
+
+#include <stdlib.h>
+#include "parser-lib.h"
+#include "xdl-parser.h"
+#include "xdl.h"
+
+#define YYDEBUG(state, ch) \
+  printf("lexer:%d:%c\n", state, ch)
+
+DECLARE_LEXER()
+
+main:
+/*!re2c
+
+  re2c:indent:top       = 1;
+  re2c:indent:string    = "  ";
+  re2c:define:YYCTYPE   = "unsigned char";
+  re2c:define:YYCURSOR  = "c";
+  re2c:define:YYMARKER  = "q";
+  re2c:yyfill:enable    = 0;
+
+  any   = [\001-\377];
+  eoi   = "\000";
+  D     = [0-9];
+  L     = [A-Za-z_];
+  ICS   = "<%";
+  ICE   = "%>";
+  SLCOM = "//" (.\eoi)* ("\n"|eoi);
+
+  SLCOM              { EAT(); goto main; }
+  "/*"               { goto comment; }
+  ICS                { goto code; }
+  [ \t\n\r]+         { EAT(); goto main; }
+  "__init__"         { RET(TK_INIT); }
+  "__fini__"         { RET(TK_FINI); }
+  "__attrs__"        { RET(TK_ATTRS); }
+  "__pre_call__"     { RET(TK_PRECALL); }
+  "__post_call__"    { RET(TK_POSTCALL); }
+  "error"            { RET(TK_ERROR); }
+  "namespace"        { RET(TK_NAMESPACE); }
+  "servlet"          { RET(TK_SERVLET); }
+  "array"            { RET(TK_ARRAY); }
+  "struct"           { RET(TK_STRUCT); }
+  L (L|D)*           { RET(TK_ID); }
+  D+                 { RET(TK_INTEGER); }
+  "="                { RET(TK_EQ); }
+  ";"                { RET(TK_SEMICOL); }
+  "<"                { RET(TK_LT); }
+  ">"                { RET(TK_GT); }
+  "{"                { RET(TK_LB); }
+  "}"                { RET(TK_RB); }
+  "("                { RET(TK_LP); }
+  ")"                { RET(TK_RP); }
+  ","                { RET(TK_COMMA); }
+  eoi                { RET(TK_EOF); }
+  any                { RET(TK_UNKNOWN); }
+
+*/
+
+code:
+/*!re2c
+  "%>"           { RET(TK_CODE); }
+  eoi            { RET(TK_UNKNOWN); }
+  any            { goto code; }
+*/
+
+comment:
+/*!re2c
+  "*/"           { EAT(); goto main; }
+  eoi            { RET(TK_UNKNOWN); }
+  any            { goto comment; }
+*/
+
+DECLARE_LEXER_END()
+
+DECLARE_PARSER(xdlParser, xdl_parse, xdl_model*);
+
+#define MODEL ((xdl_model*)ctx->data)
+#define _MODEL ctx->data
+
+}
+
+/* non-terminal types definition */
+
+/* grammar */
+
+compilation_unit ::= opt_namespace_decl toplevel_decls.
+
+%type opt_inline_code {token*}
+opt_inline_code(Y) ::= . {
+  Y = NULL;
+}
+opt_inline_code(Y) ::= CODE(X). {
+  Y = X;
+}
+
+%type opt_doc_comment {char*}
+opt_doc_comment(Y) ::= . {
+  Y = NULL;
+}
+opt_doc_comment(Y) ::= DOC(X). {
+  Y = X->text;
+  X->text = NULL;
+  token_free(X);
+}
+
+opt_namespace_decl ::= .
+opt_namespace_decl ::= namespace_decl.
+
+namespace_decl ::= NAMESPACE ID(N) SEMICOL. {
+  if (!MODEL)
+    _MODEL = xdl_new();
+  MODEL->name = g_strdup(N->text);
+  token_free(N);
+}
+
+toplevel_decls ::= toplevel_decl.
+toplevel_decls ::= toplevel_decls toplevel_decl.
+
+toplevel_decl ::= error_decl.
+toplevel_decl ::= struct_decl(X). {
+  MODEL->types = g_slist_append(MODEL->types, X);
+}
+toplevel_decl ::= servlet_decl.
+
+error_decl ::= ERROR ID(N) EQ INTEGER(C) SEMICOL. {
+  if (!MODEL)
+    _MODEL = xdl_new();
+  xdl_error_new(MODEL, MODEL->cur_servlet, N->text, atoi(C->text));
+  token_free(N);
+  token_free(C);
+}
+
+%type struct_decl {xdl_typedef*}
+struct_decl(Y) ::= opt_doc_comment(C) STRUCT ID(N) LB struct_members(M) RB. {
+  if (!MODEL)
+    _MODEL = xdl_new();
+  if (xdl_typedef_find(MODEL, MODEL->cur_servlet, N->text))
+  {
+    printf("Redefining already defined type %s\n", N->text);
+    exit(1);
+  }
+  Y = xdl_typedef_new_struct(MODEL, MODEL->cur_servlet, N->text);
+  Y->struct_members = M;
+  Y->doc = C;
+  token_free(N);
+}
+
+%type struct_members {GSList*}
+struct_members(Y) ::= struct_member(X). {
+  Y = g_slist_append(NULL, X);
+}
+struct_members(Y) ::= struct_members(L) struct_member(X). {
+  Y = g_slist_append(L, X);
+}
+
+%type struct_member {xdl_struct_member*}
+struct_member(Y) ::= type(T) ID(N) SEMICOL. {
+  Y = g_new0(xdl_struct_member, 1);
+  Y->type = T;
+  Y->name = g_strdup(N->text);
+  token_free(N);
+}
+
+servlet_decl ::= servlet_decl_head servlet_decl_body.
+servlet_decl_head ::= opt_doc_comment(C) SERVLET ID(N). {
+  if (!MODEL)
+    _MODEL = xdl_new();
+  MODEL->cur_servlet = g_new0(xdl_servlet, 1);
+  MODEL->servlets = g_slist_append(MODEL->servlets, MODEL->cur_servlet);
+  MODEL->cur_servlet->name = g_strdup(N->text);
+  MODEL->cur_servlet->doc = C;
+  token_free(N);
+}
+servlet_decl_body ::= LB opt_inline_code(C) servlet_body_decls RB. {
+  if (C)
+  {
+    MODEL->cur_servlet->stub_header = g_strndup(C->text+2, strlen(C->text)-4);
+    MODEL->cur_servlet->stub_header_line = C->sline;
+    token_free(C);
+  }
+  MODEL->cur_servlet = NULL;
+}
+
+servlet_body_decls ::= servlet_body_decl.
+servlet_body_decls ::= servlet_body_decls servlet_body_decl.
+
+servlet_body_decl ::= struct_decl(S). {
+  MODEL->cur_servlet->types = g_slist_append(MODEL->cur_servlet->types, S);
+}
+servlet_body_decl ::= method_decl(M) CODE(C). {
+  MODEL->cur_servlet->methods = g_slist_append(MODEL->cur_servlet->methods, M);
+  M->stub_impl = g_strndup(C->text+2, strlen(C->text)-4);
+  M->stub_impl_line = C->sline;
+  token_free(C);
+}
+servlet_body_decl ::= method_decl(M) SEMICOL. {
+  MODEL->cur_servlet->methods = g_slist_append(MODEL->cur_servlet->methods, M);
+}
+servlet_body_decl ::= INIT CODE(C). {
+  MODEL->cur_servlet->stub_init = g_strndup(C->text+2, strlen(C->text)-4);
+  MODEL->cur_servlet->stub_init_line = C->sline;
+  token_free(C);
+}
+servlet_body_decl ::= FINI CODE(C). {
+  MODEL->cur_servlet->stub_fini = g_strndup(C->text+2, strlen(C->text)-4);
+  MODEL->cur_servlet->stub_fini_line = C->sline;
+  token_free(C);
+}
+servlet_body_decl ::= ATTRS CODE(C). {
+  MODEL->cur_servlet->stub_attrs = g_strndup(C->text+2, strlen(C->text)-4);
+  MODEL->cur_servlet->stub_attrs_line = C->sline;
+  token_free(C);
+}
+servlet_body_decl ::= PRECALL CODE(C). {
+  MODEL->cur_servlet->stub_pre_call = g_strndup(C->text+2, strlen(C->text)-4);
+  MODEL->cur_servlet->stub_pre_call_line = C->sline;
+  token_free(C);
+}
+servlet_body_decl ::= POSTCALL CODE(C). {
+  MODEL->cur_servlet->stub_post_call = g_strndup(C->text+2, strlen(C->text)-4);
+  MODEL->cur_servlet->stub_post_call_line = C->sline;
+  token_free(C);
+}
+servlet_body_decl ::= error_decl.
+
+%type type {xdl_typedef*}
+type(Y) ::= ARRAY LT type(T) GT. {
+  if (!MODEL)
+    _MODEL = xdl_new();
+  Y = xdl_typedef_new_array(MODEL, MODEL->cur_servlet, T);
+}
+type(Y) ::= ID(N). {
+  if (!MODEL)
+    _MODEL = xdl_new();
+  Y = xdl_typedef_find(MODEL, MODEL->cur_servlet, N->text);
+  if (Y == NULL)
+  {
+    printf("Undefined type %s\n", N->text);
+    exit(1);
+  }
+  token_free(N);
+}
+
+%type method_decl {xdl_method*}
+method_decl(Y) ::= opt_doc_comment(C) type(RT) ID(N) LP params(P) RP. {
+  Y = g_new0(xdl_method, 1);
+  Y->name = g_strdup(N->text);
+  Y->return_type = RT;
+  Y->params = P;
+  Y->doc = C;
+  token_free(N);
+}
+
+%type params {GSList*}
+params(Y) ::= . {
+  Y = NULL;
+}
+params(Y) ::= param(X). {
+  Y = g_slist_append(NULL, X);
+}
+params(Y) ::= params(L) COMMA param(X). {
+  Y = g_slist_append(L, X);
+}
+
+%type param {xdl_method_param*}
+param(Y) ::= type(T) ID(N). {
+  Y = g_new0(xdl_method_param, 1);
+  Y->type = T;
+  Y->name = g_strdup(N->text);
+  token_free(N);
+}

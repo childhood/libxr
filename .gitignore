@@ -41,10 +41,11 @@ Makefile.in
 /tests/TTest*.c
 /tests/TTest*.h
 
-/xdl-compiler/parser.c
-/xdl-compiler/parser.h
-/xdl-compiler/scanner.c
+/xdl-compiler/xdl-parser.c
+/xdl-compiler/xdl-parser.h
+/xdl-compiler/xdl-parser.y
 /xdl-compiler/xdl-compiler
+/xdl-compiler/lemon
 
 /docs/html
 /docs/man3
