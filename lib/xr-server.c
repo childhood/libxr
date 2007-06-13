@@ -2,6 +2,7 @@
   #include <winsock2.h>
 #else
   #include <sys/select.h>
+  #include <signal.h>
 #endif
 #include <stdlib.h>
 
@@ -426,6 +427,54 @@ GQuark xr_server_error_quark()
 {
   static GQuark quark;
   return quark ? quark : (quark = g_quark_from_static_string("xr_server_error"));
+}
+
+/* simple server setup function */
+
+static xr_server* server = NULL;
+static void _sh(int signum)
+{
+  xr_server_stop(server);
+}
+
+gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_servlet_def* servlet_def, GError** err)
+{
+  if (!g_thread_supported())
+    g_thread_init(NULL);
+
+  g_assert(server == NULL);
+
+#ifndef WIN32
+  struct sigaction act;
+  act.sa_handler = _sh;
+  act.sa_flags = SA_RESTART;
+  sigemptyset(&act.sa_mask);
+  if (sigaction(SIGINT, &act, NULL) < 0
+   || sigaction(SIGHUP, &act, NULL) < 0
+   || sigaction(SIGTERM, &act, NULL) < 0)
+    return FALSE;
+#endif
+
+  server = xr_server_new(cert, threads, err);
+  if (server == NULL)
+    return FALSE;
+
+  if (xr_server_bind(server, bind, err) < 0)
+  {
+    xr_server_free(server);
+    return FALSE;
+  }
+
+  xr_server_register_servlet(server, servlet_def);
+
+  if (xr_server_run(server, err) < 0)
+  {
+    xr_server_free(server);
+    return FALSE;
+  }
+
+  xr_server_free(server);
+  return TRUE;
 }
 
 /* GSource stuff for integration with glib mainloop */

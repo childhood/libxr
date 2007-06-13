@@ -140,4 +140,16 @@ int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet);
  */
 void* xr_servlet_get_priv(xr_servlet* servlet);
 
+/** Use this function as a simple way to quickly start a server.
+ *
+ * @param cert Combined PEM file with server certificate and private
+ * @param bind Port and IP address to bind to.
+ * @param servlet_def Servlet definition object.
+ * @param err Pointer to the variable to store error to on error.
+ *
+ * @return Function returns FALSE on error, TRUE on success.
+ */
+gboolean xr_server_simple(const char* cert, int threads, const char* bind, 
+  xr_servlet_def* servlet_def, GError** err);
+
 #endif
