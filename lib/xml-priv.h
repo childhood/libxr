@@ -132,7 +132,12 @@ static __inline__ gint xp_eval_cont_int(xmlXPathContextPtr ctx, const gchar* pat
 }
 
 #define for_each_node(parent, child) \
-  for (xmlNodePtr child = parent->xmlChildrenNode; child != NULL; child = child->next)
+  { \
+    xmlNodePtr child; \
+    for (child = parent->xmlChildrenNode; child != NULL; child = child->next) \
+    {
+
+#define for_each_node_end() }}
 
 #define match_node(_node, _name) \
   (_node->type == XML_ELEMENT_NODE && !strcmp((gchar*)_node->name, _name))

@@ -4,7 +4,6 @@ EXTRA_DIST = \
   xr-utils.h
 
 AM_CFLAGS= \
-  -std=gnu99 \
   $(XR_CFLAGS) \
   -I$(top_srcdir)/include \
   -D_REENTRANT \

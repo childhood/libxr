@@ -34,7 +34,8 @@ static gpointer _thread_func(gpointer data)
   }
 
   int stop = 0;
-  for (int i=0; i<100 && !stop; i++)
+  int i;
+  for (i=0; i<100 && !stop; i++)
   {
     /* call some servlet methods */
     TAllTypes* t = TTest1_getAll(conn, &err);

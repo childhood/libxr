@@ -20,7 +20,6 @@ EXTRA_DIST = \
   $(BUILT_SOURCES)
 
 AM_CFLAGS= \
-  -std=gnu99 \
   $(XR_CFLAGS) \
   -I$(top_srcdir)/include \
   -D_REENTRANT \

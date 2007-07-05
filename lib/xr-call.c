@@ -249,7 +249,6 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len)
 static xr_value* _xr_value_unserialize(xmlNode* node)
 {
   for_each_node(node, tn)
-  {
     if (match_node(tn, "int") || match_node(tn, "i4"))
       return xr_value_int_new(xml_get_cont_int(tn));
     else if (match_node(tn, "string"))
@@ -277,11 +276,9 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
     {
       xr_value* arr = xr_value_array_new();
       for_each_node(tn, d)
-      {
         if (match_node(d, "data"))
         {
           for_each_node(d, v)
-          {
             if (match_node(v, "value"))
             {
               xr_value* elem = _xr_value_unserialize(v);
@@ -292,17 +289,16 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
               }
               xr_value_array_append(arr, elem);
             }
-          }
+          for_each_node_end()
           return arr;
         }
-      }
+      for_each_node_end()
       return arr;
     }
     else if (match_node(tn, "struct"))
     {
       xr_value* str = xr_value_struct_new();
       for_each_node(tn, m)
-      {
         if (match_node(m, "member"))
         {
           char* name = NULL;
@@ -310,7 +306,6 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
           int names = 0, values = 0;
 
           for_each_node(m, me)
-          {
             if (match_node(me, "name"))
             {
               if (names++ == 0)
@@ -321,7 +316,7 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
               if (values++ == 0)
                 val = _xr_value_unserialize(me);
             }
-          }
+          for_each_node_end()
 
           if (values != 1 || names != 1)
           {
@@ -332,10 +327,10 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
           }
           xr_value_struct_set_member(str, name, val);
         }
-      }
+      for_each_node_end()
       return str;
     }
-  }
+  for_each_node_end()
   return NULL;
 }
 
@@ -373,7 +368,8 @@ int xr_call_unserialize_request(xr_call* call, char* buf, int len)
   }
 
   struct nodeset* ns = xp_eval_nodes(ctx, "/methodCall/params/param/value");
-  for (int i = 0; i < ns->count; i++)
+  int i;
+  for (i = 0; i < ns->count; i++)
   {
     xr_value* v = _xr_value_unserialize(ns->nodes[i]);
     if (v == NULL)
