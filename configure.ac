@@ -50,8 +50,9 @@ AC_OUTPUT([
 	include/Makefile
 	lib/Makefile
 	xdl-compiler/Makefile
-	tests/Makefile
 	docs/Makefile
 	libxr.pc
+	tests/Makefile
 	tests/unit/Makefile
+	tests/zblok/Makefile
 ])
