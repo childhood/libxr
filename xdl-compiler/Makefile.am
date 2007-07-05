@@ -35,4 +35,5 @@ xdl-parser.c xdl-parser.h: xdl-parser.y lemon
 
 BUILT_SOURCES = \
 	xdl-parser.h \
-	xdl-parser.c
+	xdl-parser.c \
+	xdl-parser.y
