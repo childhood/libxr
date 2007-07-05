@@ -1,3 +1,10 @@
+0.9.11 - 2007-07-05
+~~~~~~~~~~~~~~~~~~~
+- Fix #line numbering issues (use lemon/re2c in xdl-compiler)
+- New xr_server_simple() method for simple XML-RPC server implementations and
+  tests
+- New updated HOWTO and sample code
+
 0.9.10 - 2007-05-18
 ~~~~~~~~~~~~~~~~~~~
 - Win32 port using mingw32 toolchain.
