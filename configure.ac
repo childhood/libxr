@@ -12,9 +12,8 @@ AC_PROG_CC
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
 
-# for xdl
-AM_PROG_LEX
-AC_PROG_YACC
+# for xdl-compiler
+AC_CHECK_PROG(RE2C, re2c, re2c)
 
 # Checks for pkg-config packages
 GLIB_REQUIRED="glib-2.0 >= 2.12.0"
