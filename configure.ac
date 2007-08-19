@@ -1,5 +1,5 @@
 AC_PREREQ(2.57)
-AC_INIT([libxr], 0.9.11, [oss@zonio.net], libxr)
+AC_INIT([libxr], 0.9.12, [oss@zonio.net], libxr)
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_CONFIG_HEADER([config.h])
 AC_CANONICAL_SYSTEM
