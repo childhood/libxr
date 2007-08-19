@@ -144,12 +144,12 @@ void* xr_servlet_get_priv(xr_servlet* servlet);
  *
  * @param cert Combined PEM file with server certificate and private
  * @param bind Port and IP address to bind to.
- * @param servlet_def Servlet definition object.
+ * @param servlets Servlet definition objects array (NULL termianted).
  * @param err Pointer to the variable to store error to on error.
  *
  * @return Function returns FALSE on error, TRUE on success.
  */
-gboolean xr_server_simple(const char* cert, int threads, const char* bind, 
-  xr_servlet_def* servlet_def, GError** err);
+gboolean xr_server_simple(const char* cert, int threads, const char* bind,
+  xr_servlet_def** servlets, GError** err);
 
 #endif

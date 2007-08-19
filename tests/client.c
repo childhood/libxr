@@ -2,6 +2,7 @@
 #include <signal.h>
 
 #include "TTest1.xrc.h"
+#include "TTest2.xrc.h"
 
 /* this function prints client error if any and resets error so that futher calls to client funcs work */
 
@@ -52,6 +53,15 @@ int main(int ac, char* av[])
 
   /* call some servlet methods */
   TAllTypes* t = TTest1_getAll(conn, &err);
+  _check_err(err);
+  err = NULL;
+  TAllTypes_free(t);
+
+  TTest2_auth(conn, &err);
+  _check_err(err);
+  err = NULL;
+
+  t = TTest1_getAll(conn, &err);
   _check_err(err);
   err = NULL;
   TAllTypes_free(t);

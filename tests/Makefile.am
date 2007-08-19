@@ -10,7 +10,15 @@ BUILT_SOURCES = \
   TTest1.xrs.h \
   TTest1.xrc.h \
   TTest1.stubs.h \
-  TTest1.h
+  TTest1.h \
+  TTest2.xrs.c \
+  TTest2.xrc.c \
+  TTest2.stubs.c \
+  TTest2.c \
+  TTest2.xrs.h \
+  TTest2.xrc.h \
+  TTest2.stubs.h \
+  TTest2.h
 
 EXTRA_DIST = \
   bench.h \
@@ -37,29 +45,19 @@ noinst_PROGRAMS = \
 
 client_SOURCES = \
   client.c \
-  TCommon.c \
-  TTest1.xrc.c \
-  TTest1.c
+  $(BUILT_SOURCES)
 
 tclient_SOURCES = \
   tclient.c \
-  TCommon.c \
-  TTest1.xrc.c \
-  TTest1.c
+  $(BUILT_SOURCES)
 
 server_SOURCES = \
   server.c \
-  TCommon.c \
-  TTest1.xrs.c \
-  TTest1.stubs.c \
-  TTest1.c
+  $(BUILT_SOURCES)
 
 mlserver_SOURCES = \
   mlserver.c \
-  TCommon.c \
-  TTest1.xrs.c \
-  TTest1.stubs.c \
-  TTest1.c
+  $(BUILT_SOURCES)
 
 $(BUILT_SOURCES): $(srcdir)/test.xdl
 	$(top_builddir)/xdl-compiler/xdl-compiler -i $(srcdir)/test.xdl -o $(top_builddir)/tests/

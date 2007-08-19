@@ -37,72 +37,90 @@ struct AllTypes
 
 servlet Test1
 {
-<%
+  <%
 #include <stdio.h>
 #include <string.h>
-%>
+  %>
 
   error NOTHING = 2;
   error NO_DATA = 5;
 
-    AllTypes getAll()
-    <%
-        //printf("getAll()\n");
-        retval = TAllTypes_new();
-        retval->v_string = g_strdup("Hi!");
-        retval->v_time = g_strdup("2006-04-04");
-        retval->v_blob = xr_blob_new(g_strdup("Hi all!"), strlen("Hi all!"));
-        retval->v_int = 5645;
-        retval->v_boolean = FALSE;
-        retval->v_double = 123.123e-3;
-        retval->v_struct = TStruct_new();
-        retval->v_struct->v_string = g_strdup("some str");
-        retval->v_arrays = TAllArrays_new();
-    %>
-    
-    /** Get user data.
-     *
-     * @param name Name of the user.
-     * @return User struct.
-     */
-    boolean setAll(AllTypes all)
-    <%
-        //printf("setAll()\n");
-    %>
+  AllTypes getAll()
+  <%
+    printf("getAll()\n");
+    retval = TAllTypes_new();
+    retval->v_string = g_strdup("Hi!");
+    retval->v_time = g_strdup("2006-04-04");
+    retval->v_blob = xr_blob_new(g_strdup("Hi all!"), strlen("Hi all!"));
+    retval->v_int = 5645;
+    retval->v_boolean = FALSE;
+    retval->v_double = 123.123e-3;
+    retval->v_struct = TStruct_new();
+    retval->v_struct->v_string = g_strdup("some str");
+    retval->v_arrays = TAllArrays_new();
+  %>
+  
+  boolean setAll(AllTypes all)
+  <%
+    printf("setAll()\n");
+  %>
 
-    array<string> getBigArray()
-    <%
-      int i;
-      for (i=0; i<5000; i++)
-        retval = g_slist_append(retval, g_strdup_printf("user.bob%d@zonio.net", i));
-    %>
+  array<string> getBigArray()
+  <%
+    int i;
+    for (i=0; i<5000; i++)
+      retval = g_slist_append(retval, g_strdup_printf("user.bob%d@zonio.net", i));
+  %>
 
-    boolean putBigArray(array<string> arr)
-    <%
-    %>
+  boolean putBigArray(array<string> arr)
+  <%
+  %>
 
-    __attrs__
-    <%
-        char* username;
-    %>
-    
-    __init__
-    <%
-        //printf("Init!\n");
-    %>
+  __attrs__
+  <%
+    char* username;
+  %>
+  
+  __init__
+  <%
+    printf("Init!\n");
+  %>
 
-    __fini__
-    <%
-        //printf("Fini!\n");
-    %>
+  __fini__
+  <%
+    printf("Fini!\n");
+  %>
 
-    __pre_call__
-    <%
-        //printf("Pre-call!\n");
-    %>
+  __pre_call__
+  <%
+    //printf("Pre-call!\n");
+  %>
 
-    __post_call__
-    <%
-        //printf("Post-call!\n");
-    %>
+  __post_call__
+  <%
+    //printf("Post-call!\n");
+  %>
+}
+
+servlet Test2
+{
+  __attrs__
+  <%
+    char* username;
+  %>
+  
+  __init__
+  <%
+    printf("Init!\n");
+  %>
+
+  __fini__
+  <%
+    printf("Fini!\n");
+  %>
+
+  boolean auth()
+  <%
+    printf("auth!\n");
+  %>
 }

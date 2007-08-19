@@ -129,7 +129,7 @@ static xr_servlet_method_def* _find_servlet_method_def(xr_servlet* servlet, char
 
 static int _xr_server_servlet_method_call(xr_server* server, xr_server_conn* conn, xr_call* call, xr_http* http)
 {
-  int retval = -1, i;
+  int retval = -1;
   xr_servlet* servlet = NULL;
   xr_servlet_method_def* method;
   char *servlet_name, *tmp;
@@ -498,7 +498,7 @@ static void _sh(int signum)
   xr_server_stop(server);
 }
 
-gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_servlet_def* servlet_def, GError** err)
+gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_servlet_def** servlets, GError** err)
 {
   if (!g_thread_supported())
     g_thread_init(NULL);
@@ -526,7 +526,14 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
     return FALSE;
   }
 
-  xr_server_register_servlet(server, servlet_def);
+  if (servlets)
+  {
+    while (*servlets)
+    {
+      xr_server_register_servlet(server, *servlets);
+      servlets++;
+    }
+  }
 
   if (xr_server_run(server, err) < 0)
   {

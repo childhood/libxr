@@ -2,6 +2,7 @@
 #include <signal.h>
 
 #include "TTest1.xrs.h"
+#include "TTest2.xrs.h"
 
 static int _check_err(GError* err)
 {
@@ -61,6 +62,7 @@ int main(int ac, char* av[])
     goto err1;
 
   xr_server_register_servlet(server, __TTest1Servlet_def());
+  xr_server_register_servlet(server, __TTest2Servlet_def());
 
   GSource* source = xr_server_source(server);
   g_source_attach(source, NULL);
