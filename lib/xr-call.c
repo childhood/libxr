@@ -29,6 +29,8 @@ void xr_call_free(xr_call* call)
 {
   GSList* i;
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
+  if (call == NULL)
+    return;
   g_free(call->method);
   for (i = call->params; i; i = i->next)
     xr_value_free(i->data);
@@ -41,6 +43,17 @@ char* xr_call_get_method(xr_call* call)
 {
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_assert(call != NULL);
+  return call->method;
+}
+
+char* xr_call_get_method_name(xr_call* call)
+{
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
+  g_assert(call != NULL);
+  if (call->method == NULL)
+    return NULL;
+  if (strchr(call->method, '.'))
+    return strchr(call->method, '.') + 1;
   return call->method;
 }
 

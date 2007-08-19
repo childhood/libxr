@@ -527,7 +527,7 @@ int main(int ac, char* av[])
       EL(1, "xr_value* _param_value;");
       EL(1, "g_assert(_conn != NULL);");
       EL(1, "g_return_val_if_fail(_error == NULL || *_error == NULL, _retval);");
-      EL(1, "xr_call* _call = xr_call_new(\"%s\");", m->name);
+      EL(1, "xr_call* _call = xr_call_new(\"%s%s.%s\");", xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;

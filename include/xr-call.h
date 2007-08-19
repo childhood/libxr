@@ -33,7 +33,7 @@ xr_call* xr_call_new(char* method);
  */
 void xr_call_free(xr_call* call);
 
-/** Get method name.
+/** Get method name (as passed in XML-RPC).
  *
  * @param call Call obejct.
  *
@@ -42,6 +42,16 @@ void xr_call_free(xr_call* call);
  * @warning Returned value is still owned by the call object. Don't free it!
  */
 char* xr_call_get_method(xr_call* call);
+
+/** Get method name. (second part if in Servlet.Method format)
+ *
+ * @param call Call obejct.
+ *
+ * @return Method name or NULL if not set.
+ *
+ * @warning Returned value is still owned by the call object. Don't free it!
+ */
+char* xr_call_get_method_name(xr_call* call);
 
 /** Add parameter to the call obejct.
  *
