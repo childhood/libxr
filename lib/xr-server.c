@@ -50,14 +50,13 @@ static xr_servlet* xr_servlet_new(xr_servlet_def* def)
   return s;
 }
 
-static void xr_servlet_free(xr_servlet* servlet)
+static void xr_servlet_free(xr_servlet* servlet, gboolean fini)
 {
   if (servlet == NULL)
     return;
-  if (servlet->def && servlet->def->fini)
+  if (fini && servlet->def && servlet->def->fini)
     servlet->def->fini(servlet);
   g_free(servlet->priv);
-  xr_call_free(servlet->call);
   g_free(servlet);
 }
 
@@ -75,7 +74,7 @@ static void xr_server_conn_free(xr_server_conn* conn)
   if (conn == NULL)
     return;
   BIO_free_all(conn->bio);
-  g_ptr_array_foreach(conn->servlets, (GFunc)xr_servlet_free, NULL);
+  g_ptr_array_foreach(conn->servlets, (GFunc)xr_servlet_free, (gpointer)TRUE);
   g_ptr_array_free(conn->servlets, TRUE);
   g_free(conn);
 }
@@ -166,7 +165,7 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_server_conn* con
     if (servlet->def->init(servlet) < 0)
     {
       xr_call_set_error(call, 100, "Servlet initialization failed.");
-      xr_servlet_free(servlet);
+      xr_servlet_free(servlet, FALSE);
       servlet = NULL;
       goto done;
     }
