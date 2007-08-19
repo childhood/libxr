@@ -27,13 +27,12 @@ xr_call* xr_call_new(char* method)
 
 void xr_call_free(xr_call* call)
 {
-  GSList* i;
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   if (call == NULL)
     return;
   g_free(call->method);
-  for (i = call->params; i; i = i->next)
-    xr_value_free(i->data);
+  g_slist_foreach(call->params, (GFunc)xr_value_free, NULL);
+  g_slist_free(call->params);
   xr_value_free(call->retval);
   g_free(call->errmsg);
   g_free(call);
@@ -265,13 +264,23 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
     if (match_node(tn, "int") || match_node(tn, "i4"))
       return xr_value_int_new(xml_get_cont_int(tn));
     else if (match_node(tn, "string"))
-      return xr_value_string_new(xml_get_cont_str(tn));
+    {
+      char* str = xml_get_cont_str(tn);
+      xr_value* val = xr_value_string_new(str);
+      g_free(str);
+      return val;
+    }
     else if (match_node(tn, "boolean"))
       return xr_value_bool_new(xml_get_cont_bool(tn));
     else if (match_node(tn, "double"))
       return xr_value_double_new(xml_get_cont_double(tn));
     else if (match_node(tn, "dateTime.iso8601"))
-      return xr_value_time_new(xml_get_cont_str(tn));
+    {
+      char* str = xml_get_cont_str(tn);
+      xr_value* val = xr_value_time_new(str);
+      g_free(str);
+      return val;
+    }
     else if (match_node(tn, "base64"))
     {
       xr_blob* b;
@@ -339,6 +348,7 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
             return NULL;
           }
           xr_value_struct_set_member(str, name, val);
+          g_free(name);
         }
       for_each_node_end()
       return str;
