@@ -39,14 +39,14 @@ void xr_call_free(xr_call* call)
   g_free(call);
 }
 
-char* xr_call_get_method(xr_call* call)
+char* xr_call_get_method_full(xr_call* call)
 {
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_assert(call != NULL);
   return call->method;
 }
 
-char* xr_call_get_method_name(xr_call* call)
+char* xr_call_get_method(xr_call* call)
 {
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_assert(call != NULL);

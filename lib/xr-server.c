@@ -139,7 +139,7 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_server_conn* con
   g_assert(call != NULL);
 
   /* identify servlet name */
-  servlet_name = g_strdup(xr_call_get_method(call));
+  servlet_name = g_strdup(xr_call_get_method_full(call));
   if (servlet_name && (tmp = strchr(servlet_name, '.')) && tmp != servlet_name)
     *tmp = '\0';
   else
@@ -176,10 +176,10 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_server_conn* con
   servlet->call = call;
 
   /* find method and perform a call */
-  method = _find_servlet_method_def(servlet, xr_call_get_method_name(call));
+  method = _find_servlet_method_def(servlet, xr_call_get_method(call));
   if (method == NULL)
   {
-    char* msg = g_strdup_printf("Method %s not found in %s servlet.", xr_call_get_method_name(call), servlet->def->name);
+    char* msg = g_strdup_printf("Method %s not found in %s servlet.", xr_call_get_method(call), servlet->def->name);
     xr_call_set_error(call, 100, msg);
     g_free(msg);
     goto done;
