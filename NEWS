@@ -1,3 +1,10 @@
+0.9.12 - 2007-08-19
+~~~~~~~~~~~~~~~~~~~
+- Allow multiple servlets per connection. Method names now contain servlet
+  name. If you want to get method name without servlet name call
+  xr_call_get_method_name().
+- xr_server_simple() can now take multiple servlet definitions.
+
 0.9.11 - 2007-07-05
 ~~~~~~~~~~~~~~~~~~~
 - Fix #line numbering issues (use lemon/re2c in xdl-compiler)
