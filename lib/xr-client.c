@@ -87,6 +87,8 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
 
 #else
 
+G_LOCK_DEFINE_STATIC(regex);
+
 static int _parse_uri(const char* uri, int* secure, char** host, char** resource)
 {
   static GRegex* regex = NULL;
@@ -98,11 +100,13 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
   g_assert(resource != NULL);
 
   // precompile regexp
+  G_LOCK(regex);
   if (regex == NULL)
   {
     regex = g_regex_new("^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", G_REGEX_CASELESS, 0, NULL);
     g_assert(regex != NULL);
   }
+  G_UNLOCK(regex);
 
   if (!g_regex_match(regex, uri, 0, &match_info))
     return -1;
