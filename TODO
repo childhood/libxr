@@ -1,4 +1,5 @@
-- blob: check it, fix it (ref counting, serialization, etc.)
+- distcheck
+- configure.ac (lemon, re2c)
 - any type: make xdl compiler understand any type
 - array<double>: too long to fit into i->data
 - extend testsuite
