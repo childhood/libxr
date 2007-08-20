@@ -21,6 +21,7 @@ static int constructCall()
   TEST_ASSERT(method != 0);
   int method_match = !strcmp(method, "test");
   TEST_ASSERT(method_match);
+  xr_call_free(call);
   return 0;
 }
 
@@ -29,6 +30,7 @@ static int constructCallNoMethod()
   xr_call* call = xr_call_new(0);
   char* method = xr_call_get_method(call);
   TEST_ASSERT(method == 0);
+  xr_call_free(call);
   return 0;
 }
 
@@ -37,6 +39,7 @@ static int requestUnserialize1()
   xr_call* call = xr_call_new(0);
   int rs = xr_call_unserialize_request(call, "<->", -1);
   TEST_ASSERT(rs < 0);
+  xr_call_free(call);
   return 0;
 }
 
@@ -50,6 +53,7 @@ static int requestUnserialize2()
   );
   int rs = xr_call_unserialize_request(call, call_value, -1);
   TEST_ASSERT(rs < 0);
+  xr_call_free(call);
   return 0;
 }
 
@@ -79,6 +83,7 @@ static int requestUnserialize3()
   TEST_ASSERT(str_val != 0);
   int param_match = !strcmp(str_val, "");
   TEST_ASSERT(param_match);
+  g_free(str_val);
 
   val = xr_call_get_param(call, 1);
   TEST_ASSERT(val != 0);
@@ -89,7 +94,9 @@ static int requestUnserialize3()
   TEST_ASSERT(str_val != 0);
   param_match = !strcmp(str_val, "s2");
   TEST_ASSERT(param_match);
+  g_free(str_val);
 
+  xr_call_free(call);
   return 0;
 }
 
@@ -137,6 +144,7 @@ static int requestUnserialize4()
   TEST_ASSERT(_assert_param_type(call, 6, XRV_BLOB) == 0);
   TEST_ASSERT(_assert_param_type(call, 7, XRV_ARRAY) == 0);
   TEST_ASSERT(_assert_param_type(call, 8, XRV_STRUCT) == 0);
+  xr_call_free(call);
   return 0;
 }
 

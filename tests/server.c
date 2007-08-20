@@ -10,11 +10,13 @@ int main(int ac, char* av[])
     NULL
   };
 
-  xr_debug_enabled = XR_DEBUG_ALL;
+//  xr_debug_enabled = XR_DEBUG_ALL;
 
   xr_server_simple("server.pem", 5, "*:4444", servlets, &err);
   if (err)
     g_print("error: %s\n", err->message);
+
+  xr_ssl_fini();
 
   return !!err;
 }

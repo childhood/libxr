@@ -20,8 +20,9 @@ static int _check_err(GError* err)
 int main(int ac, char* av[])
 {
   GError* err = NULL;
-  char* uri = ac == 2 ? av[1] : "https://localhost:4444/TTest1";
-  xr_debug_enabled = XR_DEBUG_ALL;
+  char* uri = ac == 2 ? av[1] : "https://localhost:4444/RPC2";
+
+//  xr_debug_enabled = XR_DEBUG_ALL;
 
   if (!g_thread_supported())
     g_thread_init(NULL);
@@ -42,6 +43,7 @@ int main(int ac, char* av[])
   GSList* arr = TTest1_getBigArray(conn, &err);
   _check_err(err);
   err = NULL;
+  Array_string_free(arr);
 
   int i;
   arr = NULL;
@@ -50,6 +52,7 @@ int main(int ac, char* av[])
   TTest1_putBigArray(conn, arr, &err);
   _check_err(err);
   err = NULL;
+  Array_string_free(arr);
 
   /* call some servlet methods */
   TAllTypes* t = TTest1_getAll(conn, &err);
@@ -66,11 +69,10 @@ int main(int ac, char* av[])
   err = NULL;
   TAllTypes_free(t);
   
-  /* disconnect */
-  xr_client_close(conn);
-  
   /* free connections object */
   xr_client_free(conn);
+
+  xr_ssl_fini();
 
   return 0;
 }
