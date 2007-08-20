@@ -179,6 +179,7 @@ static void _xr_value_serialize(xmlNode* node, xr_value* val)
       char* str_val = NULL;
       xr_value_to_time(val, &str_val);
       value = xmlNewChild(node, NULL, BAD_CAST "dateTime.iso8601", BAD_CAST str_val);
+      g_free(str_val);
       break;
     }
     case XRV_BLOB:

@@ -230,7 +230,11 @@ void xr_value_struct_set_member(xr_value* str, char* name, xr_value* val)
   {
     xr_value* m = i->data;
     if (!strcmp(m->member_name, name))
+    {
+      xr_value_free(m->member_value);
+      m->member_value = val;
       return;
+    }
   }
   xr_value* v = g_new0(xr_value, 1);
   v->type = XRV_MEMBER;
@@ -258,8 +262,8 @@ void xr_value_free(xr_value* val)
     xr_blob_unref(val->blob_val);
   g_free(val->member_name);
   xr_value_free(val->member_value);
-  for (i=val->children; i; i=i->next)
-    xr_value_free((xr_value*)i->data);
+  g_slist_foreach(val->children, (GFunc)xr_value_free, NULL);
+  g_slist_free(val->children);
   g_free(val);
 }
 

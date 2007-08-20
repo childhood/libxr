@@ -162,6 +162,7 @@ static int _xr_http_parse_headers(xr_http* http, int message_type, char* buffer)
 
   char* clen = xr_http_get_header(http, "Content-Length:");
   http->content_length = clen ? atoi(clen) : -1;
+  g_free(clen);
 
   if (http->content_length < 0 || http->content_length > 1024*1024*8)
     return -1;

@@ -124,6 +124,7 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
   else
   {
     g_free(schema);
+    g_match_info_free(match_info);
     return -1;
   }
   g_free(schema);
@@ -132,7 +133,8 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
   *resource = g_match_info_fetch(match_info, 5);
   if (*resource == NULL)
     *resource = g_strdup("/RPC2");
-  
+
+  g_match_info_free(match_info);
   return 0;
 }
 
