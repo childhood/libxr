@@ -40,6 +40,11 @@ Makefile.in
 /tests/TCommon.h
 /tests/TTest*.c
 /tests/TTest*.h
+/tests/leak*.log
+
+/tests/zblok/ZM*
+/tests/zblok/zm-client
+/tests/zblok/zm-server
 
 /xdl-compiler/xdl-parser.c
 /xdl-compiler/xdl-parser.h
