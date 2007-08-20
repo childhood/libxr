@@ -60,12 +60,12 @@ void xr_ssl_init()
     return;
   _ssl_initialized = 1;
 
+  if (!g_thread_supported())
+    g_thread_init(NULL);
+
 #ifndef WIN32
   signal(SIGPIPE, SIG_IGN);
 #endif
-
-  if (!g_thread_supported())
-    g_thread_init(NULL);
 
   SSL_library_init();
   ERR_load_crypto_strings();
