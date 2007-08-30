@@ -110,7 +110,7 @@ void xdl_process(xdl_model *xdl)
 xdl_error_code* xdl_error_new(xdl_model *xdl, xdl_servlet *servlet, char* name, int code)
 {
   xdl_error_code* e = g_new0(xdl_error_code, 1);
-  e->name = name;
+  e->name = g_strdup(name);
   e->code = code;
 
   if (servlet != NULL)

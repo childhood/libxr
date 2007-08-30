@@ -274,11 +274,13 @@ void gen_marchalizers(FILE* f, xdl_model* xdl, xdl_servlet* s)
   }
 }
 
-void gen_errors_enum(FILE* f, GSList* errs)
+void gen_errors_header(FILE* f, xdl_model* xdl, xdl_servlet* s)
 {
   GSList* j;
+  GSList* errs = s ? s->errors : xdl->errors;
   if (errs == NULL)
     return;
+
   EL(0, "enum");
   EL(0, "{");
   for (j=errs; j; j=j->next)
@@ -287,6 +289,28 @@ void gen_errors_enum(FILE* f, GSList* errs)
     EL(1, "%s = %d,", e->cenum, e->code);
   }
   EL(0, "};");
+  NL;
+  EL(0, "const char* %s%s_xmlrpc_error_to_string(int code);", xdl->name, s ? s->name : "");
+  NL;
+}
+
+void gen_errors_impl(FILE* f, xdl_model* xdl, xdl_servlet* s)
+{
+  GSList* j;
+  GSList* errs = s ? s->errors : xdl->errors;
+  if (errs == NULL)
+    return;
+
+  EL(0, "const char* %s%s_xmlrpc_error_to_string(int code)", xdl->name, s ? s->name : "");
+  EL(0, "{");
+  for (j=errs; j; j=j->next)
+  {
+    xdl_error_code* e = j->data;
+    EL(1, "if (code == %s)", e->cenum);
+    EL(2, "return \"%s\";", e->name);
+  }
+  EL(1, "return NULL;");
+  EL(0, "}");
   NL;
 }
 
@@ -356,7 +380,7 @@ int main(int ac, char* av[])
   EL(0, "#include <xr-value.h>");
   NL;
 
-  gen_errors_enum(f, xdl->errors);
+  gen_errors_header(f, xdl, NULL);
 
   gen_type_defs(f, xdl->types);
 
@@ -389,6 +413,8 @@ int main(int ac, char* av[])
     gen_type_freealloc(f, t, 0);
   }
 
+  gen_errors_impl(f, xdl, NULL);
+
   }
 
   /* client/servlet implementations for specific interfaces */
@@ -413,7 +439,7 @@ int main(int ac, char* av[])
     EL(0, "#include \"%sCommon.h\"", xdl->name);
     NL;
 
-    gen_errors_enum(f, s->errors);
+    gen_errors_header(f, xdl, s);
 
     gen_type_defs(f, s->types);
 
@@ -445,6 +471,8 @@ int main(int ac, char* av[])
       xdl_typedef* t = j->data;
       gen_type_freealloc(f, t, 0);
     }
+
+    gen_errors_impl(f, xdl, s);
     
     }
 
