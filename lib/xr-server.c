@@ -305,6 +305,14 @@ static int _xr_server_accept_connection(xr_server* server, GError** err)
   // new connection accepted
   conn = xr_server_conn_new(BIO_pop(server->bio_in));
 
+  // if we have too many clients in the queue, pause accepting new ones
+  // and leave some time to process existing ones, this ensures that
+  // server does not get overloaded and improves latency for clients that are in
+  // the queue or being processed right now
+  if (g_thread_pool_unprocessed(server->pool) > 50)
+    g_usleep(500000);
+
+  // push client into the queue
   g_thread_pool_push(server->pool, conn, &local_err);
   if (local_err)
   {
