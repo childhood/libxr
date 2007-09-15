@@ -280,61 +280,152 @@ int xr_value_is_error_retval(xr_value* v, int* errcode, char** errmsg)
   return 1;
 }
 
-void xr_value_dump(xr_value* v, int indent)
+gboolean __xr_value_is_complicated(xr_value* v, int max_strlen)
 {
+  return (xr_value_get_type(v) == XRV_STRUCT && xr_value_get_members(v))
+      || (xr_value_get_type(v) == XRV_ARRAY && xr_value_get_items(v))
+      || (xr_value_get_type(v) == XRV_STRING && v->str_val && strlen(v->str_val) > max_strlen);
+}
+
+static gboolean __xr_value_list_is_complicated(xr_value* v)
+{
+  GSList* i;
+
+  if (v == NULL)
+    return FALSE;
+
+  if (v->type == XRV_ARRAY)
+  {
+    if (g_slist_length(xr_value_get_items(v)) > 8)
+      return TRUE;
+    else
+    {
+      for (i = xr_value_get_items(v); i; i = i->next)
+        if (__xr_value_is_complicated(i->data, 35))
+          return TRUE;
+    }
+  }
+  else if (v->type == XRV_STRUCT)
+  {
+    if (g_slist_length(xr_value_get_members(v)) > 5)
+      return TRUE;
+    else
+    {
+      for (i = xr_value_get_members(v); i; i = i->next)
+        if (__xr_value_is_complicated(xr_value_get_member_value(i->data), 25))
+          return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+void xr_value_dump(xr_value* v, GString* string, int indent)
+{
+  GSList* i;
+  char buf[256];
+
   g_assert(v != NULL);
 
-  char buf[1024];
   memset(buf, 0, sizeof(buf));
-  memset(buf, ' ', indent*2);
-  printf("%s", buf);
-  
-  GSList* i;
+  memset(buf, ' ', MIN(indent * 2, sizeof(buf) - 1));
 
   switch (xr_value_get_type(v))
   {
     case XRV_ARRAY:
-      printf("ARRAY:LENGTH=%d\n", g_slist_length(xr_value_get_items(v)));
-      for (i = xr_value_get_items(v); i; i = i->next)
-        xr_value_dump(i->data, indent+1);
+    {
+      if (xr_value_get_items(v) == NULL)
+      {
+        g_string_append(string, "[]");
+      }
+      else if (!__xr_value_list_is_complicated(v))
+      {
+        g_string_append(string, "[ ");
+        for (i = xr_value_get_items(v); i; i = i->next)
+        {
+          xr_value_dump(i->data, string, indent+1);
+          g_string_append_printf(string, "%s ", i->next ? "," : "");
+        }
+        g_string_append(string, "]");
+      }
+      else
+      {
+        g_string_append_printf(string, "[");
+        for (i = xr_value_get_items(v); i; i = i->next)
+        {
+          g_string_append_printf(string, "\n%s  ", buf);
+          xr_value_dump(i->data, string, indent + 1);
+          if (i->next)
+            g_string_append(string, ",");
+        }
+        g_string_append_printf(string, "\n%s]", buf);
+      }
       break;
+    }
     case XRV_STRUCT:
-      printf("STRUCT:\n");
-      for (i = xr_value_get_members(v); i; i = i->next)
-        xr_value_dump(i->data, indent+1);
+    {
+      if (xr_value_get_members(v) == NULL)
+      {
+        g_string_append(string, "{}");
+      }
+      else if (!__xr_value_list_is_complicated(v))
+      {
+        g_string_append(string, "{ ");
+        for (i = xr_value_get_members(v); i; i = i->next)
+        {
+          xr_value_dump(i->data, string, indent);
+          g_string_append_printf(string, "%s ", i->next ? "," : "");
+        }
+        g_string_append(string, "}");
+      }
+      else
+      {
+        g_string_append(string, "{");
+        for (i = xr_value_get_members(v); i; i = i->next)
+        {
+          g_string_append_printf(string, "\n%s  ", buf);
+          xr_value_dump(i->data, string, indent);
+          if (i->next)
+            g_string_append(string, ",");
+        }
+        g_string_append_printf(string, "\n%s}", buf);
+      }
       break;
+    }
     case XRV_MEMBER:
-      printf("MEMBER:%s\n", xr_value_get_member_name(v));
-      xr_value_dump(xr_value_get_member_value(v), indent+1);
+    {
+      g_string_append_printf(string, "%s: ", xr_value_get_member_name(v));
+      xr_value_dump(xr_value_get_member_value(v), string, indent + 1);
       break;
+    }
     case XRV_INT:
     {
-      printf("INT:%d\n", v->int_val);
+      g_string_append_printf(string, "%d", v->int_val);
       break;
     }
     case XRV_STRING:
     {
-      printf("STRING:%s\n", v->str_val);
+      g_string_append_printf(string, "\"%s\"", v->str_val);
       break;
     }
     case XRV_BOOLEAN:
     {
-      printf("BOOLEAN:%s\n", v->int_val ? "true" : "false");
+      g_string_append_printf(string, "%s", v->int_val ? "true" : "false");
       break;
     }
     case XRV_DOUBLE:
     {
-      printf("DOUBLE:%g\n", v->dbl_val);
+      g_string_append_printf(string, "%g", v->dbl_val);
       break;
     }
     case XRV_TIME:
     {
-      printf("TIME:%s\n", v->str_val);
+      g_string_append_printf(string, "%s", v->str_val);
       break;
     }
     case XRV_BLOB:
     {
-      printf("BLOB:<NOT DUMPED>\n");
+      g_string_append_printf(string, "<BLOB>");
       break;
     }
   }

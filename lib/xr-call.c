@@ -514,31 +514,71 @@ done:
   return -1;
 }
 
-void xr_call_dump(xr_call* call, int indent)
+/* internal use only */
+gboolean __xr_value_is_complicated(xr_value* v, int max_strlen);
+
+char* xr_call_dump_string(xr_call* call, int indent)
 {
+  GSList* i;
+  GString* string = g_string_sized_new(1024);
+  char buf[256];
+  gboolean single_line = TRUE;
+
   g_assert(call != NULL);
 
-  char buf[1024];
   memset(buf, 0, sizeof(buf));
-  memset(buf, ' ', indent*2);
+  memset(buf, ' ', MIN(indent * 2, sizeof(buf) - 1));
 
-  printf("%sCALL:%s\n", buf, call->method ? call->method : "<NO METHOD>");
-  GSList* i;
-  int n = 0;
-  printf("%s  PARAMS:\n", buf);
-  for (i = call->params; i; i = i->next)
+  // split parameters on spearate lines?
+  if (g_slist_length(call->params) > 6)
+    single_line = FALSE;
+  else
+    for (i = call->params; i; i = i->next)
+      if (__xr_value_is_complicated(i->data, 25))
+        single_line = FALSE;
+
+  g_string_append_printf(string, "%s%s(", buf, call->method ? call->method : "<anonymous>");
+  if (single_line)
   {
-    xr_value_dump(i->data, indent+2);
-    n++;
+    for (i = call->params; i; i = i->next)
+    {
+      xr_value_dump(i->data, string, indent);
+      if (i->next)
+        g_string_append(string, ", ");
+    }
   }
+  else
+  {
+    for (i = call->params; i; i = i->next)
+    {
+      g_string_append_printf(string, "\n%s  ", buf);
+      xr_value_dump(i->data, string, indent + 1);
+      if (i->next)
+        g_string_append(string, ",");
+    }
+    g_string_append_printf(string, "\n%s", buf);
+  }
+  g_string_append(string, ")");
+
+
   if (call->retval)
   {
-    printf("%s  RETVAL:\n", buf);
-    xr_value_dump(call->retval, indent+2);
+    g_string_append(string, " = ");
+    xr_value_dump(call->retval, string, indent);
   }
   if (call->errcode || call->errmsg)
   {
-    printf("%s  ERR CODE:%d\n", buf, call->errcode);
-    printf("%s  ERR MSG:%s\n", buf, call->errmsg ? call->errmsg : "<NO MESSAGE>");
+    g_string_append_printf(string, " = { faultCode: %d, faultString: \"%s\" }", call->errcode, call->errmsg ? call->errmsg : "");
   }
+
+  return g_string_free(string, FALSE);
+}
+
+void xr_call_dump(xr_call* call, int indent)
+{
+  char* str;
+
+  str = xr_call_dump_string(call, indent);
+  g_print("%s\n", str);
+  g_free(str);
 }

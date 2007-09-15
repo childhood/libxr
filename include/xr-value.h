@@ -305,11 +305,12 @@ void xr_value_free(xr_value* val);
  */
 int xr_value_is_error_retval(xr_value* val, int* errcode, char** errmsg);
 
-/** Debugging function that dumps node tree to the stdout.
+/** Debugging function that dumps node tree to the string.
  *
  * @param v Value node.
+ * @param string GString to which value will be dumped.
  * @param indent Indent level, usually 0.
  */
-void xr_value_dump(xr_value* v, int indent);
+void xr_value_dump(xr_value* v, GString* string, int indent);
 
 #endif

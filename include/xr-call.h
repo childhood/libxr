@@ -161,7 +161,16 @@ int xr_call_unserialize_response(xr_call* call, char* buf, int len);
  */
 void xr_call_free_buffer(char* buf);
 
-/** Debugging function that dumps call object to the stdout.
+/** Debugging function that dumps call object to the string.
+ *
+ * @param call Call obejct.
+ * @param indent Indent level, usually 0.
+ *
+ * @return String representing the call.
+ */
+char* xr_call_dump_string(xr_call* call, int indent);
+
+/** Debugging function that prints call object using g_print().
  *
  * @param call Call obejct.
  * @param indent Indent level, usually 0.
