@@ -51,6 +51,7 @@ main:
   "servlet"          { RET(TK_SERVLET); }
   "array"            { RET(TK_ARRAY); }
   "struct"           { RET(TK_STRUCT); }
+  "take"             { RET(TK_TAKE); }
   L (L|D)*           { RET(TK_ID); }
   D+                 { RET(TK_INTEGER); }
   "="                { RET(TK_EQ); }
@@ -273,10 +274,19 @@ params(Y) ::= params(L) COMMA param(X). {
   Y = g_slist_append(L, X);
 }
 
+%type opt_owner {int}
+opt_owner(Y) ::= . {
+  Y = 0;
+}
+opt_owner(Y) ::= TAKE. {
+  Y = 1;
+}
+
 %type param {xdl_method_param*}
-param(Y) ::= type(T) ID(N). {
+param(Y) ::= opt_owner(C) type(T) ID(N). {
   Y = g_new0(xdl_method_param, 1);
   Y->type = T;
+  Y->pass_ownership = C;
   Y->name = g_strdup(N->text);
   token_free(N);
 }

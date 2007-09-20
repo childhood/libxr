@@ -865,7 +865,7 @@ int main(int ac, char* av[])
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
-        if (p->type->free_func)
+        if (!p->pass_ownership && p->type->free_func)
           EL(1, "%s(%s);", p->type->free_func, p->name);
       }
       EL(1, "return _retval;");

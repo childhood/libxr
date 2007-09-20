@@ -73,8 +73,10 @@ servlet Test1
       retval = g_slist_append(retval, g_strdup_printf("user.bob%d@zonio.net", i));
   %>
 
-  boolean putBigArray(array<string> arr)
+  boolean putBigArray(take array<string> arr)
   <%
+    g_slist_foreach(arr, (GFunc)g_free, NULL);
+    g_slist_free(arr);
   %>
 
   __attrs__

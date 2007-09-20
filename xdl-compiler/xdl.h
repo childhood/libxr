@@ -54,6 +54,7 @@ struct _xdl_struct_member
 struct _xdl_method_param
 {
   char* name;
+  int pass_ownership;
   xdl_typedef* type;
 };
 
