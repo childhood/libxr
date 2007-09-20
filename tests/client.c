@@ -22,7 +22,7 @@ int main(int ac, char* av[])
   GError* err = NULL;
   char* uri = ac == 2 ? av[1] : "https://localhost:4444/RPC2";
 
-//  xr_debug_enabled = XR_DEBUG_ALL;
+  xr_debug_enabled = XR_DEBUG_CALL;
 
   if (!g_thread_supported())
     g_thread_init(NULL);
@@ -55,19 +55,24 @@ int main(int ac, char* av[])
   Array_string_free(arr);
 
   /* call some servlet methods */
-  TAllTypes* t = TTest1_getAll(conn, &err);
+  TAllTypes* t1 = TTest1_getAll(conn, &err);
   _check_err(err);
   err = NULL;
-  TAllTypes_free(t);
+  TAllTypes_free(t1);
 
-  TTest2_auth(conn, &err);
+  TAllArrays* t2 = TTest1_getAllArrays(conn, &err);
+  _check_err(err);
+  err = NULL;
+  TAllArrays_free(t2);
+
+  TTest2_auth(conn, "name", &err);
   _check_err(err);
   err = NULL;
 
-  t = TTest1_getAll(conn, &err);
+  t1 = TTest1_getAll(conn, &err);
   _check_err(err);
   err = NULL;
-  TAllTypes_free(t);
+  TAllTypes_free(t1);
   
   /* free connections object */
   xr_client_free(conn);

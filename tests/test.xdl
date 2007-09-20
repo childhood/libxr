@@ -60,6 +60,75 @@ servlet Test1
     retval->v_struct->v_string = g_strdup("some str");
     retval->v_arrays = TAllArrays_new();
   %>
+
+  AllArrays getAllArrays()
+  <%
+    int i;
+
+#define ADD(a, val) retval->a = g_slist_append(retval->a, val)
+
+    printf("getAllArrays()\n");
+
+    retval = TAllArrays_new();
+    for (i = 0; i < 5; i++)
+      ADD(a_string, g_strdup_printf("str%d", i));
+    for (i = 1; i < 10; i++)
+      ADD(a_time, g_strdup_printf("2006-04-%02d", i));
+    for (i = 0; i < 2; i++)
+      ADD(a_blob, xr_blob_new(g_strdup_printf("BBBBBBBBBBBBBBBBBLOOOOOB%d", i), -1));
+    for (i = 0; i < 10; i++)
+      ADD(a_int, (gpointer)i);
+    for (i = 0; i < 10; i++)
+      ADD(a_boolean, (gpointer)g_random_boolean());
+//    for (i = 0; i < 5; i++)
+//      ADD(a_double, (gpointer)(double)(i * 1.11e-3));
+    for (i = 0; i < 10; i++)
+      if (g_random_boolean())
+      {
+        char* val = g_strdup_printf("%d", i);
+        ADD(a_any, xr_value_string_new(val));
+        g_free(val);
+      }
+      else
+        ADD(a_any, xr_value_int_new(i));
+    for (i = 0; i < 2; i++)
+    {
+      TStruct* s = TStruct_new();
+      s->v_string = g_strdup_printf("struct val %d", i);
+      ADD(a_struct, s);
+    }
+    for (i = 0; i < 2; i++)
+    {
+      GSList* a = NULL;
+      int j;
+
+      for (j = 0; j < 10; j++)
+        a = g_slist_append(a, g_strdup_printf("[%d %d]", i, j));
+
+      ADD(aa_string, a);
+    }
+    for (i = 0; i < 2; i++)
+    {
+      GSList* a = NULL;
+      int j;
+
+      for (j = 0; j < 10; j++)
+      {
+        GSList* b = NULL;
+        int k;
+
+        for (k = 0; k < 3; k++)
+          b = g_slist_append(b, g_strdup_printf("[%d %d %d]", i, j, k));
+
+        a = g_slist_append(a, b);
+      }
+
+      ADD(aaa_string, a);
+    }
+
+#undef ADD
+
+  %>
   
   boolean setAll(AllTypes all)
   <%
@@ -127,8 +196,8 @@ servlet Test2
     printf("Fini!\n");
   %>
 
-  boolean auth()
+  boolean auth(string name)
   <%
-    printf("auth!\n");
+    printf("auth(%s)!\n", name);
   %>
 }
