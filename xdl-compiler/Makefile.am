@@ -1,7 +1,13 @@
+BUILT_SOURCES = \
+	xdl-parser.h \
+	xdl-parser.c
+
 EXTRA_DIST = \
 	lempar.c \
+	lemon.c \
 	xdl-compiler.1 \
-	xdl-parser.yre
+	xdl-parser.yre \
+	$(BUILT_SOURCES)
 
 AM_CFLAGS = \
 	$(XR_CFLAGS) \
@@ -23,17 +29,14 @@ xdl_compiler_SOURCES = \
 
 # parser
 
-noinst_PROGRAMS = lemon
-lemon_SOURCES = lemon.c
+xdl-parser.c: xdl-parser.yre
+	test -r $(builddir)/lempar.c || test x$(srcdir) = x$(builddir) || cat $(srcdir)/lempar.c > $(builddir)/lempar.c
+	gcc -o lemon $(srcdir)/lemon.c
+	re2c -s -i -o tmp.y $<
+	./lemon -q tmp.y
+	rm -f tmp.y
+	mv tmp.c xdl-parser.c
+	mv tmp.h xdl-parser.h
+	test x$(srcdir) = x$(builddir) || rm -f $(builddir)/lempar.c
 
-xdl-parser.y: xdl-parser.yre
-	re2c -s -i -o $@ $<
-
-xdl-parser.c xdl-parser.h: xdl-parser.y lemon
-	test -r $(builddir)/lempar.c || cat $(srcdir)/lempar.c > $(builddir)/lempar.c
-	./lemon -q $<
-
-BUILT_SOURCES = \
-	xdl-parser.h \
-	xdl-parser.c \
-	xdl-parser.y
+CLEANFILES = lemon
