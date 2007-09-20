@@ -92,7 +92,7 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       for (k=t->struct_members; k; k=k->next)
       {
         xdl_struct_member* m = k->data;
-        EL(2, "xr_value_free(%s);", m->name);
+        EL(2, "xr_value_unref(%s);", m->name);
       }
       EL(2, "return NULL;");
       EL(1, "}");
@@ -140,7 +140,7 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(2, "xr_value* _item_value = %s((%s)_item->data);", t->item_type->march_name, t->item_type->ctype);
       EL(2, "if (_item_value == NULL)");
       EL(2, "{");
-      EL(3, "xr_value_free(_array);");
+      EL(3, "xr_value_unref(_array);");
       EL(3, "return NULL;");
       EL(2, "}");
       EL(2, "xr_value_array_append(_array, _item_value);");
@@ -265,11 +265,15 @@ void gen_marchalizers(FILE* f, xdl_model* xdl, xdl_servlet* s)
   for (j=xdl->types; j; j=j->next)
   {
     xdl_typedef* t = j->data;
+    if (t->type == TD_ANY)
+      continue;
     gen_type_marchalizers(f, t);
   }
   for (j=s->types; j; j=j->next)
   {
     xdl_typedef* t = j->data;
+    if (t->type == TD_ANY)
+      continue;
     gen_type_marchalizers(f, t);
   }
 }

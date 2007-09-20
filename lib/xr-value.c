@@ -6,6 +6,7 @@
 struct _xr_value
 {
   int type;                      /**< Type of the value. */
+  volatile guint ref;
 
   // values
   char* str_val;
@@ -20,6 +21,12 @@ struct _xr_value
   char* member_name;             /**< Struct member name. */
   xr_value* member_value; /**< Struct member value. */
 };
+
+static xr_value* _xr_value_new()
+{
+  xr_value* v = g_slice_new0(xr_value);
+  return xr_value_ref(v);
+}
 
 xr_blob* xr_blob_new(char* buf, int len)
 {
@@ -51,10 +58,40 @@ void xr_blob_unref(xr_blob* b)
   }
 }
 
+xr_value* xr_value_ref(xr_value* val)
+{
+  if (val == NULL)
+    return NULL;
+  g_atomic_int_inc(&val->ref);
+  return val;
+}
+
+/*XXX: this is probably not a thread-safe way of doing unref */
+void xr_value_unref(xr_value* val)
+{
+  if (val == NULL)
+    return;
+
+  if (g_atomic_int_dec_and_test(&val->ref))
+  {
+    GSList* i;
+
+    if (val->type == XRV_BLOB)
+      xr_blob_unref(val->blob_val);
+
+    g_free(val->str_val);
+    g_free(val->member_name);
+    xr_value_unref(val->member_value);
+    g_slist_foreach(val->children, (GFunc)xr_value_unref, NULL);
+    g_slist_free(val->children);
+    g_slice_free(xr_value, val);
+  }
+}
+
 /* base types */
 xr_value* xr_value_string_new(char* val)
 {
-  xr_value* v = g_new0(xr_value, 1);
+  xr_value* v = _xr_value_new();
   v->type = XRV_STRING;
   v->str_val = g_strdup(val != NULL ? val : "");
   return v;
@@ -62,7 +99,7 @@ xr_value* xr_value_string_new(char* val)
 
 xr_value* xr_value_int_new(int val)
 {
-  xr_value* v = g_new0(xr_value, 1);
+  xr_value* v = _xr_value_new();
   v->type = XRV_INT;
   v->int_val = val;
   return v;
@@ -70,7 +107,7 @@ xr_value* xr_value_int_new(int val)
 
 xr_value* xr_value_bool_new(int val)
 {
-  xr_value* v = g_new0(xr_value, 1);
+  xr_value* v = _xr_value_new();
   v->type = XRV_BOOLEAN;
   v->int_val = val;
   return v;
@@ -78,7 +115,7 @@ xr_value* xr_value_bool_new(int val)
 
 xr_value* xr_value_double_new(double val)
 {
-  xr_value* v = g_new0(xr_value, 1);
+  xr_value* v = _xr_value_new();
   v->type = XRV_DOUBLE;
   v->dbl_val = val;
   return v;
@@ -86,7 +123,7 @@ xr_value* xr_value_double_new(double val)
 
 xr_value* xr_value_time_new(char* val)
 {
-  xr_value* v = g_new0(xr_value, 1);
+  xr_value* v = _xr_value_new();
   v->type = XRV_TIME;
   v->str_val = g_strdup(val != NULL ? val : "");
   return v;
@@ -96,7 +133,7 @@ xr_value* xr_value_blob_new(xr_blob* val)
 {
   if (val == NULL)
     return NULL;
-  xr_value* v = g_new0(xr_value, 1);
+  xr_value* v = _xr_value_new();
   v->type = XRV_BLOB;
   v->blob_val = xr_blob_ref(val);
   return v;
@@ -156,6 +193,15 @@ int xr_value_to_blob(xr_value* val, xr_blob** nval)
   return 0;
 }
 
+int xr_value_to_value(xr_value* val, xr_value** nval)
+{
+  g_assert(nval != NULL);
+  if (val == NULL)
+    return -1;
+  *nval = xr_value_ref(val);
+  return 0;
+}
+
 int xr_value_get_type(xr_value* val)
 {
   g_assert(val != NULL);
@@ -208,14 +254,14 @@ GSList* xr_value_get_items(xr_value* val)
 
 xr_value* xr_value_struct_new()
 {
-  xr_value* v = g_new0(xr_value, 1);
+  xr_value* v = _xr_value_new();
   v->type = XRV_STRUCT;
   return v;
 }
 
 xr_value* xr_value_array_new()
 {
-  xr_value* v = g_new0(xr_value, 1);
+  xr_value* v = _xr_value_new();
   v->type = XRV_ARRAY;
   return v;
 }
@@ -231,12 +277,12 @@ void xr_value_struct_set_member(xr_value* str, char* name, xr_value* val)
     xr_value* m = i->data;
     if (!strcmp(m->member_name, name))
     {
-      xr_value_free(m->member_value);
+      xr_value_unref(m->member_value);
       m->member_value = val;
       return;
     }
   }
-  xr_value* v = g_new0(xr_value, 1);
+  xr_value* v = _xr_value_new();
   v->type = XRV_MEMBER;
   v->member_name = g_strdup(name);
   v->member_value = val;
@@ -249,22 +295,6 @@ void xr_value_array_append(xr_value* arr, xr_value* val)
   g_assert(arr->type == XRV_ARRAY);
   g_assert(val != NULL);
   arr->children = g_slist_append(arr->children, val);
-}
-
-void xr_value_free(xr_value* val)
-{
-  GSList* i;
-  if (val == NULL)
-    return;
-  if (val->type == XRV_STRING || val->type == XRV_TIME)
-    g_free(val->str_val);
-  if (val->type == XRV_BLOB)
-    xr_blob_unref(val->blob_val);
-  g_free(val->member_name);
-  xr_value_free(val->member_value);
-  g_slist_foreach(val->children, (GFunc)xr_value_free, NULL);
-  g_slist_free(val->children);
-  g_free(val);
 }
 
 int xr_value_is_error_retval(xr_value* v, int* errcode, char** errmsg)

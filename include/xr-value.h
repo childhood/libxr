@@ -70,6 +70,22 @@ xr_blob* xr_blob_new(char* buf, int len);
  */
 void xr_blob_unref(xr_blob* blob);
 
+/** Take reference to the node.
+ *
+ * @param val Node to be refed.
+ *
+ * @return Same node.
+ */
+xr_value* xr_value_ref(xr_value* val);
+
+/** Unref @ref xr_value node.
+ *
+ * Children will be unrefed only if last reference of @a val node is being removed.
+ *
+ * @param val Node to be unrefed.
+ */
+void xr_value_unref(xr_value* val);
+
 /** Create new @ref xr_value node of type @ref XRV_STRING.
  *
  * @param val Value to be contained in the node.
@@ -114,7 +130,7 @@ xr_value* xr_value_time_new(char* val);
  *
  * @param val Value to be contained in the node. Ownership of the val
  *   is transferred to the @ref xr_value. Val will be freed using
- *   xr_blob_unref when @ref xr_value_free is called.
+ *   xr_blob_unref when @ref xr_value_unref is called.
  *
  * @return New @ref xr_value node.
  */
@@ -201,9 +217,19 @@ int xr_value_to_time(xr_value* val, char** nval);
  *   on success.
  *
  * @warning Returned blob is still owned by the xr_value node and will be freed
- *   whenever xr_value_free is called on the original node.
+ *   whenever xr_value_unref is called on the original node.
  */
 int xr_value_to_blob(xr_value* val, xr_blob** nval);
+
+/** Just a convenience interface to xr_value_ref.
+ *
+ * @param val Value node. May be NULL, see below.
+ * @param nval Pointer to the variable where value should be extracted.
+ *   This pointer must not be NULL.
+ *
+ * @return This function returns -1 if @a val is NULL, otherwise 0 is returned.
+ */
+int xr_value_to_value(xr_value* val, xr_value** nval);
 
 /** Get type of @ref xr_value node.
  *
@@ -285,12 +311,6 @@ char* xr_value_get_member_name(xr_value* mem);
  * @return Value of the member. Owned by the mem node.
  */
 xr_value* xr_value_get_member_value(xr_value* mem);
-
-/** Free @ref xr_value node and all its children.
- *
- * @param val Node to be freed.
- */
-void xr_value_free(xr_value* val);
 
 /** Check if given node is stadard XML-RPC error struct. And store
  * faultCode and faultString into errcode and errmsg.

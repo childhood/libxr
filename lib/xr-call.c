@@ -31,9 +31,9 @@ void xr_call_free(xr_call* call)
   if (call == NULL)
     return;
   g_free(call->method);
-  g_slist_foreach(call->params, (GFunc)xr_value_free, NULL);
+  g_slist_foreach(call->params, (GFunc)xr_value_unref, NULL);
   g_slist_free(call->params);
-  xr_value_free(call->retval);
+  xr_value_unref(call->retval);
   g_free(call->errmsg);
   g_free(call);
 }
@@ -81,7 +81,7 @@ void xr_call_set_retval(xr_call* call, xr_value* val)
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, val=%p)", call, val);
   g_assert(call != NULL);
   g_assert(val != NULL);
-  xr_value_free(call->retval);
+  xr_value_unref(call->retval);
   call->retval = val;
 }
 
@@ -242,7 +242,7 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len)
     xr_value_struct_set_member(v, "faultCode", xr_value_int_new(call->errcode));
     xr_value_struct_set_member(v, "faultString", xr_value_string_new(call->errmsg));
     _xr_value_serialize(fault, v);
-    xr_value_free(v);
+    xr_value_unref(v);
   }
   else if (call->retval)
   {
@@ -307,7 +307,7 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
               xr_value* elem = _xr_value_unserialize(v);
               if (elem == NULL)
               {
-                xr_value_free(arr);
+                xr_value_unref(arr);
                 return NULL;
               }
               xr_value_array_append(arr, elem);
@@ -344,8 +344,8 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
           if (values != 1 || names != 1)
           {
             g_free(name);
-            xr_value_free(val);
-            xr_value_free(str);
+            xr_value_unref(val);
+            xr_value_unref(str);
             return NULL;
           }
           xr_value_struct_set_member(str, name, val);
@@ -503,7 +503,7 @@ done:
   return 0;
 
  err_3:
-  xr_value_free(call->retval);
+  xr_value_unref(call->retval);
   call->retval = NULL;
  err_2:
   xp_free_nodes(ns);

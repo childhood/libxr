@@ -16,7 +16,7 @@ struct AllArrays
     array<int>         a_int;
     array<boolean>     a_boolean;
 //    array<double>      a_double;
-//    array<any>         a_any;
+    array<any>         a_any;
     array<Struct>      a_struct;
     array<array<string>> aa_string;
     array<array<array<string>>> aaa_string;
@@ -30,7 +30,7 @@ struct AllTypes
     int         v_int;
     boolean     v_boolean;
     double      v_double;
-//    any         v_any;
+    any         v_any;
     Struct      v_struct;
     AllArrays   v_arrays;
 }
@@ -55,6 +55,7 @@ servlet Test1
     retval->v_int = 5645;
     retval->v_boolean = FALSE;
     retval->v_double = 123.123e-3;
+    retval->v_any = xr_value_string_new("test");
     retval->v_struct = TStruct_new();
     retval->v_struct->v_string = g_strdup("some str");
     retval->v_arrays = TAllArrays_new();
