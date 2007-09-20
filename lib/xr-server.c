@@ -397,7 +397,7 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
   g_assert(threads > 0 && threads < 1000);
   g_return_val_if_fail (err == NULL || *err == NULL, NULL);
 
-  xr_ssl_init();
+  xr_init();
 
   xr_server* server = g_new0(xr_server, 1);
   server->secure = !!cert;

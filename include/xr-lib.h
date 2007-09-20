@@ -34,6 +34,8 @@ extern int xr_debug_enabled;
 #define xr_trace(mask, fmt, args...) \
   do { if (G_UNLIKELY(xr_debug_enabled & mask)) _xr_debug(G_STRFUNC, fmt, ## args); } while(0)
 
+G_BEGIN_DECLS
+
 /** Log message.
  *
  * @param call Call obejct.
@@ -41,5 +43,17 @@ extern int xr_debug_enabled;
  * @return Method name or NULL if not set.
  */
 void _xr_debug(const char* loc, const char* fmt, ...);
+
+/** Initialize libxr.
+ */
+void xr_init();
+
+/** Finalize libxr.
+ *
+ * Cleanup resources. Libxr functions should not be used after this call.
+ */
+void xr_fini();
+
+G_END_DECLS
 
 #endif

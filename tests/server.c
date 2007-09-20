@@ -16,7 +16,7 @@ int main(int ac, char* av[])
   if (err)
     g_print("error: %s\n", err->message);
 
-  xr_ssl_fini();
+  xr_fini();
 
   return !!err;
 }

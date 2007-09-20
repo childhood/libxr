@@ -72,7 +72,7 @@ int main(int ac, char* av[])
   /* free connections object */
   xr_client_free(conn);
 
-  xr_ssl_fini();
+  xr_fini();
 
   return 0;
 }

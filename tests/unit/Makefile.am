@@ -28,7 +28,7 @@ t001_http_CFLAGS = \
 
 t001_http_SOURCES = \
   t001-http.c \
-  $(top_srcdir)/lib/xr-lib.c \
+  phony-lib.c \
   $(top_srcdir)/lib/xr-http.c
 
 # t002
@@ -38,6 +38,6 @@ t002_call_CFLAGS = \
 
 t002_call_SOURCES = \
   t002-call.c \
-  $(top_srcdir)/lib/xr-lib.c \
+  phony-lib.c \
   $(top_srcdir)/lib/xr-call.c \
   $(top_srcdir)/lib/xr-value.c

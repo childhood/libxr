@@ -27,7 +27,8 @@ xr_client_conn* xr_client_new(GError** err)
 
   xr_trace(XR_DEBUG_CLIENT_TRACE, "(err=%p)", err);
 
-  xr_ssl_init();
+  xr_init();
+
   xr_client_conn* conn = g_new0(xr_client_conn, 1);
   conn->ctx = SSL_CTX_new(SSLv3_client_method());
   //XXX: setup certificates?
