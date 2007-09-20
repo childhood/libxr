@@ -92,7 +92,7 @@ void xr_value_unref(xr_value* val);
  *
  * @return New @ref xr_value node.
  */
-xr_value* xr_value_string_new(char* val);
+xr_value* xr_value_string_new(const char* val);
 
 /** Create new @ref xr_value node of type @ref XRV_INT.
  *
@@ -124,7 +124,7 @@ xr_value* xr_value_double_new(double val);
  *
  * @return New @ref xr_value node.
  */
-xr_value* xr_value_time_new(char* val);
+xr_value* xr_value_time_new(const char* val);
 
 /** Create new @ref xr_value node of type @ref XRV_BLOB.
  *
@@ -274,7 +274,7 @@ xr_value* xr_value_struct_new();
  * @param name Member name.
  * @param val Member value node. Ownership of the val is transferred to str.
  */
-void xr_value_struct_set_member(xr_value* str, char* name, xr_value* val);
+void xr_value_struct_set_member(xr_value* str, const char* name, xr_value* val);
 
 /** Get member value from the struct node.
  *
@@ -285,7 +285,7 @@ void xr_value_struct_set_member(xr_value* str, char* name, xr_value* val);
  *   with specified name. Returned value is owned by the str.
  *   Don't free it!
  */
-xr_value* xr_value_get_member(xr_value* str, char* name);
+xr_value* xr_value_get_member(xr_value* str, const char* name);
 
 /** Get list of @ref XRV_MEMBER nodes from the struct node.
  *
@@ -302,7 +302,7 @@ GSList* xr_value_get_members(xr_value* str);
  *
  * @return Name of the member. Owned by the mem node.
  */
-char* xr_value_get_member_name(xr_value* mem);
+const char* xr_value_get_member_name(xr_value* mem);
 
 /** Get value of the struct member from the @ref XRV_MEMBER node.
  *

@@ -89,7 +89,7 @@ void xr_value_unref(xr_value* val)
 }
 
 /* base types */
-xr_value* xr_value_string_new(char* val)
+xr_value* xr_value_string_new(const char* val)
 {
   xr_value* v = _xr_value_new();
   v->type = XRV_STRING;
@@ -121,7 +121,7 @@ xr_value* xr_value_double_new(double val)
   return v;
 }
 
-xr_value* xr_value_time_new(char* val)
+xr_value* xr_value_time_new(const char* val)
 {
   xr_value* v = _xr_value_new();
   v->type = XRV_TIME;
@@ -215,7 +215,7 @@ GSList* xr_value_get_members(xr_value* val)
   return val->children;
 }
 
-char* xr_value_get_member_name(xr_value* val)
+const char* xr_value_get_member_name(xr_value* val)
 {
   g_assert(val != NULL);
   g_assert(val->type == XRV_MEMBER);
@@ -229,7 +229,7 @@ xr_value* xr_value_get_member_value(xr_value* val)
   return val->member_value;
 }
 
-xr_value* xr_value_get_member(xr_value* val, char* name)
+xr_value* xr_value_get_member(xr_value* val, const char* name)
 {
   g_assert(val != NULL);
   g_assert(val->type == XRV_STRUCT);
@@ -266,7 +266,7 @@ xr_value* xr_value_array_new()
   return v;
 }
 
-void xr_value_struct_set_member(xr_value* str, char* name, xr_value* val)
+void xr_value_struct_set_member(xr_value* str, const char* name, xr_value* val)
 {
   g_assert(str != NULL);
   g_assert(str->type == XRV_STRUCT);

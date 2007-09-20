@@ -113,7 +113,7 @@ static xr_servlet_def* _find_servlet_def(xr_server* server, char* name)
   return NULL;
 }
 
-static xr_servlet_method_def* _find_servlet_method_def(xr_servlet* servlet, char* name)
+static xr_servlet_method_def* _find_servlet_method_def(xr_servlet* servlet, const char* name)
 {
   int i;
 

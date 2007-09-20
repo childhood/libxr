@@ -518,7 +518,7 @@ int main(int ac, char* av[])
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
-        E(0, ", %s %s", p->type->ctype, p->name);
+        E(0, ", %s%s %s", !strcmp(p->type->ctype, "char*") ? "const " : "", p->type->ctype, p->name);
       }
       EL(0, ", GError** _error);");
       NL;
@@ -551,7 +551,7 @@ int main(int ac, char* av[])
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
-        E(0, ", %s %s", p->type->ctype, p->name);
+        E(0, ", %s%s %s", !strcmp(p->type->ctype, "char*") ? "const " : "", p->type->ctype, p->name);
       }
       EL(0, ", GError** _error)");
       EL(0, "{");

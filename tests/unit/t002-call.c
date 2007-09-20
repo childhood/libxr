@@ -17,7 +17,7 @@
 static int constructCall()
 {
   xr_call* call = xr_call_new("test");
-  char* method = xr_call_get_method(call);
+  const char* method = xr_call_get_method(call);
   TEST_ASSERT(method != 0);
   int method_match = !strcmp(method, "test");
   TEST_ASSERT(method_match);
@@ -28,7 +28,7 @@ static int constructCall()
 static int constructCallNoMethod()
 {
   xr_call* call = xr_call_new(0);
-  char* method = xr_call_get_method(call);
+  const char* method = xr_call_get_method(call);
   TEST_ASSERT(method == 0);
   xr_call_free(call);
   return 0;
@@ -69,7 +69,7 @@ static int requestUnserialize3()
   int rs = xr_call_unserialize_request(call, call_value, -1);
   TEST_ASSERT(rs == 0);
 
-  char* method = xr_call_get_method(call);
+  const char* method = xr_call_get_method(call);
   TEST_ASSERT(method != 0);
   int method_match = !strcmp(method, "test");
   TEST_ASSERT(method_match);

@@ -25,7 +25,7 @@ typedef struct _xr_call xr_call;
  *
  * @return Newly created call object.
  */
-xr_call* xr_call_new(char* method);
+xr_call* xr_call_new(const char* method);
 
 /** Free call object.
  *
@@ -41,7 +41,7 @@ void xr_call_free(xr_call* call);
  *
  * @warning Returned value is still owned by the call object. Don't free it!
  */
-char* xr_call_get_method(xr_call* call);
+const char* xr_call_get_method(xr_call* call);
 
 /** Get method name (as passed in XML-RPC).
  *
@@ -51,7 +51,7 @@ char* xr_call_get_method(xr_call* call);
  *
  * @warning Returned value is still owned by the call object. Don't free it!
  */
-char* xr_call_get_method_full(xr_call* call);
+const char* xr_call_get_method_full(xr_call* call);
 
 /** Add parameter to the call obejct.
  *
@@ -97,7 +97,7 @@ xr_value* xr_call_get_retval(xr_call* call);
  * @param code Error code.
  * @param msg Error message.
  */
-void xr_call_set_error(xr_call* call, int code, char* msg);
+void xr_call_set_error(xr_call* call, int code, const char* msg);
 
 /** Get error code that is set on the call object.
  *
@@ -113,7 +113,7 @@ int xr_call_get_error_code(xr_call* call);
  *
  * @return Error message. String is owned by the call obejct.
  */
-char* xr_call_get_error_message(xr_call* call);
+const char* xr_call_get_error_message(xr_call* call);
 
 /** Serialize call object into XML-RPC request.
  *
@@ -142,7 +142,7 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len);
  * @return Returns 0 on success and -1 on failure. On failure
  *   @ref xr_call_set_error is used to set reason of the failure.
  */
-int xr_call_unserialize_request(xr_call* call, char* buf, int len);
+int xr_call_unserialize_request(xr_call* call, const char* buf, int len);
 
 /** Unserialize XML-RPC response into call object.
  *
@@ -153,7 +153,7 @@ int xr_call_unserialize_request(xr_call* call, char* buf, int len);
  * @return Returns 0 on success and -1 on failure. On failure
  *   @ref xr_call_set_error is used to set reason of the failure.
  */
-int xr_call_unserialize_response(xr_call* call, char* buf, int len);
+int xr_call_unserialize_response(xr_call* call, const char* buf, int len);
 
 /** Free buffer allocated by serialize functions.
  *

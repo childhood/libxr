@@ -17,7 +17,7 @@ struct _xr_call
 
 /* construct/destruct */
 
-xr_call* xr_call_new(char* method)
+xr_call* xr_call_new(const char* method)
 {
   xr_call* c = g_new0(xr_call, 1);
   xr_trace(XR_DEBUG_CALL_TRACE, "(method=%s) = %p", method, c);
@@ -38,14 +38,14 @@ void xr_call_free(xr_call* call)
   g_free(call);
 }
 
-char* xr_call_get_method_full(xr_call* call)
+const char* xr_call_get_method_full(xr_call* call)
 {
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_assert(call != NULL);
   return call->method;
 }
 
-char* xr_call_get_method(xr_call* call)
+const char* xr_call_get_method(xr_call* call)
 {
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_assert(call != NULL);
@@ -94,7 +94,7 @@ xr_value* xr_call_get_retval(xr_call* call)
 
 /* error manipulation */
 
-void xr_call_set_error(xr_call* call, int code, char* msg)
+void xr_call_set_error(xr_call* call, int code, const char* msg)
 {
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, code=%d, msg=%s)", call, code, msg);
   g_assert(call != NULL);
@@ -111,7 +111,7 @@ int xr_call_get_error_code(xr_call* call)
   return call->errcode;
 }
 
-char* xr_call_get_error_message(xr_call* call)
+const char* xr_call_get_error_message(xr_call* call)
 {
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
   g_assert(call != NULL);
@@ -358,7 +358,7 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
   return NULL;
 }
 
-int xr_call_unserialize_request(xr_call* call, char* buf, int len)
+int xr_call_unserialize_request(xr_call* call, const char* buf, int len)
 {
   g_assert(call != NULL);
   g_assert(buf != NULL);
@@ -420,7 +420,7 @@ int xr_call_unserialize_request(xr_call* call, char* buf, int len)
   return -1;
 }
 
-int xr_call_unserialize_response(xr_call* call, char* buf, int len)
+int xr_call_unserialize_response(xr_call* call, const char* buf, int len)
 {
   g_assert(call != NULL);
   g_assert(buf != NULL);
