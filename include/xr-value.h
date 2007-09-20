@@ -55,7 +55,8 @@ struct _xr_blob
  *
  * @param buf Buffer with blob data. Ownership of the buffer is transferred.
  *   Buffer will be freed using g_free when @ref xr_blob_unref is called.
- * @param len Lenght of the data in the buffer.
+ * @param len Lenght of the data in the buffer. If negative, length is
+ *   calculated automatically by strlen().
  *
  * @return New blob.
  *

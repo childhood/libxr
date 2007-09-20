@@ -30,11 +30,14 @@ static xr_value* _xr_value_new()
 
 xr_blob* xr_blob_new(char* buf, int len)
 {
-  if (buf == NULL || len < 0)
+  if (buf == NULL)
     return NULL;
   xr_blob* b = g_new0(xr_blob, 1);
   b->buf = buf;
-  b->len = len;
+  if (len < 0)
+    b->len = strlen(buf);
+  else
+    b->len = len;
   b->refs = 1;
   return b;
 }
