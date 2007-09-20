@@ -104,6 +104,11 @@ servlet Test1
 
 servlet Test2
 {
+  <%
+#include <stdio.h>
+#include <string.h>
+  %>
+
   __attrs__
   <%
     char* username;
