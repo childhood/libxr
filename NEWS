@@ -9,6 +9,7 @@ Note: This is binary incompatible release.
 - Implemented 'any' type. (API change: xr_value_free replaced by xr_value_unref)
 - Implemented 'take' method parameter flag. (Pass parameter ownership to the stub.)
   See test.xdl for details.
+- Imporve tests.
 
 0.9.13 - 2007-08-20
 ~~~~~~~~~~~~~~~~~~~
