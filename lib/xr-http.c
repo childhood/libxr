@@ -251,9 +251,8 @@ int xr_http_receive(xr_http* http, int message_type, gchar** buffer, gint* lengt
 
   if (xr_debug_enabled & XR_DEBUG_HTTP)
   {
-    printf(">>>>> HTTP RECEIVE START >>>>>\n");
-    fwrite(header, header_length, 1, stdout);
-    fflush(stdout);
+    g_print(">>>>> HTTP RECEIVE START >>>>>\n");
+    g_print("%*s", header_length, header);
   }
 
   if (_xr_http_parse_headers(http, message_type, header) < 0)
@@ -275,9 +274,8 @@ int xr_http_receive(xr_http* http, int message_type, gchar** buffer, gint* lengt
 
   if (xr_debug_enabled & XR_DEBUG_HTTP)
   {
-    fwrite(_buffer, _length, 1, stdout);
-    printf(">>>>> HTTP RECEIVE END >>>>>>>\n");
-    fflush(stdout);
+    g_print("%*s", _length, _buffer);
+    g_print(">>>>> HTTP RECEIVE END >>>>>>>\n");
   }
 
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p, message_type=%d, *buffer=%p, *length=%d)", http, message_type, *buffer, *length);
@@ -330,11 +328,10 @@ int xr_http_send(xr_http* http, int message_type, gchar* buffer, gint length)
 
   if (xr_debug_enabled & XR_DEBUG_HTTP)
   {
-    printf("<<<<< HTTP SEND START <<<<<\n");
-    printf("%s", header);
-    fwrite(buffer, length, 1, stdout);
-    fflush(stdout);
-    printf("<<<<< HTTP SEND END <<<<<<<\n");
+    g_print("<<<<< HTTP SEND START <<<<<\n");
+    g_print("%s", header);
+    g_print("%*s", length, buffer);
+    g_print("<<<<< HTTP SEND END <<<<<<<\n");
   }
 
   retval = 0;
