@@ -1,3 +1,12 @@
+0.9.15 - 2007-09-30
+~~~~~~~~~~~~~~~~~~~
+
+- Added proper license notices to all files (LGPL v3).
+- Added vala language support. XDL compiler can generate VAPI file.
+- New functions: xr_client_set_http_header(), xr_client_basic_auth().
+- New mailing list! Feel free to contribute with anything. Address
+  is libxr@zhost.zonio.net
+
 0.9.14 - 2007-09-20
 ~~~~~~~~~~~~~~~~~~~
 Note: This is binary incompatible release.
