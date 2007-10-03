@@ -41,6 +41,10 @@ Makefile.in
 /tests/TTest*.c
 /tests/TTest*.h
 /tests/leak*.log
+/tests/vala/T*
+/tests/vala/test
+/tests/vala/test.c
+/tests/vala/test.h
 
 /tests/zblok/ZM*
 /tests/zblok/zm-client

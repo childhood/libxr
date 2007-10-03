@@ -146,6 +146,7 @@ xdl_typedef* xdl_typedef_new_array(xdl_model *xdl, xdl_servlet *servlet, xdl_typ
 xdl_typedef* xdl_typedef_new_struct(xdl_model *xdl, xdl_servlet *servlet, char* name);
 
 xdl_typedef* xdl_typedef_find(xdl_model *xdl, xdl_servlet *servlet, const char* name);
+char* xdl_typedef_vala_name(xdl_typedef* t);
 
 void xdl_process(xdl_model *ctx);
 

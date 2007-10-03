@@ -144,3 +144,32 @@ xdl_error_code* xdl_error_new(xdl_model *xdl, xdl_servlet *servlet, char* name, 
   }
   return e;
 }
+
+char* xdl_typedef_vala_name(xdl_typedef* t)
+{
+  if (t == NULL)
+    return "";
+  if (t->type == TD_BASE)
+  {
+    if (!strcmp(t->name, "time"))
+      return "string";
+    if (!strcmp(t->name, "boolean"))
+      return "bool";
+    return t->name;
+  }
+  else if (t->type == TD_STRUCT)
+  {
+    return t->name;
+  }
+  else if (t->type == TD_ARRAY)
+  {
+    return g_strdup_printf("GLib.SList<%s>", xdl_typedef_vala_name(t->item_type));
+  }
+  else if (t->type == TD_BLOB)
+    return "XR.Blob";
+  else if (t->type == TD_ANY)
+    return "XR.Value";
+  else
+    g_assert_not_reached();
+  return NULL;
+}

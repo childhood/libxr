@@ -346,7 +346,7 @@ static GOptionEntry entries[] =
 {
   { "xdl", 'i', 0, G_OPTION_ARG_STRING, &xdl_file, "Interface description file.", "FILE" },
   { "out", 'o', 0, G_OPTION_ARG_STRING, &out_dir, "Output directory.", "DIR" },
-  { "mode", 'm', 0, G_OPTION_ARG_STRING, &mode, "Compiler mode (all, server-impl, pub-headers, pub-impl).", "MODE" },
+  { "mode", 'm', 0, G_OPTION_ARG_STRING, &mode, "Compiler mode (all, server-impl, pub-headers, pub-impl, vapi).", "MODE" },
   { NULL, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -386,6 +386,7 @@ int main(int ac, char* av[])
   int pub_headers = !strcmp(mode, "all") || !strcmp(mode, "pub-headers");
   int pub_impl = !strcmp(mode, "all") || !strcmp(mode, "pub-impl");
   int server_impl = !strcmp(mode, "all") || !strcmp(mode, "server-impl");
+  int vapi_file = !strcmp(mode, "vapi");
 
   /***********************************************************
    * common types header                                     *
@@ -924,7 +925,158 @@ int main(int ac, char* av[])
 
   }
   
-  fclose(f);
+  /***********************************************************
+   * VAPI file                                               *
+   ***********************************************************/
+
+  if (vapi_file)
+  {
+
+  OPEN("%s/%s.vala", out_dir, xdl->name);
+
+  EL(0, "/* VALA bindings */");
+  NL;
+  EL(0, "[CCode (cheader_filename = \"xr-lib.h\", lower_case_cprefix = \"xr_\", cprefix = \"xr_\")]");
+  EL(0, "namespace XR");
+  EL(0, "{");
+  EL(1, "public static void init();");
+  EL(1, "public static void fini();");
+  NL;
+  EL(1, "[CCode (cheader_filename = \"xr-value.h\", free_function = \"xr_blob_unref\", cname = \"xr_blob\", cprefix = \"xr_blob_\")]");
+  EL(1, "public class Blob");
+  EL(1, "{");
+  EL(2, "public string buf;");
+  EL(2, "public int len;");
+  EL(2, "[CCode (cname = \"xr_blob_new\")]");
+  EL(2, "public Blob(string buf, int len);");
+  EL(1, "}");
+  NL;
+  EL(1, "[CCode (cprefix = \"XRV_\")]");
+  EL(1, "public enum ValueType { ARRAY, STRUCT, MEMBER, INT, STRING, BOOLEAN, DOUBLE, TIME, BLOB }");
+  NL;
+  EL(1, "[CCode (cheader_filename = \"xr-value.h\", unref_function = \"xr_value_unref\", ref_function = \"xr_value_ref\", cname = \"xr_value\", cprefix = \"xr_value_\")]");
+  EL(1, "public class Value");
+  EL(1, "{");
+  EL(2, "[CCode (cname = \"xr_value_int_new\")]");
+  EL(2, "public Value.int(int val);");
+  EL(2, "[CCode (cname = \"xr_value_string_new\")]");
+  EL(2, "public Value.string(string val);");
+  EL(2, "[CCode (cname = \"xr_value_bool_new\")]");
+  EL(2, "public Value.bool(bool val);");
+  EL(2, "[CCode (cname = \"xr_value_double_new\")]");
+  EL(2, "public Value.double(double val);");
+  EL(2, "[CCode (cname = \"xr_value_time_new\")]");
+  EL(2, "public Value.time(string val);");
+  EL(2, "[CCode (cname = \"xr_value_blob_new\")]");
+  EL(2, "public Value.blob(XR.Blob# val);");
+  EL(2, "[CCode (cname = \"xr_value_array_new\")]");
+  EL(2, "public Value.array();");
+  EL(2, "[CCode (cname = \"xr_value_struct_new\")]");
+  EL(2, "public Value.@struct();");
+  EL(2, "public int to_int(ref int nval);");
+  EL(2, "public int to_string(ref string nval);");
+  EL(2, "public int to_bool(ref bool nval);");
+  EL(2, "public int to_double(ref double nval);");
+  EL(2, "public int to_time(ref string nval);");
+  EL(2, "public int to_blob(ref XR.Blob nval);");
+  EL(2, "public int to_value(ref XR.Value nval);");
+  EL(2, "public ValueType get_type();");
+  EL(2, "public void array_append(Value val);");
+  EL(2, "public GLib.SList<weak Value> get_items();");
+  EL(2, "public void set_member(string name, Value# val);");
+  EL(2, "public weak Value get_member(string name);");
+  EL(2, "public weak GLib.SList<weak Value> get_members();");
+  EL(2, "public weak string get_member_name();");
+  EL(2, "public weak Value get_member_value();");
+  EL(2, "public int is_error_retval(ref int code, ref string msg);");
+  EL(2, "public int dump(GLib.String str, int indent);");
+  EL(1, "}");
+  NL;
+  EL(1, "[CCode (cheader_filename = \"xr-call.h\", free_function = \"xr_call_free\", cname = \"xr_call\", cprefix = \"xr_call_\")]");
+  EL(1, "public class Call");
+  EL(1, "{");
+  EL(2, "public Call(string! method);");
+  EL(2, "public weak string! get_method();");
+  EL(2, "public weak string! get_method_full();");
+  EL(2, "public void add_param(Value# val);");
+  EL(2, "public weak Value! get_param(uint pos);");
+  EL(2, "public void set_retval(Value# val);");
+  EL(2, "public weak Value! get_retval();");
+  EL(2, "public void set_error(int code, string msg);");
+  EL(2, "public int get_error_code();");
+  EL(2, "public weak string! get_error_message();");
+  EL(2, "public string dump_string(int indent);");
+  EL(2, "public void dump(int indent);");
+  EL(1, "}");
+  EL(0, "}");
+  NL;  
+  EL(0, "[CCode (cheader_filename = \"%sCommon.h\", lower_case_cprefix = \"xr_\", cprefix = \"%s\")]", xdl->name, xdl->name);
+  EL(0, "namespace %s", xdl->name);
+  EL(0, "{");
+  EL(1, "[CCode (cprefix = \"%s_XMLRPC_ERROR_\")]", xdl->name);
+  EL(1, "public enum Error");
+  EL(1, "{");
+  for (j=xdl->errors; j; j=j->next)
+  {
+    xdl_error_code* e = j->data;
+    EL(2, "%s = %d,", e->name, e->code);
+  }
+  EL(1, "}");
+  for (j=xdl->types; j; j=j->next)
+  {
+    xdl_typedef* t = j->data;
+    if (t->type == TD_STRUCT)
+    {
+      NL;
+      EL(1, "[CCode (free_function = \"%s_free\")]", t->cname);
+      EL(1, "public class %s", t->name);
+      EL(1, "{");
+      for (k=t->struct_members; k; k=k->next)
+      {
+        xdl_struct_member* m = k->data;
+        EL(2, "public %s %s;", xdl_typedef_vala_name(m->type), m->name);
+      }
+      EL(1, "}");
+    }
+  }
+
+  for (i=xdl->servlets; i; i=i->next)
+  {
+    xdl_servlet* s = i->data;
+    NL;
+    EL(1, "[CCode (cheader_filename = \"%s%s.xrc.h\", free_function = \"xr_client_free\", cname = \"xr_client_conn\", cprefix = \"%s%s_\")]", xdl->name, s->name, xdl->name, s->name);
+    EL(1, "public class %s", s->name);
+    EL(1, "{");
+    EL(2, "[CCode (cname = \"xr_client_new\")]");
+    EL(2, "public %s() throws GLib.Error;", s->name);
+    EL(2, "[CCode (cname = \"xr_client_open\")]");
+    EL(2, "public bool open(string uri) throws GLib.Error;");
+    EL(2, "[CCode (cname = \"xr_client_close\")]");
+    EL(2, "public void close();");
+    EL(2, "[CCode (cname = \"xr_client_set_http_header\")]");
+    EL(2, "public void set_http_header(string name, string value);");
+    for (j=s->methods; j; j=j->next)
+    {
+      xdl_method* m = j->data;
+
+      E(2, "public %s %s(", xdl_typedef_vala_name(m->return_type), m->name);
+      for (k=m->params; k; k=k->next)
+      {
+        xdl_method_param* p = k->data;
+        E(0, "%s %s%s", xdl_typedef_vala_name(p->type), p->name, k->next ? ", " : "");
+      }
+      EL(0, ") throws GLib.Error;");
+    }
+    EL(1, "}");
+  }
+  EL(0, "}");
+
+  }
+
+  /* end */
+
+  if (f)
+    fclose(f);
 
   return 0;
 }
