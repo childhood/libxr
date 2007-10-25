@@ -1,0 +1,5 @@
+Add this to your ~/.vim/filetype.vim
+
+augroup filetypedetect
+au BufNewFile,BufRead *.xdl  setf xdl
+augroup END

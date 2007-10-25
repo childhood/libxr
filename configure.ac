@@ -50,6 +50,7 @@ AC_OUTPUT([
 	lib/Makefile
 	xdl-compiler/Makefile
 	docs/Makefile
+	misc/Makefile
 	libxr.pc
 	tests/Makefile
 	tests/unit/Makefile
