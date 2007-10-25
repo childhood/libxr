@@ -122,6 +122,11 @@ xdl_typedef* xdl_typedef_new_struct(xdl_model *xdl, xdl_servlet *servlet, char* 
   return s;
 }
 
+gint xdl_method_compare(xdl_method* m1, xdl_method* m2)
+{
+  return strcmp(m1->name, m2->name);
+}
+
 void xdl_process(xdl_model *xdl)
 {
 }
@@ -172,4 +177,13 @@ char* xdl_typedef_vala_name(xdl_typedef* t)
   else
     g_assert_not_reached();
   return NULL;
+}
+
+char* xdl_typedef_xdl_name(xdl_typedef* t)
+{
+  if (t == NULL)
+    return "";
+  if (t->type == TD_ARRAY)
+    return g_strdup_printf("array<%s>", xdl_typedef_xdl_name(t->item_type));
+  return t->name;
 }

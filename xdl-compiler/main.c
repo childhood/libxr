@@ -387,6 +387,7 @@ int main(int ac, char* av[])
   int pub_impl = !strcmp(mode, "all") || !strcmp(mode, "pub-impl");
   int server_impl = !strcmp(mode, "all") || !strcmp(mode, "server-impl");
   int vapi_file = !strcmp(mode, "vapi");
+  int xdl_file = !strcmp(mode, "xdl");
 
   /***********************************************************
    * common types header                                     *
@@ -1070,6 +1071,94 @@ int main(int ac, char* av[])
     EL(1, "}");
   }
   EL(0, "}");
+
+  }
+
+  if (xdl_file)
+  {
+  OPEN("%s/%s.xdl", out_dir, xdl->name);
+
+  EL(0, "/* Generated XDL */");
+  NL;
+
+  EL(0, "namespace %s;", xdl->name);
+  NL;
+
+  for (j=xdl->errors; j; j=j->next)
+  {
+    xdl_error_code* e = j->data;
+    EL(0, "error %-22s = %d;", e->name, e->code);
+  }
+
+  for (j=xdl->types; j; j=j->next)
+  {
+    xdl_typedef* t = j->data;
+    if (t->type == TD_STRUCT)
+    {
+      NL;
+      EL(0, "struct %s", t->name);
+      EL(0, "{");
+      for (k=t->struct_members; k; k=k->next)
+      {
+        xdl_struct_member* m = k->data;
+        EL(1, "%-24s %s;", xdl_typedef_xdl_name(m->type), m->name);
+      }
+      EL(0, "}");
+    }
+  }
+
+  for (i=xdl->servlets; i; i=i->next)
+  {
+    xdl_servlet* s = i->data;
+    NL;
+    EL(0, "servlet %s", s->name);
+    EL(0, "{");
+
+    for (j=s->errors; j; j=j->next)
+    {
+      xdl_error_code* e = j->data;
+      EL(1, "error %-18s = %d;", e->name, e->code);
+    }
+    if (s->errors)
+      NL;
+
+    for (j=s->types; j; j=j->next)
+    {
+      xdl_typedef* t = j->data;
+      if (t->type == TD_STRUCT)
+      {
+        EL(1, "struct %s", t->name);
+        EL(1, "{");
+        for (k=t->struct_members; k; k=k->next)
+        {
+          xdl_struct_member* m = k->data;
+          EL(2, "%-20s %s;", xdl_typedef_xdl_name(m->type), m->name);
+        }
+        EL(1, "}");
+        NL;
+      }
+    }
+
+    s->methods = g_slist_sort(s->methods, (GCompareFunc)xdl_method_compare);
+
+    for (j=s->methods; j; j=j->next)
+    {
+      xdl_method* m = j->data;
+
+      E(1, "%-24s %-25s(", xdl_typedef_xdl_name(m->return_type), m->name);
+      for (k=m->params; k; k=k->next)
+      {
+        xdl_method_param* p = k->data;
+        if (k == m->params)
+          EL(0, "%-15s %s%s", xdl_typedef_xdl_name(p->type), p->name, k->next ? "," : ");");
+        else
+          EL(0, "%-55s%-15s %s%s", "", xdl_typedef_xdl_name(p->type), p->name, k->next ? "," : ");");
+      }
+      if (m->params == NULL)
+        EL(0, ");");
+    }
+    EL(0, "}");
+  }
 
   }
 

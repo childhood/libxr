@@ -145,8 +145,11 @@ xdl_error_code* xdl_error_new(xdl_model *xdl, xdl_servlet *servlet, char* name, 
 xdl_typedef* xdl_typedef_new_array(xdl_model *xdl, xdl_servlet *servlet, xdl_typedef* item);
 xdl_typedef* xdl_typedef_new_struct(xdl_model *xdl, xdl_servlet *servlet, char* name);
 
+gint xdl_method_compare(xdl_method* m1, xdl_method* m2);
+
 xdl_typedef* xdl_typedef_find(xdl_model *xdl, xdl_servlet *servlet, const char* name);
 char* xdl_typedef_vala_name(xdl_typedef* t);
+char* xdl_typedef_xdl_name(xdl_typedef* t);
 
 void xdl_process(xdl_model *ctx);
 
