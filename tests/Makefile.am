@@ -1,4 +1,4 @@
-SUBDIRS = unit zblok
+SUBDIRS = unit zblok vala
 
 BUILT_SOURCES = \
   TCommon.h \

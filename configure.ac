@@ -55,4 +55,5 @@ AC_OUTPUT([
 	tests/Makefile
 	tests/unit/Makefile
 	tests/zblok/Makefile
+	tests/vala/Makefile
 ])

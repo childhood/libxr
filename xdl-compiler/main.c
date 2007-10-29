@@ -933,7 +933,7 @@ int main(int ac, char* av[])
   if (vapi_file)
   {
 
-  OPEN("%s/%s.vala", out_dir, xdl->name);
+  OPEN("%s/%s.vapi", out_dir, xdl->name);
 
   EL(0, "/* VALA bindings */");
   NL;
