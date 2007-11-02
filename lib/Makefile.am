@@ -1,6 +1,5 @@
 EXTRA_DIST = \
   xml-priv.h \
-  xr-http.h \
   xr-utils.h
 
 AM_CFLAGS= \

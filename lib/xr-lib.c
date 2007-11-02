@@ -27,6 +27,7 @@
 #endif
 
 #include "xr-lib.h"
+#include "xr-http.h"
 
 int xr_debug_enabled = 0;
 
@@ -75,14 +76,15 @@ void xr_init()
   if (!g_thread_supported())
     g_thread_init(NULL);
 
+  xr_http_init();
+
 #ifndef WIN32
   signal(SIGPIPE, SIG_IGN);
 #endif
 
   SSL_library_init();
-  ERR_load_crypto_strings();
   SSL_load_error_strings();
-  ERR_load_SSL_strings();
+  OpenSSL_add_all_algorithms();
 
   _ssl_mutexes = g_new(GMutex*, CRYPTO_num_locks());
   for (i=0; i<CRYPTO_num_locks(); i++)

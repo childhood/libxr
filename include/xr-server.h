@@ -28,6 +28,7 @@
 #define __XR_SERVER_H__
 
 #include "xr-call.h"
+#include "xr-http.h"
 
 /** Opaque data structrure that represents XML-RPC server.
  */
@@ -168,6 +169,14 @@ int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet);
  * @return Returns private data associated with the servlet.
  */
 void* xr_servlet_get_priv(xr_servlet* servlet);
+
+/** Get http object for the servlet.
+ *
+ * @param servlet Servlet object.
+ *
+ * @return Returns HTTP object that can be used to upload/download data.
+ */
+xr_http* xr_servlet_get_http(xr_servlet* servlet);
 
 /** Use this function as a simple way to quickly start a server.
  *

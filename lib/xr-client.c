@@ -32,6 +32,7 @@ struct _xr_client_conn
   SSL_CTX* ctx;
   SSL* ssl;
   BIO* bio;
+  xr_http* http;
 
   char* resource;
   char* host;
@@ -212,6 +213,7 @@ int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     }
   }
 
+  conn->http = xr_http_new(conn->bio);
   conn->is_open = 1;
   return 0;
 }
@@ -228,6 +230,8 @@ void xr_client_close(xr_client_conn* conn)
   if (conn->secure)
     BIO_ssl_shutdown(conn->bio);
 
+  xr_http_free(conn->http);
+  conn->http = NULL;
   BIO_free_all(conn->bio);
   conn->ssl = NULL;
   conn->bio = NULL;
@@ -237,7 +241,10 @@ void xr_client_close(xr_client_conn* conn)
 int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
 {
   char* buffer;
-  int length, rs;
+  int length;
+  gsize rs;
+  gboolean write_success;
+  GString* response;
 
   g_assert(conn != NULL);
   g_assert(call != NULL);
@@ -248,47 +255,51 @@ int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   if (!conn->is_open)
   {
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_CLOSED, "Can't perform RPC on closed connection.");
-    goto err1;
+    return -1;
   }
 
-  xr_http* http = xr_http_new(conn->bio);
+  /* serialize nad send XML-RPC request */
   xr_call_serialize_request(call, &buffer, &length);
-  xr_http_setup_request(http, "POST", conn->resource, conn->host);
-  rs = xr_http_send(http, XR_HTTP_REQUEST, buffer, length);
+  xr_http_setup_request(conn->http, "POST", conn->resource, conn->host);
+  xr_http_set_header(conn->http, "Content-Type", "text/xml");
+  xr_http_set_message_length(conn->http, length);
+  write_success = xr_http_write_all(conn->http, buffer, length, NULL);
   xr_call_free_buffer(buffer);
-
-  if (rs < 0)
+  if (!write_success)
   {
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_IO, "HTTP send failed.");
     xr_client_close(conn);
-    goto err2;
+    return -1;
   }
 
-  if (xr_http_receive(http, XR_HTTP_RESPONSE, &buffer, &length) < 0)
+  /* receive HTTP response header */
+  if (!xr_http_read_header(conn->http, NULL))
+    return -1;
+
+  /* check if some dumb bunny sent us wrong message type */
+  if (xr_http_get_message_type(conn->http) != XR_HTTP_RESPONSE)
+    return -1;
+
+  response = xr_http_read_all(conn->http, NULL);
+  if (response == NULL)
   {
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_IO, "HTTP receive failed.");
     xr_client_close(conn);
-    goto err2;
+    return -1;
   }
 
-  rs = xr_call_unserialize_response(call, buffer, length);
-  g_free(buffer);
-  xr_http_free(http);
-  if (xr_debug_enabled & XR_DEBUG_CALL)
-    xr_call_dump(call, 0);
-
+  rs = xr_call_unserialize_response(call, response->str, response->len);
+  g_string_free(response, TRUE);
   if (rs)
   {
     g_set_error(err, 0, xr_call_get_error_code(call), "%s", xr_call_get_error_message(call));
-    goto err1;
+    return -1;
   }
 
-  return 0;
+  if (xr_debug_enabled & XR_DEBUG_CALL)
+    xr_call_dump(call, 0);
 
- err2:
-  xr_http_free(http);
- err1:
-  return -1;
+  return 0;
 }
 
 void xr_client_free(xr_client_conn* conn)

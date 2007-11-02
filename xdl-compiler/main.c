@@ -790,6 +790,7 @@ int main(int ac, char* av[])
     EL(0, "gboolean %s%sServlet_download(xr_servlet* _servlet)", xdl->name, s->name);
     EL(0, "{");
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
+    EL(1, "xr_http* _http = xr_servlet_get_http(_servlet);");
     STUB(s->stub_download);
     EL(1, "return FALSE;");
     EL(0, "}");
@@ -798,6 +799,7 @@ int main(int ac, char* av[])
     EL(0, "gboolean %s%sServlet_upload(xr_servlet* _servlet)", xdl->name, s->name);
     EL(0, "{");
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
+    EL(1, "xr_http* _http = xr_servlet_get_http(_servlet);");
     STUB(s->stub_upload);
     EL(1, "return FALSE;");
     EL(0, "}");
