@@ -191,6 +191,45 @@ servlet Test1
   <%
     //printf("Post-call!\n");
   %>
+
+  /* serve GET request, if serverd return TRUE, otherwise return FALSE */
+  __download__
+  <%
+    const char* path = xr_http_get_resource(_http);
+    //const char* username = xr_http_get_auth_username(_http);
+    //const char* password = xr_http_get_auth_password(_http);
+
+    if (!strcmp(path, "/test.file"))
+    {
+      //if (username && password && !strcmp(username, "bob") && !strcmp(password, "qwe"))
+      if (1)
+      {
+        xr_http_setup_response(_http, 200);
+        xr_http_set_header(_http, "Content-Type", "text/plain");
+        xr_http_write_all(_http, "crap", 4, NULL);
+        return TRUE;
+      }
+    }
+    else if (!strcmp(path, "/test.file.2"))
+    {
+    }
+    else
+    {
+      GString* response = g_string_sized_new(100);
+      g_string_append_printf(response, "<html><head><title>401 Not Authorized</title></head><body><h1>401 Not Authorized</h1><p>You are not authorized to download %s</p></body></html>", path);
+
+      xr_http_setup_response(_http, 401);
+      xr_http_set_header(_http, "Content-Type", "text/html");
+      xr_http_write_all(_http, response->str, response->len, NULL);
+
+      g_string_free(response, TRUE);
+      return TRUE;
+    }
+  %>
+
+  __upload__
+  <%
+  %>
 }
 
 servlet Test2
