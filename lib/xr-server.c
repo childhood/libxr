@@ -181,7 +181,7 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_server_conn* con
     }
 
     servlet = xr_servlet_new(def);
-    if (servlet->def->init(servlet) < 0)
+    if (servlet->def->init && servlet->def->init(servlet) < 0)
     {
       xr_call_set_error(call, 100, "Servlet initialization failed.");
       xr_servlet_free(servlet, FALSE);

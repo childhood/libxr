@@ -50,6 +50,14 @@ typedef int (*servlet_init_t)(xr_servlet* servlet);
  */
 typedef void (*servlet_fini_t)(xr_servlet* servlet);
 
+/** Servlet download callback type.
+ */
+typedef gboolean (*servlet_download_t)(xr_servlet* servlet);
+
+/** Servlet upload callback type.
+ */
+typedef gboolean (*servlet_upload_t)(xr_servlet* servlet);
+
 /** Servlet method description structure.
  */
 typedef struct _xr_servlet_method_def xr_servlet_method_def;
@@ -76,6 +84,8 @@ struct _xr_servlet_def
   servlet_fini_t fini;              /**< Servlet destructor. */
   servlet_method_t pre_call;        /**< Pre-call hook. */
   servlet_method_t post_call;       /**< Post-call hook. */
+  servlet_download_t download;      /**< Download hook. */
+  servlet_upload_t upload;          /**< Upload hook. */
   int methods_count;                /**< Count of the methods implemented by the server. */
   xr_servlet_method_def* methods;   /**< Methods descriptions. */
 };

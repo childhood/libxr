@@ -676,6 +676,24 @@ int main(int ac, char* av[])
     EL(0, "int %s%sServlet_post_call(xr_servlet* _servlet, xr_call* _call);", xdl->name, s->name);
     NL;
 
+    EL(0, "/** Download hook.");
+    EL(0, " * ");
+    EL(0, " * @param _servlet Servlet object.");
+    EL(0, " * ");
+    EL(0, " * @return TRUE if you want to continue execution of the call.");
+    EL(0, " */ ");
+    EL(0, "gboolean %s%sServlet_download(xr_servlet* _servlet);", xdl->name, s->name);
+    NL;
+
+    EL(0, "/** Upload hook.");
+    EL(0, " * ");
+    EL(0, " * @param _servlet Servlet object.");
+    EL(0, " * ");
+    EL(0, " * @return TRUE if you want to continue execution of the call.");
+    EL(0, " */ ");
+    EL(0, "gboolean %s%sServlet_upload(xr_servlet* _servlet);", xdl->name, s->name);
+    NL;
+
     for (j=s->methods; j; j=j->next)
     {
       xdl_method* m = j->data;
@@ -766,6 +784,22 @@ int main(int ac, char* av[])
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
     STUB(s->stub_post_call);
     EL(1, "return TRUE;");
+    EL(0, "}");
+    NL;
+
+    EL(0, "gboolean %s%sServlet_download(xr_servlet* _servlet)", xdl->name, s->name);
+    EL(0, "{");
+    EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
+    STUB(s->stub_download);
+    EL(1, "return FALSE;");
+    EL(0, "}");
+    NL;
+
+    EL(0, "gboolean %s%sServlet_upload(xr_servlet* _servlet)", xdl->name, s->name);
+    EL(0, "{");
+    EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
+    STUB(s->stub_upload);
+    EL(1, "return FALSE;");
     EL(0, "}");
     NL;
 
@@ -906,12 +940,20 @@ int main(int ac, char* av[])
     EL(0, "};");
     NL;
 
+#define SET_STUB(n) \
+  if (s->stub_##n) \
+    EL(1, "." G_STRINGIFY(n) " = %s%sServlet_" G_STRINGIFY(n) ",", xdl->name, s->name); \
+  else \
+    EL(1, "." G_STRINGIFY(n) " = NULL,")
+
     EL(0, "static xr_servlet_def __servlet = {");
     EL(1, ".name = \"%s%s\",", xdl->name, s->name);
-    EL(1, ".init = %s%sServlet_init,", xdl->name, s->name);
-    EL(1, ".fini = %s%sServlet_fini,", xdl->name, s->name);
-    EL(1, ".pre_call = %s%sServlet_pre_call,", xdl->name, s->name);
-    EL(1, ".post_call = %s%sServlet_post_call,", xdl->name, s->name);
+    SET_STUB(init);
+    SET_STUB(fini);
+    SET_STUB(pre_call);
+    SET_STUB(post_call);
+    SET_STUB(download);
+    SET_STUB(upload);
     EL(1, ".methods_count = %d,", g_slist_length(s->methods));
     EL(1, ".methods = __servlet_methods");
     EL(0, "};");

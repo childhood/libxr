@@ -65,6 +65,8 @@ main:
   "__attrs__"        { RET(TK_ATTRS); }
   "__pre_call__"     { RET(TK_PRECALL); }
   "__post_call__"    { RET(TK_POSTCALL); }
+  "__download__"     { RET(TK_DOWNLOAD); }
+  "__upload__"       { RET(TK_UPLOAD); }
   "error"            { RET(TK_ERROR); }
   "namespace"        { RET(TK_NAMESPACE); }
   "servlet"          { RET(TK_SERVLET); }
@@ -250,6 +252,16 @@ servlet_body_decl ::= PRECALL CODE(C). {
 servlet_body_decl ::= POSTCALL CODE(C). {
   MODEL->cur_servlet->stub_post_call = g_strndup(C->text+2, strlen(C->text)-4);
   MODEL->cur_servlet->stub_post_call_line = C->sline;
+  token_free(C);
+}
+servlet_body_decl ::= DOWNLOAD CODE(C). {
+  MODEL->cur_servlet->stub_download = g_strndup(C->text+2, strlen(C->text)-4);
+  MODEL->cur_servlet->stub_download_line = C->sline;
+  token_free(C);
+}
+servlet_body_decl ::= UPLOAD CODE(C). {
+  MODEL->cur_servlet->stub_upload = g_strndup(C->text+2, strlen(C->text)-4);
+  MODEL->cur_servlet->stub_upload_line = C->sline;
   token_free(C);
 }
 servlet_body_decl ::= error_decl.
