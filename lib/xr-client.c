@@ -30,7 +30,6 @@
 struct _xr_client_conn
 {
   SSL_CTX* ctx;
-  SSL* ssl;
   BIO* bio;
   xr_http* http;
 
@@ -184,14 +183,19 @@ int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 
   if (conn->secure)
   {
-    conn->bio = BIO_new_ssl_connect(conn->ctx);
-    BIO_get_ssl(conn->bio, &conn->ssl);
-    SSL_set_mode(conn->ssl, SSL_MODE_AUTO_RETRY);
+    SSL* ssl;
+
+    conn->bio = BIO_new_buffer_ssl_connect(conn->ctx);
+    BIO_get_ssl(conn->bio, &ssl);
+    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
     BIO_set_conn_hostname(conn->bio, conn->host);
+    BIO_set_buffer_size(conn->bio, 2048);
   }
   else
   {
-    conn->bio = BIO_new_connect(conn->host);
+    conn->bio = BIO_new(BIO_f_buffer());
+    BIO_push(conn->bio, BIO_new_connect(conn->host));
+    BIO_set_buffer_size(conn->bio, 2048);
   }
 
   if (BIO_do_connect(conn->bio) <= 0)
@@ -233,7 +237,6 @@ void xr_client_close(xr_client_conn* conn)
   xr_http_free(conn->http);
   conn->http = NULL;
   BIO_free_all(conn->bio);
-  conn->ssl = NULL;
   conn->bio = NULL;
   conn->is_open = FALSE;
 }
@@ -263,24 +266,23 @@ int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   xr_http_setup_request(conn->http, "POST", conn->resource, conn->host);
   xr_http_set_header(conn->http, "Content-Type", "text/xml");
   xr_http_set_message_length(conn->http, length);
-  write_success = xr_http_write_all(conn->http, buffer, length, NULL);
+  write_success = xr_http_write_all(conn->http, buffer, length, err);
   xr_call_free_buffer(buffer);
   if (!write_success)
   {
-    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_IO, "HTTP send failed.");
     xr_client_close(conn);
     return -1;
   }
 
   /* receive HTTP response header */
-  if (!xr_http_read_header(conn->http, NULL))
+  if (!xr_http_read_header(conn->http, err))
     return -1;
 
   /* check if some dumb bunny sent us wrong message type */
   if (xr_http_get_message_type(conn->http) != XR_HTTP_RESPONSE)
     return -1;
 
-  response = xr_http_read_all(conn->http, NULL);
+  response = xr_http_read_all(conn->http, err);
   if (response == NULL)
   {
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_IO, "HTTP receive failed.");
