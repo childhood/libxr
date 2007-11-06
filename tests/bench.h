@@ -3,7 +3,13 @@
 #if __BENCH == 1
 
 #include <stdio.h>
-#include <asm/msr.h>
+
+extern __inline__ unsigned long long int rdtsc()
+{
+  unsigned long long int x;
+  __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+  return x;
+}
 
 /* tics per second (this is constant for my 1GHz athlon) */
 #define TPS 2400000000ull
@@ -28,20 +34,18 @@ static __inline__ void reset_timers()
 static __inline__ void start_timer(int t)
 {
   reset_timer(t);
-  rdtscll(timers[t][0]);
+  timers[t][0] = rdtsc();
 }
 
 static __inline__ void continue_timer(int t)
 {
-  rdtscll(timers[t][0]);
+  timers[t][0] = rdtsc();
 }
 
 static __inline__ void stop_timer(int t)
 {
-  unsigned long long stop;
-  rdtscll(stop);
   timers[t][2] += 1;
-  timers[t][1] += stop - timers[t][0];
+  timers[t][1] += rdtsc() - timers[t][0];
 }
 
 static __inline__ double get_timer(int t)
