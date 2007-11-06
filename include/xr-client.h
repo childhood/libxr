@@ -64,6 +64,32 @@ xr_client_conn* xr_client_new(GError** err);
  */
 void xr_client_free(xr_client_conn* conn);
 
+/** Set HTTP header to be used in RPCs.
+ *
+ * This setting persists until you remove header by passing NULL value or by
+ * calling xr_client_reset_http_headers().
+ * 
+ * @param conn Connection object.
+ * @param name HTTP header name.
+ * @param value HTTP header value. Value is not escaped and thus it should not span
+ *   multiple lines.
+ */
+void xr_client_set_http_header(xr_client_conn* conn, const char* name, const char* value);
+
+/** Remove all user defined HTTP headers.
+ * 
+ * @param conn Connection object.
+ */
+void xr_client_reset_http_headers(xr_client_conn* conn);
+
+/** Helper function for setting HTTP headers for Basic Authorization.
+ * 
+ * @param conn Connection object.
+ * @param username Username.
+ * @param password Password.
+ */
+void xr_client_basic_auth(xr_client_conn* conn, const char* username, const char* password);
+
 /** Open new connection to the server.
  *
  * @param conn Connection object.

@@ -41,7 +41,7 @@ int main(int ac, char* av[])
   GError* err = NULL;
   char* uri = ac == 2 ? av[1] : "https://localhost:4444/RPC2";
 
-  xr_debug_enabled = XR_DEBUG_CALL;
+  xr_debug_enabled = XR_DEBUG_CALL | XR_DEBUG_HTTP;
 
   if (!g_thread_supported())
     g_thread_init(NULL);
@@ -50,6 +50,8 @@ int main(int ac, char* av[])
   xr_client_conn* conn = xr_client_new(&err);
   if (_check_err(err))
     return 1;
+
+  xr_client_basic_auth(conn, "user", "pass");
 
   /* connect to the servlet on the server specified by uri */
   xr_client_open(conn, uri, &err);

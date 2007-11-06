@@ -38,6 +38,7 @@ struct _xr_client_conn
   int secure;
 
   int is_open;
+  GHashTable* headers;
 };
 
 xr_client_conn* xr_client_new(GError** err)
@@ -57,6 +58,9 @@ xr_client_conn* xr_client_new(GError** err)
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "ssl context creation failed: %s", ERR_reason_error_string(ERR_get_error()));
     return NULL;
   }
+
+  conn->headers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+
   return conn;
 }
 
@@ -222,6 +226,33 @@ int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
   return 0;
 }
 
+void xr_client_set_http_header(xr_client_conn* conn, const char* name, const char* value)
+{
+  g_assert(conn != NULL);
+  g_assert(name != NULL);
+
+  if (value == NULL)
+    g_hash_table_remove(conn->headers, name);
+  else
+    g_hash_table_replace(conn->headers, g_strdup(name), g_strdup(value));
+}
+
+void xr_client_reset_http_headers(xr_client_conn* conn)
+{
+  g_hash_table_remove_all(conn->headers);
+}
+
+void xr_client_basic_auth(xr_client_conn* conn, const char* username, const char* password)
+{
+  char* auth_str = g_strdup_printf("%s:%s", username, password);
+  char* enc_auth_str = g_base64_encode(auth_str, strlen(auth_str));
+  char* auth_value = g_strdup_printf("Basic %s", enc_auth_str);
+  xr_client_set_http_header(conn, "Authorization", auth_value);
+  g_free(auth_str);
+  g_free(enc_auth_str);
+  g_free(auth_value);
+}
+
 void xr_client_close(xr_client_conn* conn)
 {
   g_assert(conn != NULL);
@@ -239,6 +270,11 @@ void xr_client_close(xr_client_conn* conn)
   BIO_free_all(conn->bio);
   conn->bio = NULL;
   conn->is_open = FALSE;
+}
+
+static void _add_http_header(const char* name, const char* value, xr_http* http)
+{
+  xr_http_set_header(http, name, value);
 }
 
 int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
@@ -265,6 +301,7 @@ int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   xr_call_serialize_request(call, &buffer, &length);
   xr_http_setup_request(conn->http, "POST", conn->resource, conn->host);
   xr_http_set_header(conn->http, "Content-Type", "text/xml");
+  g_hash_table_foreach(conn->headers, (GHFunc)_add_http_header, conn->http);
   xr_http_set_message_length(conn->http, length);
   write_success = xr_http_write_all(conn->http, buffer, length, err);
   xr_call_free_buffer(buffer);
@@ -313,6 +350,7 @@ void xr_client_free(xr_client_conn* conn)
   g_free(conn->host);
   g_free(conn->resource);
   SSL_CTX_free(conn->ctx);
+  g_hash_table_destroy(conn->headers);
   g_free(conn);
 }
 
