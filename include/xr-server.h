@@ -91,13 +91,14 @@ struct _xr_servlet_def
   xr_servlet_method_def* methods;   /**< Methods descriptions. */
 };
 
-GQuark xr_server_error_quark();
 #define XR_SERVER_ERROR xr_server_error_quark()
 
 typedef enum
 {
   XR_SERVER_ERROR_FAILED
 } XRServerError;
+
+G_BEGIN_DECLS
 
 /** Create new server object.
  *
@@ -189,5 +190,9 @@ xr_http* xr_servlet_get_http(xr_servlet* servlet);
  */
 gboolean xr_server_simple(const char* cert, int threads, const char* bind,
   xr_servlet_def** servlets, GError** err);
+
+GQuark xr_server_error_quark();
+
+G_END_DECLS
 
 #endif

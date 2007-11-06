@@ -54,6 +54,8 @@ typedef enum
   XR_HTTP_ERROR_FAILED
 } XRHttpError;
 
+G_BEGIN_DECLS
+
 void xr_http_init();
 
 /** Create new HTTP transport object.
@@ -245,5 +247,7 @@ gboolean xr_http_write_all(xr_http* http, const char* buffer, gsize length, GErr
 gboolean xr_http_is_ready(xr_http* http);
 
 GQuark xr_http_error_quark();
+
+G_END_DECLS
 
 #endif

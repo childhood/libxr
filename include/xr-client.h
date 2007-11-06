@@ -34,7 +34,6 @@
 
 #include "xr-call.h"
 
-GQuark xr_client_error_quark();
 #define XR_CLIENT_ERROR xr_client_error_quark()
 
 typedef enum
@@ -45,6 +44,8 @@ typedef enum
   XR_CLIENT_ERROR_IO,
   XR_CLIENT_ERROR_FAILED
 } XRClientError;
+
+G_BEGIN_DECLS
 
 /** Opaque data structrure that represents client connection.
  */
@@ -92,5 +93,9 @@ void xr_client_close(xr_client_conn* conn);
  *   abort on next call to this function.
  */
 int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err);
+
+GQuark xr_client_error_quark();
+
+G_END_DECLS
 
 #endif

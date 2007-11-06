@@ -70,6 +70,8 @@ struct _xr_blob
   char refs;   /**< Number of references. */
 };
 
+G_BEGIN_DECLS
+
 /** Create new blob.
  *
  * @param buf Buffer with blob data. Ownership of the buffer is transferred.
@@ -352,5 +354,7 @@ int xr_value_is_error_retval(xr_value* val, int* errcode, char** errmsg);
  * @param indent Indent level, usually 0.
  */
 void xr_value_dump(xr_value* v, GString* string, int indent);
+
+G_END_DECLS
 
 #endif

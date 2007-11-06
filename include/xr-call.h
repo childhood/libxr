@@ -38,6 +38,8 @@
  */
 typedef struct _xr_call xr_call;
 
+G_BEGIN_DECLS
+
 /** Create new call obejct.
  *
  * @param method Method name. This may be NULL.
@@ -195,5 +197,7 @@ char* xr_call_dump_string(xr_call* call, int indent);
  * @param indent Indent level, usually 0.
  */
 void xr_call_dump(xr_call* call, int indent);
+
+G_END_DECLS
 
 #endif
