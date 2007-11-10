@@ -1095,13 +1095,13 @@ int main(int ac, char* av[])
   EL(2, "public Value.array();");
   EL(2, "[CCode (cname = \"xr_value_struct_new\")]");
   EL(2, "public Value.@struct();");
-  EL(2, "public int to_int(ref int nval);");
-  EL(2, "public int to_string(ref string nval);");
-  EL(2, "public int to_bool(ref bool nval);");
-  EL(2, "public int to_double(ref double nval);");
-  EL(2, "public int to_time(ref string nval);");
-  EL(2, "public int to_blob(ref XR.Blob nval);");
-  EL(2, "public int to_value(ref XR.Value nval);");
+  EL(2, "public bool to_int(ref int nval);");
+  EL(2, "public bool to_string(ref string nval);");
+  EL(2, "public bool to_bool(ref bool nval);");
+  EL(2, "public bool to_double(ref double nval);");
+  EL(2, "public bool to_time(ref string nval);");
+  EL(2, "public bool to_blob(ref XR.Blob nval);");
+  EL(2, "public bool to_value(ref XR.Value nval);");
   EL(2, "public ValueType get_type();");
   EL(2, "public void array_append(Value val);");
   EL(2, "public GLib.SList<weak Value> get_items();");
@@ -1110,8 +1110,8 @@ int main(int ac, char* av[])
   EL(2, "public weak GLib.SList<weak Value> get_members();");
   EL(2, "public weak string get_member_name();");
   EL(2, "public weak Value get_member_value();");
-  EL(2, "public int is_error_retval(ref int code, ref string msg);");
-  EL(2, "public int dump(GLib.String str, int indent);");
+  EL(2, "public bool is_error_retval(ref int code, ref string msg);");
+  EL(2, "public void dump(GLib.String str, int indent);");
   EL(1, "}");
   NL;
   EL(1, "[CCode (cheader_filename = \"xr-call.h\", free_function = \"xr_call_free\", cname = \"xr_call\", cprefix = \"xr_call_\")]");
@@ -1150,7 +1150,7 @@ int main(int ac, char* av[])
     if (t->type == TD_STRUCT)
     {
       NL;
-      EL(1, "[CCode (free_function = \"%s_free\")]", t->cname);
+      EL(1, "[CCode (free_function = \"%s\", copy_function = \"%s\")]", t->free_func, t->copy_func);
       EL(1, "public class %s", t->name);
       EL(1, "{");
       for (k=t->struct_members; k; k=k->next)
@@ -1176,7 +1176,11 @@ int main(int ac, char* av[])
     EL(2, "[CCode (cname = \"xr_client_close\")]");
     EL(2, "public void close();");
     EL(2, "[CCode (cname = \"xr_client_set_http_header\")]");
-    EL(2, "public void set_http_header(string name, string value);");
+    EL(2, "public void set_http_header(string! name, string value);");
+    EL(2, "[CCode (cname = \"xr_client_reset_http_headers\")]");
+    EL(2, "public void reset_http_headers();");
+    EL(2, "[CCode (cname = \"xr_client_basic_auth\")]");
+    EL(2, "public void basic_auth(string! username, string! password);");
     for (j=s->methods; j; j=j->next)
     {
       xdl_method* m = j->data;

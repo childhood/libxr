@@ -33,10 +33,8 @@ namespace T
     if (retval != null)
     {
       int v;
-      if (retval.to_int(ref v) == 0)
-      {
+      if (!retval.to_int(ref v))
         return;
-      }
     }
     return;
 
