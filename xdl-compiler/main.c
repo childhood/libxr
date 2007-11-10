@@ -387,7 +387,7 @@ int main(int ac, char* av[])
   int pub_impl = !strcmp(mode, "all") || !strcmp(mode, "pub-impl");
   int server_impl = !strcmp(mode, "all") || !strcmp(mode, "server-impl");
   int vapi_file = !strcmp(mode, "vapi");
-  int xdl_file = !strcmp(mode, "xdl");
+  int xdl_gen = !strcmp(mode, "xdl");
 
   /***********************************************************
    * common types header                                     *
@@ -1119,7 +1119,7 @@ int main(int ac, char* av[])
 
   }
 
-  if (xdl_file)
+  if (xdl_gen)
   {
   OPEN("%s/%s.xdl", out_dir, xdl->name);
 
