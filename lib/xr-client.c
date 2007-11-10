@@ -253,6 +253,11 @@ void xr_client_basic_auth(xr_client_conn* conn, const char* username, const char
   g_free(auth_value);
 }
 
+xr_http* xr_client_get_http(xr_client_conn* conn)
+{
+  return conn->http;
+}
+
 void xr_client_close(xr_client_conn* conn)
 {
   g_assert(conn != NULL);

@@ -33,6 +33,7 @@
 #define __XR_CLIENT_H__
 
 #include "xr-call.h"
+#include "xr-http.h"
 
 #define XR_CLIENT_ERROR xr_client_error_quark()
 
@@ -89,6 +90,14 @@ void xr_client_reset_http_headers(xr_client_conn* conn);
  * @param password Password.
  */
 void xr_client_basic_auth(xr_client_conn* conn, const char* username, const char* password);
+
+/** Get HTTP transport object.
+ * 
+ * @param conn Connection object.
+ * 
+ * @return HTTP transport object.
+ */
+xr_http* xr_client_get_http(xr_client_conn* conn);
 
 /** Open new connection to the server.
  *
