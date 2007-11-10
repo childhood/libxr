@@ -78,6 +78,11 @@ servlet Test1
     retval->v_struct = TStruct_new();
     retval->v_struct->v_string = g_strdup("some str");
     retval->v_arrays = TAllArrays_new();
+
+    /* test copy/free */
+    TAllTypes* orig = retval;
+    retval = TAllTypes_copy(retval);
+    TAllTypes_free(orig);
   %>
 
   AllArrays getAllArrays()
@@ -147,6 +152,10 @@ servlet Test1
 
 #undef ADD
 
+    /* test copy/free */
+    TAllArrays* orig = retval;
+    retval = TAllArrays_copy(retval);
+    TAllArrays_free(orig);
   %>
   
   boolean setAll(AllTypes all)

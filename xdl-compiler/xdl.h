@@ -56,6 +56,7 @@ struct _xdl_typedef
   char* march_name;
   char* demarch_name;
   char* free_func;
+  char* copy_func;
 
   GSList* struct_members;  /* struct memners list */
   xdl_typedef* item_type; /* array item type */

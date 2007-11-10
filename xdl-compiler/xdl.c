@@ -32,6 +32,15 @@ xdl_typedef* xdl_typedef_new(int type, char* name, char* cname, char* ctype, cha
   t->cnull = g_strdup(cnull);
   t->free_func = g_strdup(free_func);
 
+  if (type == TD_BASE && (!strcmp(name, "string") || !strcmp(name, "time")))
+    t->copy_func = g_strdup("g_strdup");
+  else if (type == TD_BLOB)
+    t->copy_func = g_strdup("xr_blob_ref");
+  else if (type == TD_ANY)
+    t->copy_func = g_strdup("xr_value_ref");
+  else if (type == TD_STRUCT || type == TD_ARRAY)
+    t->copy_func = g_strdup_printf("%s_copy", t->cname);
+
   if (dem_name)
     t->demarch_name = g_strdup(dem_name);
   else

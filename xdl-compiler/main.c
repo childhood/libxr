@@ -214,19 +214,31 @@ void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
 
   if (def)
   {
-    if (t->type == TD_STRUCT || t->type == TD_ARRAY)
-      EL(0, "void %s(%s val);", t->free_func, t->ctype);
     if (t->type == TD_STRUCT)
       EL(0, "%s %s_new();", t->ctype, t->cname);
+    if (t->type == TD_STRUCT || t->type == TD_ARRAY)
+    {
+      EL(0, "void %s(%s val);", t->free_func, t->ctype);
+      EL(0, "%s %s(%s orig);", t->ctype, t->copy_func, t->ctype);
+    }
     return;
   }
 
   if (t->type == TD_STRUCT)
   {
+    /* new */
+    EL(0, "%s %s_new()", t->ctype, t->cname);
+    EL(0, "{");
+    EL(1, "return g_new0(%s, 1);", t->cname);
+    EL(0, "}");
+    NL;
+
+    /* free */
     EL(0, "void %s(%s val)", t->free_func, t->ctype);
     EL(0, "{");
     EL(1, "if (val == NULL)");
     EL(2, "return;");
+    NL;
     for (k=t->struct_members; k; k=k->next)
     {
       xdl_struct_member* m = k->data;
@@ -237,19 +249,54 @@ void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
     EL(0, "}");
     NL;
 
-    EL(0, "%s %s_new()", t->ctype, t->cname);
+    /* copy */
+    EL(0, "%s %s(%s orig)", t->ctype, t->copy_func, t->ctype);
     EL(0, "{");
-    EL(1, "return g_new0(%s, 1);", t->cname);
+    EL(1, "%s copy;", t->ctype);
+    NL;
+    EL(1, "if (orig == NULL)");
+    EL(2, "return NULL;");
+    NL;
+    EL(1, "copy = %s_new();", t->cname);
+    for (k=t->struct_members; k; k=k->next)
+    {
+      xdl_struct_member* m = k->data;
+      if (m->type->copy_func)
+        EL(1, "copy->%s = %s(orig->%s);", m->name, m->type->copy_func, m->name);
+      else
+        EL(1, "copy->%s = orig->%s;", m->name, m->name);
+    }
+    NL;
+    EL(1, "return copy;");
     EL(0, "}");
     NL;
   }
   else if (t->type == TD_ARRAY)
   {
+    /* free */
     EL(0, "void %s(%s val)", t->free_func, t->ctype);
     EL(0, "{");
     if (t->item_type->free_func)
       EL(1, "g_slist_foreach(val, (GFunc)%s, NULL);", t->item_type->free_func);
     EL(1, "g_slist_free(val);");
+    EL(0, "}");
+    NL;
+
+    /* copy */
+    EL(0, "%s %s(%s orig)", t->ctype, t->copy_func, t->ctype);
+    EL(0, "{");
+    EL(1, "%s copy = NULL;", t->ctype);
+    NL;
+    EL(1, "while (orig)");
+    EL(1, "{");
+    if (t->item_type->copy_func)
+      EL(2, "copy = g_slist_prepend(copy, (gpointer)%s((%s)orig->data));", t->item_type->copy_func, t->item_type->ctype);
+    else
+      EL(2, "copy = g_slist_prepend(copy, orig->data);");
+    EL(2, "orig = orig->next;");
+    EL(1, "}");
+    NL;
+    EL(1, "return g_slist_reverse(copy);");
     EL(0, "}");
     NL;
   }

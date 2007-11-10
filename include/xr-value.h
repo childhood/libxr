@@ -92,6 +92,14 @@ xr_blob* xr_blob_new(char* buf, int len);
  */
 void xr_blob_unref(xr_blob* blob);
 
+/** Take reference to blbo.
+ *
+ * @param blob Blob.
+ *
+ * @return Same blob.
+ */
+xr_blob* xr_blob_ref(xr_blob* blob);
+
 /** Take reference to the node.
  *
  * @param val Node to be refed.
