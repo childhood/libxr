@@ -205,7 +205,7 @@ static int BIO_xgets(BIO* bio, char* buffer, int length)
 
 xr_http* xr_http_new(BIO* bio)
 {
-  g_assert(bio != NULL);
+  g_return_val_if_fail(bio != NULL, NULL);
 
   xr_http* http = g_new0(xr_http, 1);
   http->bio = bio;

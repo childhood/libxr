@@ -121,15 +121,15 @@ static xr_servlet* xr_server_conn_find_servlet(xr_server_conn* conn, const char*
 
 void* xr_servlet_get_priv(xr_servlet* servlet)
 {
-  g_assert(servlet != NULL);
+  g_return_val_if_fail(servlet != NULL, NULL);
   return servlet->priv;
 }
 
 xr_http* xr_servlet_get_http(xr_servlet* servlet)
 {
-  g_assert(servlet != NULL);
-  g_assert(servlet->conn != NULL);
-  g_assert(servlet->conn->http != NULL);
+  g_return_val_if_fail(servlet != NULL, NULL);
+  g_return_val_if_fail(servlet->conn != NULL, NULL);
+  g_return_val_if_fail(servlet->conn->http != NULL, NULL);
   return servlet->conn->http;
 }
 
@@ -151,8 +151,8 @@ static xr_servlet_method_def* _find_servlet_method_def(xr_servlet* servlet, cons
 {
   int i;
 
-  g_assert(servlet != NULL);
-  g_assert(servlet->def != NULL);
+  g_return_val_if_fail(servlet != NULL, NULL);
+  g_return_val_if_fail(servlet->def != NULL, NULL);
 
   for (i = 0; i < servlet->def->methods_count; i++)
     if (!strcmp(servlet->def->methods[i].name, name))
@@ -168,9 +168,9 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_server_conn* con
   xr_servlet_method_def* method;
   char *servlet_name, *tmp;
 
-  g_assert(server != NULL);
-  g_assert(conn != NULL);
-  g_assert(call != NULL);
+  g_return_val_if_fail(server != NULL, -1);
+  g_return_val_if_fail(conn != NULL, -1);
+  g_return_val_if_fail(call != NULL, -1);
 
   /* identify servlet name */
   servlet_name = g_strdup(xr_call_get_method_full(call));
@@ -332,8 +332,8 @@ static int _xr_server_serve_request(xr_server* server, xr_server_conn* conn)
 
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, conn=%p)", server, conn);
 
-  g_assert(server != NULL);
-  g_assert(conn != NULL);
+  g_return_val_if_fail(server != NULL, -1);
+  g_return_val_if_fail(conn != NULL, -1);
 
   /* receive HTTP request */
   if (!xr_http_read_header(conn->http, NULL))
@@ -407,8 +407,8 @@ static int _xr_server_connection_thread(xr_server_conn* conn, xr_server* server)
 {
   xr_trace(XR_DEBUG_SERVER_TRACE, "(conn=%p, server=%p)", conn, server);
 
-  g_assert(conn != NULL);
-  g_assert(server != NULL);
+  g_return_val_if_fail(conn != NULL, -1);
+  g_return_val_if_fail(server != NULL, -1);
 
   if (server->secure)
     if (BIO_do_handshake(conn->bio) <= 0)
@@ -426,7 +426,7 @@ static int _xr_server_connection_thread(xr_server_conn* conn, xr_server* server)
 void xr_server_stop(xr_server* server)
 {
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p)", server);
-  g_assert(server != NULL);
+  g_return_if_fail(server != NULL);
   server->running = FALSE;
 }
 
@@ -439,7 +439,7 @@ static int _xr_server_accept_connection(xr_server* server, GError** err)
 
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, err=%p)", server, err);
 
-  g_assert(server != NULL);
+  g_return_val_if_fail(server != NULL, -1);
   g_return_val_if_fail(err == NULL || *err == NULL, -1);
 
   if (BIO_do_accept(server->bio_accept) <= 0)
@@ -486,7 +486,7 @@ int xr_server_run(xr_server* server, GError** err)
   struct timeval tv, tvcopy;
   int maxfd;
 
-  g_assert(server != NULL);
+  g_return_val_if_fail(server != NULL, -1);
   g_return_val_if_fail(err == NULL || *err == NULL, -1);
 
   FD_ZERO(&setcopy);
@@ -530,8 +530,8 @@ int xr_server_run(xr_server* server, GError** err)
 int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
 {
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, servlet=%p)", server, servlet);
-  g_assert(server != NULL);
-  g_assert(servlet != NULL);
+  g_return_val_if_fail(server != NULL, -1);
+  g_return_val_if_fail(servlet != NULL, -1);
   if (!_find_servlet_def(server, servlet->name))
     server->servlet_types = g_slist_append(server->servlet_types, servlet);
   return 0;
@@ -542,7 +542,7 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
   xr_trace(XR_DEBUG_SERVER_TRACE, "(cert=%s, threads=%d, err=%p)", cert, threads, err);
   GError* local_err = NULL;
 
-  g_assert(threads > 0 && threads < 1000);
+  g_return_val_if_fail(threads > 0 && threads < 1000, NULL);
   g_return_val_if_fail (err == NULL || *err == NULL, NULL);
 
   xr_init();
@@ -591,8 +591,8 @@ int xr_server_bind(xr_server* server, const char* port, GError** err)
   BIO* bio_buffer;
 
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, port=%s, err=%p)", server, port, err);
-  g_assert(server != NULL);
-  g_assert(port != NULL);
+  g_return_val_if_fail(server != NULL, -1);
+  g_return_val_if_fail(port != NULL, -1);
   g_return_val_if_fail (err == NULL || *err == NULL, -1);
 
   server->bio_accept = BIO_new_accept((char*)port);
@@ -642,7 +642,10 @@ int xr_server_bind(xr_server* server, const char* port, GError** err)
 void xr_server_free(xr_server* server)
 {
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p)", server);
-  g_assert(server != NULL);
+
+  if (server == NULL)
+    return;
+
   g_thread_pool_free(server->pool, TRUE, TRUE);
   BIO_free_all(server->bio_accept);
   SSL_CTX_free(server->ctx);
@@ -669,7 +672,7 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
   if (!g_thread_supported())
     g_thread_init(NULL);
 
-  g_assert(server == NULL);
+  g_return_val_if_fail(server == NULL, FALSE);
 
 #ifndef WIN32
   struct sigaction act;

@@ -68,10 +68,10 @@ xr_client_conn* xr_client_new(GError** err)
 
 static int _parse_uri(const char* uri, int* secure, char** host, char** resource)
 {
-  g_assert(uri != NULL);
-  g_assert(secure != NULL);
-  g_assert(host != NULL);
-  g_assert(resource != NULL);
+  g_return_val_if_fail(uri != NULL, -1);
+  g_return_val_if_fail(secure != NULL, -1);
+  g_return_val_if_fail(host != NULL, -1);
+  g_return_val_if_fail(resource != NULL, -1);
 
   regex_t r;
   regmatch_t m[7];
@@ -118,10 +118,10 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
   static GRegex* regex = NULL;
   GMatchInfo *match_info = NULL;
 
-  g_assert(uri != NULL);
-  g_assert(secure != NULL);
-  g_assert(host != NULL);
-  g_assert(resource != NULL);
+  g_return_val_if_fail(uri != NULL, -1);
+  g_return_val_if_fail(secure != NULL, -1);
+  g_return_val_if_fail(host != NULL, -1);
+  g_return_val_if_fail(resource != NULL, -1);
 
   // precompile regexp
   G_LOCK(regex);
@@ -166,10 +166,9 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
 
 int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 {
-  g_assert(conn != NULL);
-  g_assert(uri != NULL);
-  g_assert(!conn->is_open);
-
+  g_return_val_if_fail(conn != NULL, -1);
+  g_return_val_if_fail(uri != NULL, -1);
+  g_return_val_if_fail(!conn->is_open, -1);
   g_return_val_if_fail(err == NULL || *err == NULL, -1);
 
   xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p, uri=%s)", conn, uri);
@@ -228,8 +227,8 @@ int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 
 void xr_client_set_http_header(xr_client_conn* conn, const char* name, const char* value)
 {
-  g_assert(conn != NULL);
-  g_assert(name != NULL);
+  g_return_if_fail(conn != NULL);
+  g_return_if_fail(name != NULL);
 
   if (value == NULL)
     g_hash_table_remove(conn->headers, name);
@@ -239,11 +238,17 @@ void xr_client_set_http_header(xr_client_conn* conn, const char* name, const cha
 
 void xr_client_reset_http_headers(xr_client_conn* conn)
 {
+  g_return_if_fail(conn != NULL);
+
   g_hash_table_remove_all(conn->headers);
 }
 
 void xr_client_basic_auth(xr_client_conn* conn, const char* username, const char* password)
 {
+  g_return_if_fail(conn != NULL);
+  g_return_if_fail(username != NULL);
+  g_return_if_fail(password != NULL);
+
   char* auth_str = g_strdup_printf("%s:%s", username, password);
   char* enc_auth_str = g_base64_encode(auth_str, strlen(auth_str));
   char* auth_value = g_strdup_printf("Basic %s", enc_auth_str);
@@ -255,17 +260,19 @@ void xr_client_basic_auth(xr_client_conn* conn, const char* username, const char
 
 xr_http* xr_client_get_http(xr_client_conn* conn)
 {
+  g_return_val_if_fail(conn != NULL, NULL);
+
   return conn->http;
 }
 
 void xr_client_close(xr_client_conn* conn)
 {
-  g_assert(conn != NULL);
+  xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p)", conn);
+
+  g_return_if_fail(conn != NULL);
 
   if (!conn->is_open)
     return;
-
-  xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p)", conn);
 
   if (conn->secure)
     BIO_ssl_shutdown(conn->bio);
@@ -290,11 +297,11 @@ int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   gboolean write_success;
   GString* response;
 
-  g_assert(conn != NULL);
-  g_assert(call != NULL);
-
-  g_return_val_if_fail(err == NULL || *err == NULL, -1);
   xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p, call=%p)", conn, call);
+
+  g_return_val_if_fail(conn != NULL, -1);
+  g_return_val_if_fail(call != NULL, -1);
+  g_return_val_if_fail(err == NULL || *err == NULL, -1);
 
   if (!conn->is_open)
   {
@@ -350,7 +357,9 @@ void xr_client_free(xr_client_conn* conn)
 {
   xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p)", conn);
 
-  g_assert(conn != NULL);
+  if (conn == NULL)
+    return;
+
   xr_client_close(conn);
   g_free(conn->host);
   g_free(conn->resource);
