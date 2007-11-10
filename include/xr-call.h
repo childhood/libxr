@@ -74,6 +74,14 @@ const char* xr_call_get_method(xr_call* call);
  */
 const char* xr_call_get_method_full(xr_call* call);
 
+/** Get servlet name (as passed in XML-RPC).
+ * 
+ * @param call Call obejct.
+ * 
+ * @return Servlet name. Caller must free it.
+ */
+char* xr_call_get_servlet_name(xr_call* call);
+
 /** Add parameter to the call obejct.
  *
  * @param call Call obejct.

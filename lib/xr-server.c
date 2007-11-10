@@ -122,6 +122,7 @@ static xr_servlet* xr_server_conn_find_servlet(xr_server_conn* conn, const char*
 void* xr_servlet_get_priv(xr_servlet* servlet)
 {
   g_return_val_if_fail(servlet != NULL, NULL);
+
   return servlet->priv;
 }
 
@@ -130,6 +131,7 @@ xr_http* xr_servlet_get_http(xr_servlet* servlet)
   g_return_val_if_fail(servlet != NULL, NULL);
   g_return_val_if_fail(servlet->conn != NULL, NULL);
   g_return_val_if_fail(servlet->conn->http != NULL, NULL);
+
   return servlet->conn->http;
 }
 
@@ -166,18 +168,14 @@ static gboolean _xr_server_servlet_method_call(xr_server* server, xr_server_conn
   gboolean retval = FALSE;
   xr_servlet* servlet = NULL;
   xr_servlet_method_def* method;
-  char *servlet_name, *tmp;
+  char *servlet_name;
 
   g_return_val_if_fail(server != NULL, FALSE);
   g_return_val_if_fail(conn != NULL, FALSE);
   g_return_val_if_fail(call != NULL, FALSE);
 
-  /* identify servlet name */
-  servlet_name = g_strdup(xr_call_get_method_full(call));
-  if (servlet_name && (tmp = strchr(servlet_name, '.')) && tmp != servlet_name)
-    *tmp = '\0';
-
   /* get xr_servlet object for current connection and given servlet name */
+  servlet_name = xr_call_get_servlet_name(call);
   servlet = xr_server_conn_find_servlet(conn, servlet_name);
   if (servlet == NULL)
   {

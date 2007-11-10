@@ -85,6 +85,23 @@ const char* xr_call_get_method(xr_call* call)
   return call->method;
 }
 
+char* xr_call_get_servlet_name(xr_call* call)
+{
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
+
+  g_return_val_if_fail(call != NULL, NULL);
+
+  if (call->method == NULL)
+    return NULL;
+
+  char* tmp;
+  char* servlet_name = g_strdup(call->method);
+  if ((tmp = strchr(servlet_name, '.')) && tmp != servlet_name)
+    *tmp = '\0';
+
+  return servlet_name;
+}
+
 /* param manipulation */
 
 void xr_call_add_param(xr_call* call, xr_value* val)
