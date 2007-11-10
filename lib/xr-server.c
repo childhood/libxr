@@ -673,6 +673,10 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
     g_thread_init(NULL);
 
   g_return_val_if_fail(server == NULL, FALSE);
+  g_return_val_if_fail(threads > 0, FALSE);
+  g_return_val_if_fail(bind != NULL, FALSE);
+  g_return_val_if_fail(servlets != NULL, FALSE);
+  g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
 
 #ifndef WIN32
   struct sigaction act;
