@@ -184,14 +184,14 @@ static gboolean _xr_server_servlet_method_call(xr_server* server, xr_server_conn
     xr_servlet_def* def = _find_servlet_def(server, servlet_name);
     if (def == NULL)
     {
-      xr_call_set_error(call, 100, "Unknown servlet.");
+      xr_call_set_error(call, -1, "Unknown servlet.");
       goto done;
     }
 
     servlet = xr_servlet_new(def, conn);
     if (servlet->def->init && !servlet->def->init(servlet))
     {
-      xr_call_set_error(call, 100, "Servlet initialization failed.");
+      xr_call_set_error(call, -1, "Servlet initialization failed.");
       xr_servlet_free(servlet, FALSE);
       servlet = NULL;
       goto done;
@@ -207,7 +207,7 @@ static gboolean _xr_server_servlet_method_call(xr_server* server, xr_server_conn
   if (method == NULL)
   {
     char* msg = g_strdup_printf("Method %s not found in %s servlet.", xr_call_get_method(call), servlet->def->name);
-    xr_call_set_error(call, 100, msg);
+    xr_call_set_error(call, -1, msg);
     g_free(msg);
     goto done;
   }
@@ -371,7 +371,7 @@ static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn
 
       /* run call */
       if (!rs)
-        xr_call_set_error(call, 100, "Unserialize request failure.");
+        xr_call_set_error(call, -1, "Unserialize request failure.");
       else
         _xr_server_servlet_method_call(server, conn, call);
 
