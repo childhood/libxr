@@ -266,7 +266,11 @@ void xr_call_serialize_request(xr_call* call, char** buf, int* len)
     _xr_value_serialize(param, i->data);
   }
 
-  xmlDocDumpFormatMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8", 1);
+  if (xr_debug_enabled & XR_DEBUG_HTTP)
+    xmlDocDumpFormatMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8", 1);
+  else
+    xmlDocDumpMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8");
+
   xmlFreeDoc(doc);
 
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, *buf=%p, *len=%d)", call, *buf, *len);
@@ -303,7 +307,11 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len)
     _xr_value_serialize(param, call->retval);
   }
 
-  xmlDocDumpFormatMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8", 1);
+  if (xr_debug_enabled & XR_DEBUG_HTTP)
+    xmlDocDumpFormatMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8", 1);
+  else
+    xmlDocDumpMemoryEnc(doc, (xmlChar**)buf, len, "UTF-8");
+
   xmlFreeDoc(doc);
 
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, *buf=%p, *len=%d)", call, *buf, *len);
