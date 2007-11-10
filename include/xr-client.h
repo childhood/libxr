@@ -104,9 +104,9 @@ xr_http* xr_client_get_http(xr_client_conn* conn);
  * @param conn Connection object.
  * @param uri URI of the cleint (http[s]://host[:port]/Servlet).
  *
- * @return Function returns -1 on failure and 0 on success.
+ * @return Function returns FALSE on failure and TRUE on success.
  */
-int xr_client_open(xr_client_conn* conn, const char* uri, GError** err);
+gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err);
 
 /** Close currently open connection.
  *
@@ -119,15 +119,10 @@ void xr_client_close(xr_client_conn* conn);
  * @param conn Connection object.
  * @param call Call object.
  *
- * @return Function returns -1 on fatal error, 0 on success and 1 on
- *   XML-RPC error. Error code and message can be retrieved using
- *   @ref xr_client_get_error_code and @ref xr_client_get_error_message
- *   functions.
- *
- * @warning You must reset error if it occured or your program will
- *   abort on next call to this function.
+ * @return Function returns FALSE on failure (including XML-RPC exception) and
+ *   TRUE on success. XML-RPC exception have err->domain == 0.
  */
-int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err);
+gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err);
 
 GQuark xr_client_error_quark();
 

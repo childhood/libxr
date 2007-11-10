@@ -66,82 +66,71 @@ xr_client_conn* xr_client_new(GError** err)
 
 #ifndef HAVE_GLIB_REGEXP
 
-static int _parse_uri(const char* uri, int* secure, char** host, char** resource)
+static gboolean _parse_uri(const char* uri, int* secure, char** host, char** resource)
 {
-  g_return_val_if_fail(uri != NULL, -1);
-  g_return_val_if_fail(secure != NULL, -1);
-  g_return_val_if_fail(host != NULL, -1);
-  g_return_val_if_fail(resource != NULL, -1);
-
   regex_t r;
   regmatch_t m[7];
   gint rs;
-  if ((rs = regcomp(&r, "^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", REG_EXTENDED|REG_ICASE)))
-    return -1;
+
+  g_return_val_if_fail(uri != NULL, FALSE);
+  g_return_val_if_fail(secure != NULL, FALSE);
+  g_return_val_if_fail(host != NULL, FALSE);
+  g_return_val_if_fail(resource != NULL, FALSE);
+
+  if ((rs = regcomp(&r, "^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", REG_EXTENDED | REG_ICASE)))
+    return FALSE;
   rs = regexec(&r, uri, 7, m, 0);
   regfree(&r);
   if (rs != 0)
-    return -1;
+    return FALSE;
   
-  char* schema = g_strndup(uri+m[1].rm_so, m[1].rm_eo-m[1].rm_so);
-
-  if (!strcasecmp("eees", schema))
-    *secure = 1;
-  else if (!strcasecmp("eee", schema))
+  char* schema = g_strndup(uri + m[1].rm_so, m[1].rm_eo - m[1].rm_so);
+  if (!g_ascii_strcasecmp("http", schema))
     *secure = 0;
-  else if (!strcasecmp("http", schema))
-    *secure = 0;
-  else if (!strcasecmp("https", schema))
+  else if (!g_ascii_strcasecmp("https", schema))
     *secure = 1;
   else
   {
     g_free(schema);
-    return -1;
+    return FALSE;
   }
   g_free(schema);
   
-  *host = g_strndup(uri+m[2].rm_so, m[2].rm_eo-m[2].rm_so);
-  if (m[5].rm_eo-m[5].rm_so == 0)
+  *host = g_strndup(uri + m[2].rm_so, m[2].rm_eo - m[2].rm_so);
+  if (m[5].rm_eo - m[5].rm_so == 0)
     *resource = g_strdup("/RPC2");
   else
-    *resource = g_strndup(uri+m[5].rm_so, m[5].rm_eo-m[5].rm_so);
+    *resource = g_strndup(uri + m[5].rm_so, m[5].rm_eo - m[5].rm_so);
   
-  return 0;
+  return TRUE;
 }
 
 #else
 
 G_LOCK_DEFINE_STATIC(regex);
 
-static int _parse_uri(const char* uri, int* secure, char** host, char** resource)
+static gboolean _parse_uri(const char* uri, int* secure, char** host, char** resource)
 {
   static GRegex* regex = NULL;
   GMatchInfo *match_info = NULL;
 
-  g_return_val_if_fail(uri != NULL, -1);
-  g_return_val_if_fail(secure != NULL, -1);
-  g_return_val_if_fail(host != NULL, -1);
-  g_return_val_if_fail(resource != NULL, -1);
+  g_return_val_if_fail(uri != NULL, FALSE);
+  g_return_val_if_fail(secure != NULL, FALSE);
+  g_return_val_if_fail(host != NULL, FALSE);
+  g_return_val_if_fail(resource != NULL, FALSE);
 
   // precompile regexp
   G_LOCK(regex);
   if (regex == NULL)
-  {
     regex = g_regex_new("^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", G_REGEX_CASELESS, 0, NULL);
-    g_assert(regex != NULL);
-  }
   G_UNLOCK(regex);
 
   if (!g_regex_match(regex, uri, 0, &match_info))
-    return -1;
+    return FALSE;
   
   // check schema
   char* schema = g_match_info_fetch(match_info, 1);
-  if (!g_ascii_strcasecmp("eees", schema))
-    *secure = 1;
-  else if (!g_ascii_strcasecmp("eee", schema))
-    *secure = 0;
-  else if (!g_ascii_strcasecmp("http", schema))
+  if (!g_ascii_strcasecmp("http", schema))
     *secure = 0;
   else if (!g_ascii_strcasecmp("https", schema))
     *secure = 1;
@@ -149,7 +138,7 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
   {
     g_free(schema);
     g_match_info_free(match_info);
-    return -1;
+    return FALSE;
   }
   g_free(schema);
   
@@ -159,17 +148,17 @@ static int _parse_uri(const char* uri, int* secure, char** host, char** resource
     *resource = g_strdup("/RPC2");
 
   g_match_info_free(match_info);
-  return 0;
+  return TRUE;
 }
 
 #endif
 
-int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
+gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 {
-  g_return_val_if_fail(conn != NULL, -1);
-  g_return_val_if_fail(uri != NULL, -1);
-  g_return_val_if_fail(!conn->is_open, -1);
-  g_return_val_if_fail(err == NULL || *err == NULL, -1);
+  g_return_val_if_fail(conn != NULL, FALSE);
+  g_return_val_if_fail(uri != NULL, FALSE);
+  g_return_val_if_fail(!conn->is_open, FALSE);
+  g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
 
   xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p, uri=%s)", conn, uri);
 
@@ -178,10 +167,10 @@ int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
   g_free(conn->resource);
   conn->host = NULL;
   conn->resource = NULL;
-  if (_parse_uri(uri, &conn->secure, &conn->host, &conn->resource))
+  if (!_parse_uri(uri, &conn->secure, &conn->host, &conn->resource))
   {
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "invalid URI format: %s", uri);
-    return -1;
+    return FALSE;
   }
 
   if (conn->secure)
@@ -205,7 +194,7 @@ int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
   {
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_connect failed: %s", xr_get_bio_error_string());
     BIO_free_all(conn->bio);
-    return -1;
+    return FALSE;
   }
 
   xr_set_nodelay(conn->bio);
@@ -216,13 +205,14 @@ int xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     {
       g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_handshake failed: %s", xr_get_bio_error_string());
       BIO_free_all(conn->bio);
-      return -1;
+      return FALSE;
     }
   }
 
   conn->http = xr_http_new(conn->bio);
   conn->is_open = 1;
-  return 0;
+
+  return TRUE;
 }
 
 void xr_client_set_http_header(xr_client_conn* conn, const char* name, const char* value)
@@ -289,7 +279,7 @@ static void _add_http_header(const char* name, const char* value, xr_http* http)
   xr_http_set_header(http, name, value);
 }
 
-int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
+gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
 {
   char* buffer;
   int length;
@@ -299,14 +289,14 @@ int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
 
   xr_trace(XR_DEBUG_CLIENT_TRACE, "(conn=%p, call=%p)", conn, call);
 
-  g_return_val_if_fail(conn != NULL, -1);
-  g_return_val_if_fail(call != NULL, -1);
-  g_return_val_if_fail(err == NULL || *err == NULL, -1);
+  g_return_val_if_fail(conn != NULL, FALSE);
+  g_return_val_if_fail(call != NULL, FALSE);
+  g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
 
   if (!conn->is_open)
   {
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_CLOSED, "Can't perform RPC on closed connection.");
-    return -1;
+    return FALSE;
   }
 
   /* serialize nad send XML-RPC request */
@@ -320,23 +310,23 @@ int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   if (!write_success)
   {
     xr_client_close(conn);
-    return -1;
+    return FALSE;
   }
 
   /* receive HTTP response header */
   if (!xr_http_read_header(conn->http, err))
-    return -1;
+    return FALSE;
 
   /* check if some dumb bunny sent us wrong message type */
   if (xr_http_get_message_type(conn->http) != XR_HTTP_RESPONSE)
-    return -1;
+    return FALSE;
 
   response = xr_http_read_all(conn->http, err);
   if (response == NULL)
   {
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_IO, "HTTP receive failed.");
     xr_client_close(conn);
-    return -1;
+    return FALSE;
   }
 
   rs = xr_call_unserialize_response(call, response->str, response->len);
@@ -344,13 +334,13 @@ int xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   if (rs)
   {
     g_set_error(err, 0, xr_call_get_error_code(call), "%s", xr_call_get_error_message(call));
-    return -1;
+    return FALSE;
   }
 
   if (xr_debug_enabled & XR_DEBUG_CALL)
     xr_call_dump(call, 0);
 
-  return 0;
+  return TRUE;
 }
 
 void xr_client_free(xr_client_conn* conn)

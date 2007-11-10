@@ -593,7 +593,7 @@ int main(int ac, char* av[])
         EL(1, "}");
         EL(1, "xr_call_add_param(_call, _param_value);");
       }
-      EL(1, "if (xr_client_call(_conn, _call, _error) == 0)");
+      EL(1, "if (xr_client_call(_conn, _call, _error))");
       EL(1, "{");
       EL(2, "if (%s(xr_call_get_retval(_call), &_retval) < 0)", m->return_type->demarch_name);
       EL(3, "g_set_error(_error, XR_CLIENT_ERROR, XR_CLIENT_ERROR_MARCHALIZER, \"Call return value demarchalization failed.\");");
