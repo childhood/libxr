@@ -86,6 +86,11 @@ void xr_init()
   SSL_load_error_strings();
   OpenSSL_add_all_algorithms();
 
+  /* add zlib SSL compresssion */
+  COMP_METHOD *cm = COMP_zlib();
+  if (cm->type != NID_undef)
+    SSL_COMP_add_compression_method(1, cm); /* 1 is DEFALTE according to the http://www.ietf.org/rfc/rfc3749.txt */
+
   _ssl_mutexes = g_new(GMutex*, CRYPTO_num_locks());
   for (i=0; i<CRYPTO_num_locks(); i++)
     _ssl_mutexes[i] = g_mutex_new();
