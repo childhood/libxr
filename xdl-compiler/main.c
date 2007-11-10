@@ -128,7 +128,7 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(0, "G_GNUC_UNUSED static gboolean %s(xr_value* _struct, %s* _nstruct)", t->demarch_name, t->ctype);
       EL(0, "{");
       EL(1, "%s _tmp_nstruct;", t->ctype);
-      EL(1, "g_assert(_nstruct != NULL);");
+      EL(1, "g_return_val_if_fail(_nstruct != NULL, FALSE);");
       EL(1, "if (_struct == NULL || xr_value_get_type(_struct) != XRV_STRUCT)");
       EL(2, "return FALSE;");
       EL(1, "_tmp_nstruct = %s_new();", t->cname);
@@ -171,7 +171,7 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(0, "G_GNUC_UNUSED static gboolean %s(xr_value* _array, %s* _narray)", t->demarch_name, t->ctype);
       EL(0, "{");
       EL(1, "GSList *_tmp_narray = NULL, *_item;");
-      EL(1, "g_assert(_narray != NULL);");
+      EL(1, "g_return_val_if_fail(_narray != NULL, FALSE);");
       EL(1, "if (_array == NULL || xr_value_get_type(_array) != XRV_ARRAY)");
       EL(2, "return FALSE;");
       EL(1, "for (_item = xr_value_get_items(_array); _item; _item = _item->next)");
@@ -578,7 +578,7 @@ int main(int ac, char* av[])
       EL(0, "{");
       EL(1, "%s _retval = %s;", m->return_type->ctype, m->return_type->cnull);
       EL(1, "xr_value* _param_value;");
-      EL(1, "g_assert(_conn != NULL);");
+      EL(1, "g_return_val_if_fail(_conn != NULL, _retval);");
       EL(1, "g_return_val_if_fail(_error == NULL || *_error == NULL, _retval);");
       EL(1, "xr_call* _call = xr_call_new(\"%s%s.%s\");", xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
@@ -876,8 +876,8 @@ int main(int ac, char* av[])
         xdl_method_param* p = k->data;
         EL(1, "%s %s = %s;", p->type->ctype, p->name, p->type->cnull);
       }
-      EL(1, "g_assert(_servlet != NULL);");
-      EL(1, "g_assert(_call != NULL);");
+      EL(1, "g_return_val_if_fail(_servlet != NULL, FALSE);");
+      EL(1, "g_return_val_if_fail(_call != NULL, FALSE);");
       // prepare parameters
       for (k=m->params; k; k=k->next)
       {
