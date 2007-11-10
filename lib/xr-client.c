@@ -283,7 +283,7 @@ gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
 {
   char* buffer;
   int length;
-  gsize rs;
+  gboolean rs;
   gboolean write_success;
   GString* response;
 
@@ -331,7 +331,7 @@ gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
 
   rs = xr_call_unserialize_response(call, response->str, response->len);
   g_string_free(response, TRUE);
-  if (rs)
+  if (!rs)
   {
     g_set_error(err, 0, xr_call_get_error_code(call), "%s", xr_call_get_error_message(call));
     return FALSE;

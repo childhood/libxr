@@ -41,11 +41,11 @@ typedef struct _xr_servlet xr_servlet;
 
 /** Servlet method callback type.
  */
-typedef int (*servlet_method_t)(xr_servlet* servlet, xr_call* call);
+typedef gboolean (*servlet_method_t)(xr_servlet* servlet, xr_call* call);
 
 /** Servlet init callback type.
  */
-typedef int (*servlet_init_t)(xr_servlet* servlet);
+typedef gboolean (*servlet_init_t)(xr_servlet* servlet);
 
 /** Servlet fini callback type.
  */
@@ -117,9 +117,9 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err);
  * @param port Port and IP address to bind to.
  * @param err Pointer to the variable to store error to on error.
  *
- * @return Function returns -1 on error or 0 on success.
+ * @return Function returns FALSE on error, TRUE on success.
  */
-int xr_server_bind(xr_server* server, const char* port, GError** err);
+gboolean xr_server_bind(xr_server* server, const char* port, GError** err);
 
 /** Run server. This function will start listening for incomming
  * connections and push them to the thread pool where they are
@@ -128,10 +128,11 @@ int xr_server_bind(xr_server* server, const char* port, GError** err);
  * @param server Server object.
  * @param err Pointer to the variable to store error to on error.
  *
- * @return Function returns -1 on fatal error or 0 on safe stop
- *   by @ref xr_server_stop. Otherwise it will block.
+ * @return Function returns FALSE on fatal error or TRUE on safe stop
+ *   by @ref xr_server_stop(). Otherwise it will block, waiting for 
+ *   connections.
  */
-int xr_server_run(xr_server* server, GError** err);
+gboolean xr_server_run(xr_server* server, GError** err);
 
 /** Stop server.
  *
@@ -150,9 +151,9 @@ void xr_server_free(xr_server* server);
  * @param server Server object.
  * @param servlet Servlet object.
  *
- * @return Function returns -1 on error, 0 on success.
+ * @return Function returns FALSE on error, TRUE on success.
  */
-int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet);
+gboolean xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet);
 
 /** Get private data for the servlet.
  *

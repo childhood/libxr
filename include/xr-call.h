@@ -160,10 +160,10 @@ void xr_call_serialize_response(xr_call* call, char** buf, int* len);
  * @param buf Pointer to the buffer with XML-RPC request.
  * @param len Length of the buffer.
  *
- * @return Returns 0 on success and -1 on failure. On failure
+ * @return Returns TRUE on success and FALSE on failure. On failure
  *   @ref xr_call_set_error is used to set reason of the failure.
  */
-int xr_call_unserialize_request(xr_call* call, const char* buf, int len);
+gboolean xr_call_unserialize_request(xr_call* call, const char* buf, int len);
 
 /** Unserialize XML-RPC response into call object.
  *
@@ -171,10 +171,10 @@ int xr_call_unserialize_request(xr_call* call, const char* buf, int len);
  * @param buf Pointer to the buffer with XML-RPC response.
  * @param len Length of the buffer.
  *
- * @return Returns 0 on success and -1 on failure. On failure
+ * @return Returns TRUE on success and FALSE on failure. On failure
  *   @ref xr_call_set_error is used to set reason of the failure.
  */
-int xr_call_unserialize_response(xr_call* call, const char* buf, int len);
+gboolean xr_call_unserialize_response(xr_call* call, const char* buf, int len);
 
 /** Free buffer allocated by serialize functions.
  *

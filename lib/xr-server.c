@@ -161,16 +161,16 @@ static xr_servlet_method_def* _find_servlet_method_def(xr_servlet* servlet, cons
   return NULL;
 }
 
-static int _xr_server_servlet_method_call(xr_server* server, xr_server_conn* conn, xr_call* call)
+static gboolean _xr_server_servlet_method_call(xr_server* server, xr_server_conn* conn, xr_call* call)
 {
-  int retval = -1;
+  gboolean retval = FALSE;
   xr_servlet* servlet = NULL;
   xr_servlet_method_def* method;
   char *servlet_name, *tmp;
 
-  g_return_val_if_fail(server != NULL, -1);
-  g_return_val_if_fail(conn != NULL, -1);
-  g_return_val_if_fail(call != NULL, -1);
+  g_return_val_if_fail(server != NULL, FALSE);
+  g_return_val_if_fail(conn != NULL, FALSE);
+  g_return_val_if_fail(call != NULL, FALSE);
 
   /* identify servlet name */
   servlet_name = g_strdup(xr_call_get_method_full(call));
@@ -189,7 +189,7 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_server_conn* con
     }
 
     servlet = xr_servlet_new(def, conn);
-    if (servlet->def->init && servlet->def->init(servlet) < 0)
+    if (servlet->def->init && !servlet->def->init(servlet))
     {
       xr_call_set_error(call, 100, "Servlet initialization failed.");
       xr_servlet_free(servlet, FALSE);
@@ -235,8 +235,7 @@ static int _xr_server_servlet_method_call(xr_server* server, xr_server_conn* con
   return retval;
 }
 
-/* -1 on error, 0 on success */
-static int _xr_server_serve_download(xr_server* server, xr_server_conn* conn)
+static gboolean _xr_server_serve_download(xr_server* server, xr_server_conn* conn)
 {
   guint i;
   GSList* iter;
@@ -266,7 +265,7 @@ static int _xr_server_serve_download(xr_server* server, xr_server_conn* conn)
       }
 
       if (def->download(servlet))
-        return xr_http_is_ready(conn->http) ? 0 : -1;
+        return xr_http_is_ready(conn->http);
     }
   }
 
@@ -276,12 +275,12 @@ static int _xr_server_serve_download(xr_server* server, xr_server_conn* conn)
   xr_http_set_message_length(conn->http, strlen(page));
   xr_http_set_header(conn->http, "Content-Type", "text/plain");
   if (!xr_http_write_all(conn->http, page, strlen(page), NULL))
-    return -1;
+    return FALSE;
 
-  return 0;
+  return TRUE;
 }
 
-static int _xr_server_serve_upload(xr_server* server, xr_server_conn* conn)
+static gboolean _xr_server_serve_upload(xr_server* server, xr_server_conn* conn)
 {
   guint i;
   GSList* iter;
@@ -311,7 +310,7 @@ static int _xr_server_serve_upload(xr_server* server, xr_server_conn* conn)
       }
 
       if (def->upload(servlet))
-        return xr_http_is_ready(conn->http) ? 0 : -1;
+        return xr_http_is_ready(conn->http);
     }
   }
 
@@ -321,36 +320,34 @@ static int _xr_server_serve_upload(xr_server* server, xr_server_conn* conn)
   xr_http_set_message_length(conn->http, strlen(page));
   xr_http_set_header(conn->http, "Content-Type", "text/plain");
   if (!xr_http_write_all(conn->http, page, strlen(page), NULL))
-    return -1;
+    return FALSE;
 
-  return 0;
+  return TRUE;
 }
 
-static int _xr_server_serve_request(xr_server* server, xr_server_conn* conn)
+static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn)
 {
   const char* method;
 
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, conn=%p)", server, conn);
 
-  g_return_val_if_fail(server != NULL, -1);
-  g_return_val_if_fail(conn != NULL, -1);
+  g_return_val_if_fail(server != NULL, FALSE);
+  g_return_val_if_fail(conn != NULL, FALSE);
 
   /* receive HTTP request */
   if (!xr_http_read_header(conn->http, NULL))
-    return -1;
+    return FALSE;
 
   /* check if some dumb bunny sent us wrong message type */
   if (xr_http_get_message_type(conn->http) != XR_HTTP_REQUEST)
-    return -1;
+    return FALSE;
 
   method = xr_http_get_method(conn->http);
   if (method == NULL)
-    return -1;
+    return FALSE;
 
   if (!strcmp(method, "GET"))
-  {
     return _xr_server_serve_download(server, conn);
-  }
   else if (!strcmp(method, "POST"))
   {
     const char* ctype = xr_http_get_header(conn->http, "Content-Type");
@@ -361,11 +358,11 @@ static int _xr_server_serve_request(xr_server* server, xr_server_conn* conn)
       GString* request;
       char* buffer;
       int length;
-      int rs;
+      gboolean rs;
 
       request = xr_http_read_all(conn->http, NULL);
       if (request == NULL)
-        return -1;
+        return FALSE;
 
       /* parse request data into xr_call */
       call = xr_call_new(NULL);
@@ -373,7 +370,7 @@ static int _xr_server_serve_request(xr_server* server, xr_server_conn* conn)
       g_string_free(request, TRUE);
 
       /* run call */
-      if (rs)
+      if (!rs)
         xr_call_set_error(call, 100, "Unserialize request failure.");
       else
         _xr_server_servlet_method_call(server, conn, call);
@@ -390,37 +387,34 @@ static int _xr_server_serve_request(xr_server* server, xr_server_conn* conn)
       rs = xr_http_write_all(conn->http, buffer, length, NULL);
       xr_call_free_buffer(buffer);
 
-      return rs ? 0 : -1;
+      return rs;
     }
     else
-    {
       return _xr_server_serve_upload(server, conn);
-    }
   }
   else
-    return -1;
+    return FALSE;
 
-  return 0;
+  return TRUE;
 }
 
-static int _xr_server_connection_thread(xr_server_conn* conn, xr_server* server)
+static void _xr_server_connection_thread(xr_server_conn* conn, xr_server* server)
 {
   xr_trace(XR_DEBUG_SERVER_TRACE, "(conn=%p, server=%p)", conn, server);
 
-  g_return_val_if_fail(conn != NULL, -1);
-  g_return_val_if_fail(server != NULL, -1);
+  g_return_if_fail(conn != NULL);
+  g_return_if_fail(server != NULL);
 
   if (server->secure)
     if (BIO_do_handshake(conn->bio) <= 0)
       goto done;
 
   while (conn->running)
-    if (_xr_server_serve_request(server, conn) < 0)
+    if (!_xr_server_serve_request(server, conn))
       break;
 
  done:
   xr_server_conn_free(conn);
-  return 0;
 }
 
 void xr_server_stop(xr_server* server)
@@ -430,22 +424,22 @@ void xr_server_stop(xr_server* server)
   server->running = FALSE;
 }
 
-/* wait for a connection and accept it, return -1 on fatal error, 0 on temprary
- * error or success */
-static int _xr_server_accept_connection(xr_server* server, GError** err)
+/* wait for a connection and accept it, return FALSE on fatal error, TRUE on
+   temprary error or success */
+static gboolean _xr_server_accept_connection(xr_server* server, GError** err)
 {
   GError* local_err = NULL;
   xr_server_conn* conn;
 
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, err=%p)", server, err);
 
-  g_return_val_if_fail(server != NULL, -1);
-  g_return_val_if_fail(err == NULL || *err == NULL, -1);
+  g_return_val_if_fail(server != NULL, FALSE);
+  g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
 
   if (BIO_do_accept(server->bio_accept) <= 0)
   {
     g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept failed: %s", xr_get_bio_error_string());
-    return -1;
+    return FALSE;
   }
 
   // new connection accepted
@@ -469,25 +463,26 @@ static int _xr_server_accept_connection(xr_server* server, GError** err)
     {
       g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "thread push failed: %s", local_err->message);
       g_clear_error(&local_err);
-      return -1;
+      return FALSE;
     }
 
     g_clear_error(&local_err);
   }
 
-  return 0;
+  return TRUE;
 }
 
-int xr_server_run(xr_server* server, GError** err)
+gboolean xr_server_run(xr_server* server, GError** err)
 {
-  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, err=%p)", server, err);
   GError* local_err = NULL;
   fd_set set, setcopy;
   struct timeval tv, tvcopy;
   int maxfd;
 
-  g_return_val_if_fail(server != NULL, -1);
-  g_return_val_if_fail(err == NULL || *err == NULL, -1);
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, err=%p)", server, err);
+
+  g_return_val_if_fail(server != NULL, FALSE);
+  g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
 
   FD_ZERO(&setcopy);
   FD_SET(server->sock, &setcopy);
@@ -509,32 +504,36 @@ int xr_server_run(xr_server* server, GError** err)
         continue;
 #else
       if (errno == EINTR)
-        return 0;
+        return TRUE;
 #endif
       g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "select failed: %s", g_strerror(errno));
-      return -1;
+      return FALSE;
     }
-    if (rs == 0)
+    else if (rs == 0)
       continue;
 
-    if (_xr_server_accept_connection(server, &local_err) < 0)
+    if (!_xr_server_accept_connection(server, &local_err))
     {
       g_propagate_error(err, local_err);
-      return -1;
+      return FALSE;
     }
   }
 
-  return 0;
+  return TRUE;
 }
 
-int xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
+gboolean xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
 {
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, servlet=%p)", server, servlet);
-  g_return_val_if_fail(server != NULL, -1);
-  g_return_val_if_fail(servlet != NULL, -1);
-  if (!_find_servlet_def(server, servlet->name))
-    server->servlet_types = g_slist_append(server->servlet_types, servlet);
-  return 0;
+
+  g_return_val_if_fail(server != NULL, FALSE);
+  g_return_val_if_fail(servlet != NULL, FALSE);
+
+  if (_find_servlet_def(server, servlet->name))
+    return FALSE;
+
+  server->servlet_types = g_slist_append(server->servlet_types, servlet);
+  return TRUE;
 }
 
 xr_server* xr_server_new(const char* cert, int threads, GError** err)
@@ -586,20 +585,21 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
   return NULL;
 }
 
-int xr_server_bind(xr_server* server, const char* port, GError** err)
+gboolean xr_server_bind(xr_server* server, const char* port, GError** err)
 {
   BIO* bio_buffer;
 
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, port=%s, err=%p)", server, port, err);
-  g_return_val_if_fail(server != NULL, -1);
-  g_return_val_if_fail(port != NULL, -1);
-  g_return_val_if_fail (err == NULL || *err == NULL, -1);
+
+  g_return_val_if_fail(server != NULL, FALSE);
+  g_return_val_if_fail(port != NULL, FALSE);
+  g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
 
   server->bio_accept = BIO_new_accept((char*)port);
   if (server->bio_accept == NULL)
   {
     g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept bio creation failed: %s", xr_get_bio_error_string());
-    goto err1;
+    return FALSE;
   }
 
   BIO_set_bind_mode(server->bio_accept, BIO_BIND_REUSEADDR);
@@ -616,7 +616,6 @@ int xr_server_bind(xr_server* server, const char* port, GError** err)
     BIO_get_ssl(bio_ssl, &ssl);
     SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
     BIO_push(bio_buffer, bio_ssl);
-
   }
 
   BIO_set_accept_bios(server->bio_accept, bio_buffer);
@@ -624,19 +623,16 @@ int xr_server_bind(xr_server* server, const char* port, GError** err)
   if (BIO_do_accept(server->bio_accept) <= 0)
   {
     g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", xr_get_bio_error_string());
-    goto err2;
+    BIO_free_all(server->bio_accept);
+    server->bio_accept = NULL;
+    return FALSE;
   }
 
   server->sock = -1;
   BIO_get_fd(server->bio_accept, &server->sock);
   xr_set_nodelay(server->bio_accept);
 
-  return 0;
- err2:
-  BIO_free_all(server->bio_accept);
-  server->bio_accept = NULL;
- err1:
-  return -1;
+  return TRUE;
 }
 
 void xr_server_free(xr_server* server)
@@ -693,7 +689,7 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
   if (server == NULL)
     return FALSE;
 
-  if (xr_server_bind(server, bind, err) < 0)
+  if (!xr_server_bind(server, bind, err))
   {
     xr_server_free(server);
     return FALSE;
@@ -708,7 +704,7 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
     }
   }
 
-  if (xr_server_run(server, err) < 0)
+  if (!xr_server_run(server, err))
   {
     xr_server_free(server);
     return FALSE;

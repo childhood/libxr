@@ -163,81 +163,81 @@ xr_value* xr_value_blob_new(xr_blob* val)
   return v;
 }
 
-int xr_value_to_int(xr_value* val, int* nval)
+gboolean xr_value_to_int(xr_value* val, int* nval)
 {
-  g_return_val_if_fail(nval != NULL, -1);
+  g_return_val_if_fail(nval != NULL, FALSE);
 
   if (val == NULL || val->type != XRV_INT)
-    return -1;
+    return FALSE;
 
   *nval = val->int_val;
-  return 0;
+  return TRUE;
 }
 
-int xr_value_to_string(xr_value* val, char** nval)
+gboolean xr_value_to_string(xr_value* val, char** nval)
 {
-  g_return_val_if_fail(nval != NULL, -1);
+  g_return_val_if_fail(nval != NULL, FALSE);
 
   if (val == NULL || val->type != XRV_STRING)
-    return -1;
+    return FALSE;
 
   *nval = g_strdup(val->str_val);
-  return 0;
+  return TRUE;
 }
 
-int xr_value_to_bool(xr_value* val, int* nval)
+gboolean xr_value_to_bool(xr_value* val, int* nval)
 {
-  g_return_val_if_fail(nval != NULL, -1);
+  g_return_val_if_fail(nval != NULL, FALSE);
 
   if (val == NULL || val->type != XRV_BOOLEAN)
-    return -1;
+    return FALSE;
 
   *nval = val->int_val;
-  return 0;
+  return TRUE;
 }
 
-int xr_value_to_double(xr_value* val, double* nval)
+gboolean xr_value_to_double(xr_value* val, double* nval)
 {
-  g_return_val_if_fail(nval != NULL, -1);
+  g_return_val_if_fail(nval != NULL, FALSE);
 
   if (val == NULL || val->type != XRV_DOUBLE)
-    return -1;
+    return FALSE;
 
   *nval = val->dbl_val;
-  return 0;
+  return TRUE;
 }
 
-int xr_value_to_time(xr_value* val, char** nval)
+gboolean xr_value_to_time(xr_value* val, char** nval)
 {
-  g_return_val_if_fail(nval != NULL, -1);
+  g_return_val_if_fail(nval != NULL, FALSE);
 
   if (val == NULL || val->type != XRV_TIME)
-    return -1;
+    return FALSE;
 
   *nval = g_strdup(val->str_val);
-  return 0;
+  return TRUE;
 }
 
-int xr_value_to_blob(xr_value* val, xr_blob** nval)
+gboolean xr_value_to_blob(xr_value* val, xr_blob** nval)
 {
-  g_return_val_if_fail(nval != NULL, -1);
+  g_return_val_if_fail(nval != NULL, FALSE);
 
   if (val == NULL || val->type != XRV_BLOB)
-    return -1;
+    return FALSE;
 
   *nval = xr_blob_ref(val->blob_val);
-  return 0;
+  return TRUE;
 }
 
-int xr_value_to_value(xr_value* val, xr_value** nval)
+gboolean xr_value_to_value(xr_value* val, xr_value** nval)
 {
-  g_return_val_if_fail(nval != NULL, -1);
+  g_return_val_if_fail(nval != NULL, FALSE);
 
   if (val == NULL)
-    return -1;
+    return FALSE;
 
   *nval = xr_value_ref(val);
-  return 0;
+  return TRUE;
 }
 
 int xr_value_get_type(xr_value* val)
@@ -347,20 +347,20 @@ void xr_value_array_append(xr_value* arr, xr_value* val)
   arr->children = g_slist_append(arr->children, val);
 }
 
-int xr_value_is_error_retval(xr_value* v, int* errcode, char** errmsg)
+gboolean xr_value_is_error_retval(xr_value* v, int* errcode, char** errmsg)
 {
-  g_return_val_if_fail(v != NULL, -1);
-  g_return_val_if_fail(errcode != NULL, -1);
-  g_return_val_if_fail(errmsg != NULL, -1);
+  g_return_val_if_fail(v != NULL, FALSE);
+  g_return_val_if_fail(errcode != NULL, FALSE);
+  g_return_val_if_fail(errmsg != NULL, FALSE);
 
   if (v->type != XRV_STRUCT)
-    return 0;
+    return FALSE;
 
-  if (xr_value_to_int(xr_value_get_member(v, "faultCode"), errcode) < 0 ||
-      xr_value_to_string(xr_value_get_member(v, "faultString"), errmsg) < 0)
-    return 0;
+  if (!xr_value_to_int(xr_value_get_member(v, "faultCode"), errcode) ||
+      !xr_value_to_string(xr_value_get_member(v, "faultString"), errmsg))
+    return FALSE;
 
-  return 1;
+  return TRUE;
 }
 
 gboolean __xr_value_is_complicated(xr_value* v, int max_strlen)

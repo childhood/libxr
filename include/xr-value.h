@@ -164,12 +164,12 @@ xr_value* xr_value_blob_new(xr_blob* val);
  * @param nval Pointer to the variable where value should be extracted.
  *   This pointer must not be NULL.
  *
- * @return This function returns -1 if value can't be extracted, this
+ * @return This function returns FALSE if value can't be extracted, this
  *   may happen when val is NULL or val is not of expected node type.
- *   On error value pointed to by nval is not modified. 0 is returned
+ *   On error value pointed to by nval is not modified. TRUE is returned
  *   on success.
  */
-int xr_value_to_int(xr_value* val, int* nval);
+gboolean xr_value_to_int(xr_value* val, int* nval);
 
 /** Extract @ref xr_value of type @ref XRV_STRING into the native language type.
  *
@@ -177,14 +177,14 @@ int xr_value_to_int(xr_value* val, int* nval);
  * @param nval Pointer to the variable where value should be extracted.
  *   This pointer must not be NULL.
  *
- * @return This function returns -1 if value can't be extracted, this
+ * @return This function returns FALSE if value can't be extracted, this
  *   may happen when val is NULL or val is not of expected node type.
- *   On error value pointed to by nval is not modified. 0 is returned
+ *   On error value pointed to by nval is not modified. TRUE is returned
  *   on success.
  *
  * @warning Caller must free returned string using g_free.
  */
-int xr_value_to_string(xr_value* val, char** nval);
+gboolean xr_value_to_string(xr_value* val, char** nval);
 
 /** Extract @ref xr_value of type @ref XRV_BOOLEAN into the native language type.
  *
@@ -192,12 +192,12 @@ int xr_value_to_string(xr_value* val, char** nval);
  * @param nval Pointer to the variable where value should be extracted.
  *   This pointer must not be NULL.
  *
- * @return This function returns -1 if value can't be extracted, this
+ * @return This function returns FALSE if value can't be extracted, this
  *   may happen when val is NULL or val is not of expected node type.
- *   On error value pointed to by nval is not modified. 0 is returned
+ *   On error value pointed to by nval is not modified. TRUE is returned
  *   on success.
  */
-int xr_value_to_bool(xr_value* val, int* nval);
+gboolean xr_value_to_bool(xr_value* val, int* nval);
 
 /** Extract @ref xr_value of type @ref XRV_DOUBLE into the native language type.
  *
@@ -205,12 +205,12 @@ int xr_value_to_bool(xr_value* val, int* nval);
  * @param nval Pointer to the variable where value should be extracted.
  *   This pointer must not be NULL.
  *
- * @return This function returns -1 if value can't be extracted, this
+ * @return This function returns FALSE if value can't be extracted, this
  *   may happen when val is NULL or val is not of expected node type.
- *   On error value pointed to by nval is not modified. 0 is returned
+ *   On error value pointed to by nval is not modified. TRUE is returned
  *   on success.
  */
-int xr_value_to_double(xr_value* val, double* nval);
+gboolean xr_value_to_double(xr_value* val, double* nval);
 
 /** Extract @ref xr_value of type @ref XRV_TIME into the native language type.
  *
@@ -218,14 +218,14 @@ int xr_value_to_double(xr_value* val, double* nval);
  * @param nval Pointer to the variable where value should be extracted.
  *   This pointer must not be NULL.
  *
- * @return This function returns -1 if value can't be extracted, this
+ * @return This function returns FALSE if value can't be extracted, this
  *   may happen when val is NULL or val is not of expected node type.
- *   On error value pointed to by nval is not modified. 0 is returned
+ *   On error value pointed to by nval is not modified. TRUE is returned
  *   on success.
  *
  * @warning Caller must free returned string using g_free.
  */
-int xr_value_to_time(xr_value* val, char** nval);
+gboolean xr_value_to_time(xr_value* val, char** nval);
 
 /** Extract @ref xr_value of type @ref XRV_BLOB into the native language type.
  *
@@ -233,15 +233,15 @@ int xr_value_to_time(xr_value* val, char** nval);
  * @param nval Pointer to the variable where value should be extracted.
  *   This pointer must not be NULL.
  *
- * @return This function returns -1 if value can't be extracted, this
+ * @return This function returns FALSE if value can't be extracted, this
  *   may happen when val is NULL or val is not of expected node type.
- *   On error value pointed to by nval is not modified. 0 is returned
+ *   On error value pointed to by nval is not modified. TRUE is returned
  *   on success.
  *
  * @warning Returned blob is still owned by the xr_value node and will be freed
  *   whenever xr_value_unref is called on the original node.
  */
-int xr_value_to_blob(xr_value* val, xr_blob** nval);
+gboolean xr_value_to_blob(xr_value* val, xr_blob** nval);
 
 /** Just a convenience interface to xr_value_ref.
  *
@@ -249,9 +249,9 @@ int xr_value_to_blob(xr_value* val, xr_blob** nval);
  * @param nval Pointer to the variable where value should be extracted.
  *   This pointer must not be NULL.
  *
- * @return This function returns -1 if @a val is NULL, otherwise 0 is returned.
+ * @return This function returns FALSE if @a val is NULL, otherwise TRUE is returned.
  */
-int xr_value_to_value(xr_value* val, xr_value** nval);
+gboolean xr_value_to_value(xr_value* val, xr_value** nval);
 
 /** Get type of @ref xr_value node.
  *
@@ -341,11 +341,11 @@ xr_value* xr_value_get_member_value(xr_value* mem);
  * @param errcode Pointer to the variable where the faultCode should be stored.
  * @param errmsg Pointer to the variable where the faultString should be stored.
  *
- * @return Function returns 1 if node is XML-RPC error node, 0 Otherwise.
+ * @return Function returns TRUE if node is XML-RPC error node, FALSE Otherwise.
  *
  * @warning Caller must free returned errmsg using g_free.
  */
-int xr_value_is_error_retval(xr_value* val, int* errcode, char** errmsg);
+gboolean xr_value_is_error_retval(xr_value* val, int* errcode, char** errmsg);
 
 /** Debugging function that dumps node tree to the string.
  *

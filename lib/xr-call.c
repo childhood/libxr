@@ -418,10 +418,10 @@ static xr_value* _xr_value_unserialize(xmlNode* node)
   return NULL;
 }
 
-int xr_call_unserialize_request(xr_call* call, const char* buf, int len)
+gboolean xr_call_unserialize_request(xr_call* call, const char* buf, int len)
 {
-  g_return_val_if_fail(call != NULL, -1);
-  g_return_val_if_fail(buf != NULL, -1);
+  g_return_val_if_fail(call != NULL, FALSE);
+  g_return_val_if_fail(buf != NULL, FALSE);
 
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, buf=%p, len=%d)", call, buf, len);
   
@@ -469,7 +469,7 @@ int xr_call_unserialize_request(xr_call* call, const char* buf, int len)
 
   xmlXPathFreeContext(ctx);
   xmlFreeDoc(doc);
-  return 0;
+  return TRUE;
 
  err_3:
   xp_free_nodes(ns);
@@ -478,13 +478,13 @@ int xr_call_unserialize_request(xr_call* call, const char* buf, int len)
  err_1:
   xmlFreeDoc(doc);
  err_0:
-  return -1;
+  return FALSE;
 }
 
-int xr_call_unserialize_response(xr_call* call, const char* buf, int len)
+gboolean xr_call_unserialize_response(xr_call* call, const char* buf, int len)
 {
-  g_return_val_if_fail(call != NULL, -1);
-  g_return_val_if_fail(buf != NULL, -1);
+  g_return_val_if_fail(call != NULL, FALSE);
+  g_return_val_if_fail(buf != NULL, FALSE);
 
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, buf=%p, len=%d)", call, buf, len);
 
@@ -561,7 +561,7 @@ done:
   xp_free_nodes(ns);
   xmlXPathFreeContext(ctx);
   xmlFreeDoc(doc);
-  return 0;
+  return TRUE;
 
  err_3:
   xr_value_unref(call->retval);
@@ -572,7 +572,7 @@ done:
  err_1:
   xmlFreeDoc(doc);
  err_0:
-  return -1;
+  return FALSE;
 }
 
 /* internal use only */
