@@ -40,8 +40,7 @@ LDADD = $(XR_LIBS) $(top_builddir)/lib/libxr.la
 noinst_PROGRAMS = \
   tclient \
   client \
-  server \
-  mlserver
+  server
 
 client_SOURCES = \
   client.c \
@@ -53,10 +52,6 @@ tclient_SOURCES = \
 
 server_SOURCES = \
   server.c \
-  $(BUILT_SOURCES)
-
-mlserver_SOURCES = \
-  mlserver.c \
   $(BUILT_SOURCES)
 
 $(BUILT_SOURCES): $(srcdir)/test.xdl
