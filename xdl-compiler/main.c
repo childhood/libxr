@@ -98,8 +98,10 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
         xdl_struct_member* m = k->data;
         EL(1, "xr_value* %s = NULL;", m->name);
       }
+      NL;
       EL(1, "if (_nstruct == NULL)");
       EL(2, "return NULL;");
+      NL;
       EL(1, "if (");
       for (k=t->struct_members; k; k=k->next)
       {
@@ -115,6 +117,7 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       }
       EL(2, "return NULL;");
       EL(1, "}");
+      NL;
       EL(1, "_struct = xr_value_struct_new();");
       for (k=t->struct_members; k; k=k->next)
       {
@@ -128,9 +131,12 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(0, "G_GNUC_UNUSED static gboolean %s(xr_value* _struct, %s* _nstruct)", t->demarch_name, t->ctype);
       EL(0, "{");
       EL(1, "%s _tmp_nstruct;", t->ctype);
+      NL;
       EL(1, "g_return_val_if_fail(_nstruct != NULL, FALSE);");
+      NL;
       EL(1, "if (_struct == NULL || xr_value_get_type(_struct) != XRV_STRUCT)");
       EL(2, "return FALSE;");
+      NL;
       EL(1, "_tmp_nstruct = %s_new();", t->cname);
       EL(1, "if (");
       for (k=t->struct_members; k; k=k->next)
@@ -143,6 +149,7 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(2, "%s(_tmp_nstruct);", t->free_func);
       EL(2, "return FALSE;");
       EL(1, "}");
+      NL;
       EL(1, "*_nstruct = _tmp_nstruct;");
       EL(1, "return TRUE;");
       EL(0, "}");
@@ -154,16 +161,20 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(0, "{");
       EL(1, "GSList* _item;");
       EL(1, "xr_value* _array = xr_value_array_new();");
+      NL;
       EL(1, "for (_item = _narray; _item; _item = _item->next)");
       EL(1, "{");
       EL(2, "xr_value* _item_value = %s((%s)_item->data);", t->item_type->march_name, t->item_type->ctype);
+      NL;
       EL(2, "if (_item_value == NULL)");
       EL(2, "{");
       EL(3, "xr_value_unref(_array);");
       EL(3, "return NULL;");
       EL(2, "}");
+      NL;
       EL(2, "xr_value_array_append(_array, _item_value);");
       EL(1, "}");
+      NL;
       EL(1, "return _array;");
       EL(0, "}");
       NL;
@@ -171,19 +182,25 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(0, "G_GNUC_UNUSED static gboolean %s(xr_value* _array, %s* _narray)", t->demarch_name, t->ctype);
       EL(0, "{");
       EL(1, "GSList *_tmp_narray = NULL, *_item;");
+      NL;
       EL(1, "g_return_val_if_fail(_narray != NULL, FALSE);");
+      NL;
       EL(1, "if (_array == NULL || xr_value_get_type(_array) != XRV_ARRAY)");
       EL(2, "return FALSE;");
+      NL;
       EL(1, "for (_item = xr_value_get_items(_array); _item; _item = _item->next)");
       EL(1, "{");
       EL(2, "%s _item_value = %s;", t->item_type->ctype, t->item_type->cnull);
+      NL;
       EL(2, "if (!%s((xr_value*)_item->data, &_item_value))", t->item_type->demarch_name);
       EL(2, "{");
       EL(3, "%s(_tmp_narray);", t->free_func);
       EL(3, "return FALSE;");
       EL(2, "}");
+      NL;
       EL(2, "_tmp_narray = g_slist_append(_tmp_narray, (void*)_item_value);");
       EL(1, "}");
+      NL;
       EL(1, "*_narray = _tmp_narray;");
       EL(1, "return TRUE;");
       EL(0, "}");
@@ -578,12 +595,16 @@ int main(int ac, char* av[])
       EL(0, "{");
       EL(1, "%s _retval = %s;", m->return_type->ctype, m->return_type->cnull);
       EL(1, "xr_value* _param_value;");
+      EL(1, "xr_call* _call;");
+      NL;
       EL(1, "g_return_val_if_fail(_conn != NULL, _retval);");
       EL(1, "g_return_val_if_fail(_error == NULL || *_error == NULL, _retval);");
-      EL(1, "xr_call* _call = xr_call_new(\"%s%s.%s\");", xdl->name, s->name, m->name);
+      NL;
+      EL(1, "_call = xr_call_new(\"%s%s.%s\");", xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
+        NL;
         EL(1, "_param_value = %s(%s);", p->type->march_name, p->name);
         EL(1, "if (_param_value == NULL)");
         EL(1, "{");
@@ -593,11 +614,13 @@ int main(int ac, char* av[])
         EL(1, "}");
         EL(1, "xr_call_add_param(_call, _param_value);");
       }
+      NL;
       EL(1, "if (xr_client_call(_conn, _call, _error))");
       EL(1, "{");
       EL(2, "if (!%s(xr_call_get_retval(_call), &_retval))", m->return_type->demarch_name);
       EL(3, "g_set_error(_error, XR_CLIENT_ERROR, XR_CLIENT_ERROR_MARCHALIZER, \"Call return value demarchalization failed.\");");
       EL(1, "}");
+      NL;
       EL(1, "xr_call_free(_call);");
       EL(1, "return _retval;");
       EL(0, "}");
@@ -876,12 +899,14 @@ int main(int ac, char* av[])
         xdl_method_param* p = k->data;
         EL(1, "%s %s = %s;", p->type->ctype, p->name, p->type->cnull);
       }
+      NL;
       EL(1, "g_return_val_if_fail(_servlet != NULL, FALSE);");
       EL(1, "g_return_val_if_fail(_call != NULL, FALSE);");
       // prepare parameters
       for (k=m->params; k; k=k->next)
       {
         xdl_method_param* p = k->data;
+        NL;
         EL(1, "if (!%s(xr_call_get_param(_call, %d), &%s))", p->type->demarch_name, n++, p->name);
         EL(1, "{");
         EL(2, "xr_call_set_error(_call, -1, \"Stub parameter value demarchalization failed. (%s:%s)\");", m->name, p->name);
@@ -890,6 +915,7 @@ int main(int ac, char* av[])
       }
 
       // call stub
+      NL;
       E(1, "_nreturn_value = %s%sServlet_%s(_servlet", xdl->name, s->name, m->name);
       for (k=m->params; k; k=k->next)
       {
@@ -907,16 +933,19 @@ int main(int ac, char* av[])
       EL(1, "}");
 
       // prepare retval
+      NL;
       EL(1, "_return_value = %s(_nreturn_value);", m->return_type->march_name);
       EL(1, "if (_return_value == NULL)");
       EL(1, "{");
       EL(2, "xr_call_set_error(_call, -1, \"Stub return value marchalization failed. (%s)\");", m->name);
       EL(2, "goto out;");
       EL(1, "}");
+      NL;
       EL(1, "xr_call_set_retval(_call, _return_value);");
       EL(1, "_retval = TRUE;");
 
       // free native types and return
+      NL;
       EL(0, "out:");
       if (m->return_type->free_func)
         EL(1, "%s(_nreturn_value);", m->return_type->free_func);
