@@ -270,9 +270,7 @@ static gboolean xr_call_unserialize_request_xmlrpc(xr_call* call, const char* bu
     xr_value* v = _xr_value_unserialize_xmlrpc(ns->nodes[i]);
     if (v == NULL)
     {
-      char* msg = g_strdup_printf("Can't parse XML-RPC XML request. Failed to unserialize parameter %d.", i);
-      xr_call_set_error(call, -1, msg);
-      g_free(msg);
+      xr_call_set_error(call, -1, "Can't parse XML-RPC XML request. Failed to unserialize parameter %d.", i);
       goto err_3;
     }
     xr_call_add_param(call, v);
@@ -345,7 +343,7 @@ static gboolean xr_call_unserialize_response_xmlrpc(xr_call* call, const char* b
     char* errmsg = NULL;
     if (xr_value_is_error_retval(call->retval, &errcode, &errmsg))
     {
-      xr_call_set_error(call, errcode, errmsg);
+      xr_call_set_error(call, errcode, "%s", errmsg);
       g_free(errmsg);
       goto err_3;
     }

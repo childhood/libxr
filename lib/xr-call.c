@@ -158,16 +158,21 @@ xr_value* xr_call_get_retval(xr_call* call)
 
 /* error manipulation */
 
-void xr_call_set_error(xr_call* call, int code, const char* msg)
+void xr_call_set_error(xr_call* call, int code, const char* msg, ...)
 {
+  va_list args;
+
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p, code=%d, msg=%s)", call, code, msg);
 
   g_return_if_fail(call != NULL);
 
   call->error_set = TRUE;
   call->errcode = code;
+
+  va_start(args, msg);
   g_free(call->errmsg);
-  call->errmsg = g_strdup(msg);
+  call->errmsg = g_strdup_vprintf(msg, args);
+  va_end(args);
 }
 
 int xr_call_get_error_code(xr_call* call)

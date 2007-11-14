@@ -198,9 +198,7 @@ static gboolean xr_call_unserialize_request_json(xr_call* call, const char* buf,
     xr_value* v = _xr_value_unserialize_json(json_object_array_get_idx(params, i));
     if (v == NULL)
     {
-      char* msg = g_strdup_printf("Can't parse JSON-RPC request. Failed to unserialize parameter %d.", i);
-      xr_call_set_error(call, -1, msg);
-      g_free(msg);
+      xr_call_set_error(call, -1, "Can't parse JSON-RPC request. Failed to unserialize parameter %d.", i);
       json_object_put(r);
       return FALSE;
     }
@@ -236,7 +234,7 @@ static gboolean xr_call_unserialize_response_json(xr_call* call, const char* buf
       struct json_object* code = json_object_object_get(error, "code");
       struct json_object* message = json_object_object_get(error, "message");
       if (code && message && json_object_is_type(code, json_type_int) && json_object_is_type(message, json_type_string))
-        xr_call_set_error(call, json_object_get_int(code), json_object_get_string(message));
+        xr_call_set_error(call, json_object_get_int(code), "%s", json_object_get_string(message));
       else
         xr_call_set_error(call, -1, "Can't parse JSON-RPC response. Invalid error object.");
     }

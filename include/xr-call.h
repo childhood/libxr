@@ -141,7 +141,7 @@ xr_value* xr_call_get_retval(xr_call* call);
  * @param code Error code.
  * @param msg Error message.
  */
-void xr_call_set_error(xr_call* call, int code, const char* msg);
+void xr_call_set_error(xr_call* call, int code, const char* msg, ...);
 
 /** Get error code that is set on the call object.
  *
