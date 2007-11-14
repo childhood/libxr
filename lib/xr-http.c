@@ -322,7 +322,6 @@ const char* xr_http_get_header(xr_http* http, const char* name)
 
   g_return_val_if_fail(http != NULL, NULL);
   g_return_val_if_fail(name != NULL, NULL);
-  g_return_val_if_fail(http->state == STATE_HEADER_READ, NULL);
 
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
 
