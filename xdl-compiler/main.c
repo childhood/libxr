@@ -452,6 +452,7 @@ int main(int ac, char* av[])
   int server_impl = !strcmp(mode, "all") || !strcmp(mode, "server-impl");
   int vapi_file = !strcmp(mode, "vapi");
   int xdl_gen = !strcmp(mode, "xdl");
+  int js_client = !strcmp(mode, "js");
 
   /***********************************************************
    * common types header                                     *
@@ -1285,6 +1286,65 @@ int main(int ac, char* av[])
     EL(0, "}");
   }
 
+  }
+
+  if (js_client)
+  {
+    OPEN("%s/%s.js", out_dir, xdl->name);
+
+    EL(0, "/* Generated JS client code */");
+    NL;
+    EL(0, "var %s = {};", xdl->name);
+
+    if (xdl->errors)
+      NL;
+    for (j = xdl->errors; j; j = j->next)
+    {
+      xdl_error_code* e = j->data;
+      EL(0, "%-30s = %d;", S("%s.%s", xdl->name, e->name), e->code);
+    }
+
+    for (i = xdl->servlets; i; i = i->next)
+    {
+      xdl_servlet* s = i->data;
+
+      NL;
+      EL(0, "%s.%s = Class.create(Client,", xdl->name, s->name);
+      EL(0, "{");
+
+      for (j=s->methods; j; j=j->next)
+      {
+        xdl_method* m = j->data;
+
+        E(1, "%s: function(", m->name);
+        for (k=m->params; k; k=k->next)
+        {
+          xdl_method_param* p = k->data;
+          E(0, "%s%s", p->name, k->next ? ", " : "");
+        }
+        EL(0, ")");
+        EL(1, "{");
+        /*
+        for (k=m->params; k; k=k->next)
+        {
+          xdl_method_param* p = k->data;
+          EL(2, "if (!Object.is%s(%s))", p->type->name, p->name);
+          EL(3, "throw new Error('Parameter %s must be of type %s.');", p->name, p->type->name);
+        }
+        */
+        E(2, "return this.call('%s%s.%s', [ ", xdl->name, s->name, m->name);
+        for (k=m->params; k; k=k->next)
+        {
+          xdl_method_param* p = k->data;
+          E(0, "%s%s", p->name, k->next ? ", " : "");
+        }
+        EL(0, " ]);");
+        EL(1, "}%s", j->next ? "," : "");
+        if (j->next)
+          NL;
+      }
+      EL(0, "});");
+    }
   }
 
   /* end */
