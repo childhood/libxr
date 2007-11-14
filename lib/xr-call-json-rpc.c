@@ -186,7 +186,7 @@ static gboolean xr_call_unserialize_request_json(xr_call* call, const char* buf,
   }
 
   struct json_object* params = json_object_object_get(r, "params");
-  if (params && !json_object_is_type(params, json_type_array))
+  if (params == NULL || !json_object_is_type(params, json_type_array))
   {
     xr_call_set_error(call, -1, "Can't parse JSON-RPC request. Invalid params.");
     json_object_put(r);
@@ -246,7 +246,7 @@ static gboolean xr_call_unserialize_response_json(xr_call* call, const char* buf
   }
 
   struct json_object* result = json_object_object_get(r, "result");
-  if (result && json_object_is_type(result, json_type_null))
+  if (result == NULL || json_object_is_type(result, json_type_null))
   {
     xr_call_set_error(call, -1, "Can't parse JSON-RPC response. Null result.");
     json_object_put(r);
