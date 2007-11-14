@@ -2,7 +2,10 @@ EXTRA_DIST = \
   tests.h
 
 AM_CFLAGS = \
-  $(XR_CFLAGS) \
+  $(GLIB_CFLAGS) \
+  $(XML_CFLAGS) \
+  $(JSON_CFLAGS) \
+  -I$(top_builddir) \
   -I$(top_srcdir)/include \
   -I$(top_srcdir)/lib \
   -D_REENTRANT \
@@ -10,7 +13,10 @@ AM_CFLAGS = \
 
 AM_LDFLAGS = -static
 
-LDADD = $(XR_LIBS)
+LDADD = \
+  $(GLIB_LIBS) \
+  $(XML_LIBS) \
+  $(JSON_LIBS)
 
 TESTS = \
   t001-call

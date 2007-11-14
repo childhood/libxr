@@ -10,10 +10,11 @@ EXTRA_DIST = \
 	$(BUILT_SOURCES)
 
 AM_CFLAGS = \
-	$(XR_CFLAGS) \
+	$(GLIB_CFLAGS) \
 	-D_GNU_SOURCE
 
-LDADD = $(XR_LIBS)
+LDADD = \
+	$(GLIB_LIBS)
 
 man_MANS = xdl-compiler.1
 bin_PROGRAMS = xdl-compiler

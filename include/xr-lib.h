@@ -28,6 +28,7 @@
 #define __XR_LIB_H__
 
 #include <glib.h>
+#include "xr-config.h"
 
 enum
 {

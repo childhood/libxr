@@ -39,6 +39,7 @@ struct _xr_client_conn
 
   int is_open;
   GHashTable* headers;
+  xr_call_transport transport;
 };
 
 xr_client_conn* xr_client_new(GError** err)
@@ -60,6 +61,7 @@ xr_client_conn* xr_client_new(GError** err)
   }
 
   conn->headers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+  conn->transport = XR_CALL_XML_RPC;
 
   return conn;
 }
@@ -279,6 +281,16 @@ static void _add_http_header(const char* name, const char* value, xr_http* http)
   xr_http_set_header(http, name, value);
 }
 
+gboolean xr_client_set_transport(xr_client_conn* conn, xr_call_transport transport)
+{
+  g_return_val_if_fail(conn != NULL, FALSE);
+  g_return_val_if_fail(transport < XR_CALL_TRANSPORT_COUNT, FALSE);
+
+  conn->transport = transport;
+
+  return TRUE;
+}
+
 gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
 {
   char* buffer;
@@ -300,13 +312,19 @@ gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   }
 
   /* serialize nad send XML-RPC request */
+  xr_call_set_transport(call, conn->transport);
   xr_call_serialize_request(call, &buffer, &length);
   xr_http_setup_request(conn->http, "POST", conn->resource, conn->host);
-  xr_http_set_header(conn->http, "Content-Type", "text/xml");
   g_hash_table_foreach(conn->headers, (GHFunc)_add_http_header, conn->http);
+  if (conn->transport == XR_CALL_XML_RPC)
+    xr_http_set_header(conn->http, "Content-Type", "text/xml");
+#ifdef XR_JSON_ENABLED
+  else if (conn->transport == XR_CALL_JSON_RPC)
+    xr_http_set_header(conn->http, "Content-Type", "text/json");
+#endif
   xr_http_set_message_length(conn->http, length);
   write_success = xr_http_write_all(conn->http, buffer, length, err);
-  xr_call_free_buffer(buffer);
+  xr_call_free_buffer(call, buffer);
   if (!write_success)
   {
     xr_client_close(conn);
@@ -324,6 +342,7 @@ gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   response = xr_http_read_all(conn->http, err);
   if (response == NULL)
   {
+    g_clear_error(err);
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_IO, "HTTP receive failed.");
     xr_client_close(conn);
     return FALSE;

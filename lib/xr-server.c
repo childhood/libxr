@@ -323,6 +323,19 @@ static gboolean _xr_server_serve_upload(xr_server* server, xr_server_conn* conn)
   return TRUE;
 }
 
+static int _ctype_to_transport(const char* ctype)
+{
+  if (ctype == NULL)
+    return -1;
+  if (!g_ascii_strcasecmp(ctype, "text/xml"))
+    return XR_CALL_XML_RPC;
+#ifdef XR_JSON_ENABLED
+  if (!g_ascii_strcasecmp(ctype, "text/json"))
+    return XR_CALL_JSON_RPC;
+#endif
+  return -1;
+}
+
 static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn)
 {
   const char* method;
@@ -348,9 +361,9 @@ static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn
     return _xr_server_serve_download(server, conn);
   else if (!strcmp(method, "POST"))
   {
-    const char* ctype = xr_http_get_header(conn->http, "Content-Type");
+    int transport = _ctype_to_transport(xr_http_get_header(conn->http, "Content-Type"));
 
-    if (ctype && !strcmp(ctype, "text/xml"))
+    if (transport >= 0)
     {
       xr_call* call;
       GString* request;
@@ -364,6 +377,8 @@ static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn
 
       /* parse request data into xr_call */
       call = xr_call_new(NULL);
+      xr_call_set_transport(call, transport);
+
       rs = xr_call_unserialize_request(call, request->str, request->len);
       g_string_free(request, TRUE);
 
@@ -377,13 +392,13 @@ static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn
       xr_call_serialize_response(call, &buffer, &length);
       if (xr_debug_enabled & XR_DEBUG_CALL)
         xr_call_dump(call, 0);
-      xr_call_free(call);
 
       /* send HTTP response */
       xr_http_setup_response(conn->http, 200);
       xr_http_set_message_length(conn->http, length);
       rs = xr_http_write_all(conn->http, buffer, length, NULL);
-      xr_call_free_buffer(buffer);
+      xr_call_free_buffer(call, buffer);
+      xr_call_free(call);
 
       return rs;
     }

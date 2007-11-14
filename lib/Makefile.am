@@ -1,9 +1,14 @@
 EXTRA_DIST = \
   xml-priv.h \
-  xr-utils.h
+  xr-utils.h \
+  xr-call-xml-rpc.c \
+  xr-call-json-rpc.c
 
 AM_CFLAGS= \
-  $(XR_CFLAGS) \
+  $(GLIB_CFLAGS) \
+  $(XML_CFLAGS) \
+  $(JSON_CFLAGS) \
+  -I$(top_srcdir) \
   -I$(top_srcdir)/include \
   -D_REENTRANT \
   -D_GNU_SOURCE
@@ -11,8 +16,14 @@ AM_CFLAGS= \
 lib_LTLIBRARIES = \
   libxr.la
 
-libxr_la_LIBADD = $(XR_LIBS) -lssl -lcrypto $(WIN32LIBS)
-libxr_la_LDFLAGS = -version-info 0:0:0 -no-undefined
+libxr_la_LIBADD = \
+  $(GLIB_LIBS) \
+  $(XML_LIBS) \
+  $(JSON_LIBS) \
+  -lssl -lcrypto \
+  $(WIN32LIBS)
+
+libxr_la_LDFLAGS = -version-info $(LIB_XR_VERSION) -no-undefined
 
 libxr_la_SOURCES = \
   xr-lib.c \

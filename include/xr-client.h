@@ -65,6 +65,18 @@ xr_client_conn* xr_client_new(GError** err);
  */
 void xr_client_free(xr_client_conn* conn);
 
+/** Set transport type.
+ *
+ * Currently supported types are XR_CALL_XML_RPC and XR_CALL_JSON_RPC (not all
+ * xr_value types).
+ * 
+ * @param conn Connection object.
+ * @param transport Transport type.
+ * 
+ * @return TRUE on success, FALSE if transport is not available.
+ */
+gboolean xr_client_set_transport(xr_client_conn* conn, xr_call_transport transport);
+
 /** Set HTTP header to be used in RPCs.
  *
  * This setting persists until you remove header by passing NULL value or by

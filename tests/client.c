@@ -61,6 +61,11 @@ int main(int ac, char* av[])
     return 1;
   }
 
+#ifdef XR_JSON_ENABLED
+  /* use json transport for big arrays */
+  xr_client_set_transport(conn, XR_CALL_JSON_RPC);
+#endif 
+
   GSList* arr = TTest1_getBigArray(conn, &err);
   _check_err(err);
   err = NULL;
@@ -75,6 +80,8 @@ int main(int ac, char* av[])
   err = NULL;
   Array_string_free(arr);
 
+  xr_client_set_transport(conn, XR_CALL_XML_RPC);
+  
   /* call some servlet methods */
   TAllTypes* t1 = TTest1_getAll(conn, &err);
   _check_err(err);

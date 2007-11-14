@@ -33,6 +33,14 @@
 
 #include "xr-value.h"
 
+typedef enum {
+  XR_CALL_XML_RPC = 0,
+#ifdef XR_JSON_ENABLED
+  XR_CALL_JSON_RPC,
+#endif
+  XR_CALL_TRANSPORT_COUNT /* must be last, not a real transport */
+} xr_call_transport;
+
 /** Opaque data structrure for storing intermediate representation
  * of XML-RPC call.
  */
@@ -53,6 +61,13 @@ xr_call* xr_call_new(const char* method);
  * @param call Call object.
  */
 void xr_call_free(xr_call* call);
+
+/** Set transport type (default is XR_CALL_XML_RPC).
+ *
+ * @param call Call object.
+ * @param transport Transport type.
+ */
+void xr_call_set_transport(xr_call* call, xr_call_transport transport);
 
 /** Get method name  (second part if in Servlet.Method format).
  *
@@ -186,9 +201,10 @@ gboolean xr_call_unserialize_response(xr_call* call, const char* buf, int len);
 
 /** Free buffer allocated by serialize functions.
  *
+ * @param call Call obejct.
  * @param buf Buffer pointer.
  */
-void xr_call_free_buffer(char* buf);
+void xr_call_free_buffer(xr_call* call, char* buf);
 
 /** Debugging function that dumps call object to the string.
  *

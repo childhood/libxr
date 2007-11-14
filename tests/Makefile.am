@@ -28,14 +28,23 @@ EXTRA_DIST = \
   $(BUILT_SOURCES)
 
 AM_CFLAGS= \
-  $(XR_CFLAGS) \
+  $(GLIB_CFLAGS) \
+  $(XML_CFLAGS) \
+  $(JSON_CFLAGS) \
+  -I$(top_builddir) \
   -I$(top_srcdir)/include \
   -D_REENTRANT \
   -D_GNU_SOURCE
 
 AM_LDFLAGS = -static
 
-LDADD = $(XR_LIBS) $(top_builddir)/lib/libxr.la
+CLEANFILES = $(BUILT_SOURCES)
+
+LDADD = \
+  $(GLIB_LIBS) \
+  $(XML_LIBS) \
+  $(JSON_LIBS) \
+  $(top_builddir)/lib/libxr.la
 
 noinst_PROGRAMS = \
   tclient \
