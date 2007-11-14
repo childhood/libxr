@@ -93,7 +93,7 @@ int main(int ac, char* av[])
   err = NULL;
   TAllArrays_free(t2);
 
-  TTest2_auth(conn, "name", &err);
+  TTest2_auth(conn, "name", "pass", &err);
   _check_err(err);
   err = NULL;
 

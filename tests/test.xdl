@@ -251,20 +251,24 @@ servlet Test2
   __attrs__
   <%
     char* username;
+    char* password;
   %>
   
   __init__
   <%
-    printf("Init!\n");
+    printf("Init AUTH Servlet!\n");
   %>
 
   __fini__
   <%
-    printf("Fini!\n");
+    printf("Fini AUTH Servlet!\n");
   %>
 
-  boolean auth(string name)
+  boolean auth(take string name, take string password)
   <%
-    printf("auth(%s)!\n", name);
+    printf("AUTH-PRE:  %s, %s\n", _priv->username, _priv->password);
+    _priv->username = name;
+    _priv->password = password;
+    printf("AUTH-POST: %s, %s\n", _priv->username, _priv->password);
   %>
 }
