@@ -256,13 +256,11 @@ gboolean xr_http_read_header(xr_http* http, GError** err)
     {
       case -1:
         g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP xgets failed: %s.", xr_get_bio_error_string());
-        http->state = STATE_ERROR;
-        return FALSE;
+        goto err;
 
       case 1:
         g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP header too long, limit is %d bytes.", MAX_HEADER_SIZE);
-        http->state = STATE_ERROR;
-        return FALSE;
+        goto err;
 
       default:
         if (xr_debug_enabled & XR_DEBUG_HTTP)
@@ -273,8 +271,7 @@ gboolean xr_http_read_header(xr_http* http, GError** err)
           if (!_xr_http_header_parse_first_line(http, header))
           {
             g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "Invalid HTTP message.");
-            http->state = STATE_ERROR;
-            return FALSE;
+            goto err;
           }
           first_line = FALSE;
         }
@@ -295,8 +292,8 @@ gboolean xr_http_read_header(xr_http* http, GError** err)
         }
     }
   }
-done:
 
+done:
   clen = g_hash_table_lookup(http->headers, "content-length");
   http->content_length = clen ? atoi(clen) : -1;
 
@@ -310,6 +307,12 @@ done:
     http->state = STATE_HEADER_READ;
 
   return TRUE;
+
+err:
+  if (xr_debug_enabled & XR_DEBUG_HTTP)
+    g_print(">>>>> HTTP RECEIVE ERROR >>>>>\n");
+  http->state = STATE_ERROR;
+  return FALSE;
 }
 
 const char* xr_http_get_header(xr_http* http, const char* name)
