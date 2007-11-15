@@ -24,6 +24,7 @@
   #include <signal.h>
 #endif
 #include <stdlib.h>
+#include <time.h>
 
 #include "xr-server.h"
 #include "xr-http.h"
@@ -40,6 +41,10 @@ struct _xr_server
   gboolean secure;
   gboolean running;
   GSList* servlet_types;
+  GHashTable* sessions;
+  GStaticRWLock sessions_lock;
+  GThread* sessions_cleaner;
+  time_t current_time;
 };
 
 /* servlet API */
@@ -59,17 +64,9 @@ struct _xr_servlet
   xr_servlet_def* def;
   xr_call* call;
   xr_server_conn* conn;
+  time_t last_used;
+  GMutex* call_mutex; /* held during call */
 };
-
-static xr_servlet* xr_servlet_new(xr_servlet_def* def, xr_server_conn* conn)
-{
-  xr_servlet* s = g_new0(xr_servlet, 1);
-  if (def->size > 0)
-    s->priv = g_malloc0(def->size);
-  s->def = def;
-  s->conn = conn;
-  return s;
-}
 
 static void xr_servlet_free(xr_servlet* servlet, gboolean fini)
 {
@@ -78,8 +75,27 @@ static void xr_servlet_free(xr_servlet* servlet, gboolean fini)
   if (fini && servlet->def && servlet->def->fini)
     servlet->def->fini(servlet);
   g_free(servlet->priv);
+  g_mutex_free(servlet->call_mutex);
   memset(servlet, 0, sizeof(*servlet));
   g_free(servlet);
+}
+
+static xr_servlet* xr_servlet_new(xr_servlet_def* def, xr_server_conn* conn)
+{
+  xr_servlet* s = g_new0(xr_servlet, 1);
+  if (def->size > 0)
+    s->priv = g_malloc0(def->size);
+  s->def = def;
+  s->conn = conn;
+  s->call_mutex = g_mutex_new();
+
+  if (s->def->init && !s->def->init(s))
+  {
+    xr_servlet_free(s, FALSE);
+    return NULL;
+  }
+
+  return s;
 }
 
 static xr_server_conn* xr_server_conn_new(BIO* bio)
@@ -163,74 +179,185 @@ static xr_servlet_method_def* _find_servlet_method_def(xr_servlet* servlet, cons
   return NULL;
 }
 
+static gboolean _xr_servlet_do_call(xr_servlet* servlet, xr_call* call)
+{
+  xr_servlet_method_def* method;
+  gboolean retval = FALSE;
+
+  servlet->call = call;
+
+  /* find method and perform a call */
+  method = _find_servlet_method_def(servlet, xr_call_get_method(call));
+  if (method)
+  {
+    if (servlet->def->pre_call)
+    {
+      if (!servlet->def->pre_call(servlet, call))
+      {
+        // FALSE returned
+        if (xr_call_get_retval(call) == NULL && !xr_call_get_error_code(call))
+          xr_call_set_error(call, -1, "Pre-call did not returned value or set error.");
+        goto out;
+      }
+    }
+
+    retval = method->cb(servlet, call);
+
+    if (servlet->def->post_call)
+      servlet->def->post_call(servlet, call);
+  }
+  else
+    xr_call_set_error(call, -1, "Method %s not found in %s servlet.", xr_call_get_method(call), servlet->def->name);
+
+out:
+  servlet->call = NULL;
+  return retval;
+}
+
+static gboolean maybe_remove_servlet(gpointer key, gpointer value, gpointer user_data)
+{
+  xr_servlet* servlet = value;
+  xr_server* server = user_data;
+
+  if (g_mutex_trylock(servlet->call_mutex))
+  {
+    g_mutex_unlock(servlet->call_mutex); /* this is ok, as nobody else is going to take this lock during remove */
+    return (servlet->last_used + 60 < server->current_time || servlet->last_used > server->current_time);
+  }
+
+  /* servlet is locked, can't remove */
+  return FALSE;
+}
+
+static gpointer sessions_cleaner_func(xr_server* server)
+{
+  while (server->running)
+  {
+    g_usleep(1000000);
+
+    server->current_time = time(NULL);
+    g_static_rw_lock_writer_lock(&server->sessions_lock);
+    g_hash_table_foreach_remove(server->sessions, maybe_remove_servlet, server);
+    g_static_rw_lock_writer_unlock(&server->sessions_lock);
+  }
+
+  return NULL;
+}
+
 static gboolean _xr_server_servlet_method_call(xr_server* server, xr_server_conn* conn, xr_call* call)
 {
-  gboolean retval = FALSE;
   xr_servlet* servlet = NULL;
-  xr_servlet_method_def* method;
+  xr_servlet* cur_servlet;
   char *servlet_name;
 
   g_return_val_if_fail(server != NULL, FALSE);
   g_return_val_if_fail(conn != NULL, FALSE);
   g_return_val_if_fail(call != NULL, FALSE);
 
+  /* session mode */
+  const char* session_id = xr_http_get_header(conn->http, "X-Libxr-Session-ID");
+  if (session_id)
+  {
+    /* lookup servlet in session and try to lock it for call, if call is in
+       progress try again later (1ms) */
+again:
+    g_static_rw_lock_reader_lock(&server->sessions_lock);
+    servlet = g_hash_table_lookup(server->sessions, session_id);
+    if (servlet)
+      if (!g_mutex_trylock(servlet->call_mutex))
+      {
+        g_static_rw_lock_reader_unlock(&server->sessions_lock);
+        g_usleep(1000);
+        goto again;
+      }
+    g_static_rw_lock_reader_unlock(&server->sessions_lock);
+
+    /* if servlet does not exist */
+    if (servlet == NULL)
+    {
+      xr_servlet_def* def;
+      servlet_name = xr_call_get_servlet_name(call);
+      if (servlet_name == NULL)
+      {
+        xr_call_set_error(call, -1, "Unknown servlet.");
+        return FALSE;
+      }
+
+      def = _find_servlet_def(server, servlet_name);
+      if (def == NULL)
+      {
+        xr_call_set_error(call, -1, "Unknown servlet %s.", servlet_name);
+        g_free(servlet_name);
+        return FALSE;
+      }
+      g_free(servlet_name);
+
+      servlet = xr_servlet_new(def, conn);
+      if (servlet == NULL)
+      {
+        xr_call_set_error(call, -1, "Servlet initialization failed.");
+        return FALSE;
+      }
+
+      g_static_rw_lock_writer_lock(&server->sessions_lock);
+
+      /* user might have used same session ID to create servlet in other thread, check for
+         this situation */
+      cur_servlet = g_hash_table_lookup(server->sessions, session_id); 
+      if (cur_servlet)
+      {
+        xr_servlet_free(servlet, TRUE);
+        servlet = cur_servlet;
+      }
+      else
+        g_hash_table_replace(server->sessions, g_strdup(session_id), servlet);
+
+      /* this will block sessions ht access until servlet call completes, if
+         servlet was found in other thread, which should be rare occurrance */
+      g_mutex_lock(servlet->call_mutex);
+      g_static_rw_lock_writer_unlock(&server->sessions_lock);
+    }
+
+    servlet->conn = conn;
+    servlet->last_used = time(NULL);
+    gboolean rs = _xr_servlet_do_call(servlet, call);
+    g_mutex_unlock(servlet->call_mutex);
+    return rs;
+  }
+
+  /* persistent mode */
+
   /* get xr_servlet object for current connection and given servlet name */
   servlet_name = xr_call_get_servlet_name(call);
+  if (servlet_name == NULL)
+  {
+    xr_call_set_error(call, -1, "Unknown servlet.");
+    return FALSE;
+  }
+
   servlet = xr_server_conn_find_servlet(conn, servlet_name);
   if (servlet == NULL)
   {
     xr_servlet_def* def = _find_servlet_def(server, servlet_name);
     if (def == NULL)
     {
-      xr_call_set_error(call, -1, "Unknown servlet.");
-      goto done;
+      xr_call_set_error(call, -1, "Unknown servlet %s.", servlet_name);
+      g_free(servlet_name);
+      return FALSE;
     }
+    g_free(servlet_name);
 
     servlet = xr_servlet_new(def, conn);
-    if (servlet->def->init && !servlet->def->init(servlet))
+    if (servlet == NULL)
     {
       xr_call_set_error(call, -1, "Servlet initialization failed.");
-      xr_servlet_free(servlet, FALSE);
-      servlet = NULL;
-      goto done;
+      return FALSE;
     }
 
     g_ptr_array_add(conn->servlets, servlet);
   }
   
-  servlet->call = call;
-
-  /* find method and perform a call */
-  method = _find_servlet_method_def(servlet, xr_call_get_method(call));
-  if (method == NULL)
-  {
-    char* msg = g_strdup_printf("Method %s not found in %s servlet.", xr_call_get_method(call), servlet->def->name);
-    xr_call_set_error(call, -1, msg);
-    g_free(msg);
-    goto done;
-  }
-
-  if (servlet->def->pre_call)
-  {
-    if (!servlet->def->pre_call(servlet, call))
-    {
-      // FALSE returned
-      if (xr_call_get_retval(call) == NULL && !xr_call_get_error_code(call))
-        xr_call_set_error(call, -1, "Pre-call did not returned value or set error.");
-      goto done;
-    }
-  }
-
-  retval = method->cb(servlet, call);
-
-  if (servlet->def->post_call)
-    servlet->def->post_call(servlet, call);
-
- done:
-  g_free(servlet_name);
-  if (servlet)
-    servlet->call = NULL;
-  return retval;
+  return _xr_servlet_do_call(servlet, call);
 }
 
 static gboolean _xr_server_serve_download(xr_server* server, xr_server_conn* conn)
@@ -588,12 +715,23 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
     goto err2;
   }
 
+  server->running = TRUE;
+
+  server->sessions = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)xr_servlet_free);
+  g_static_rw_lock_init(&server->sessions_lock);
+  server->sessions_cleaner = g_thread_create((GThreadFunc)sessions_cleaner_func, server, TRUE, NULL);
+  if (server->sessions_cleaner == NULL)
+    goto err3;
+
   return server;
 
- err2:
+err3:
+  g_hash_table_destroy(server->sessions);
+  g_static_rw_lock_free(&server->sessions_lock);
+err2:
   SSL_CTX_free(server->ctx);
   server->ctx = NULL;
- err1:
+err1:
   g_free(server);
   return NULL;
 }
@@ -659,6 +797,9 @@ void xr_server_free(xr_server* server)
   BIO_free_all(server->bio_accept);
   SSL_CTX_free(server->ctx);
   g_slist_free(server->servlet_types);
+  g_thread_join(server->sessions_cleaner);
+  g_hash_table_destroy(server->sessions);
+  g_static_rw_lock_free(&server->sessions_lock);
   g_free(server);
 }
 

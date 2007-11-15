@@ -49,10 +49,15 @@ LDADD = \
 noinst_PROGRAMS = \
   tclient \
   client \
+  session-client \
   server
 
 client_SOURCES = \
   client.c \
+  $(BUILT_SOURCES)
+
+session_client_SOURCES = \
+  session-client.c \
   $(BUILT_SOURCES)
 
 tclient_SOURCES = \

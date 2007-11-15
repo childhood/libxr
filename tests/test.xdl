@@ -271,4 +271,9 @@ servlet Test2
     _priv->password = password;
     printf("AUTH-POST: %s, %s\n", _priv->username, _priv->password);
   %>
+
+  string getUsername()
+  <%
+    return g_strdup(_priv->username);
+  %>
 }
