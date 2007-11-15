@@ -1,3 +1,40 @@
+0.9.90 - 2007-11-15 (1.0.0-rc1)
+~~~~~~~~~~~~~~~~~~~
+Note: This is source and binary incompatible release.
+
+This release reveals the significance of 'x' in libxr. It does not stand for
+XML, it stands for whatever you want (or more precisely, whatever you are
+willing to implement).
+
+- Added support for handling arbitrary uploads and downloads (GETs, POSTs). See
+  __upload__ and __download__ hooks.
+- Use buffered BIO and simplify/speedup HTTP code.
+- Allow to use libxr from C++ code. (thanks to David Lee)
+- Allow to set custom HTTP headers on xr_client_conn object.
+- Implemented HTTP basic auth.
+- Removed unused GLIB mainloop integration.
+- Don't pretty print XML-RPC requests unless in XR_DEBUG_HTTP mode.
+- Return boolean FALSE intead of -1 on errors in: xr_client_call,
+  xr_client_open, xr_server_bind, xr_server_run, xr_server_register_servlet,
+  xr_value_to_*
+- Use transparent SSL DEFLATE compression when possible.
+- Implemented copy functions for XDL_ARRAY and XDL_STRUCT types (in addition to
+  existing *_new and *_free functions).
+- Always return -1 error code on internal errors. (100 was returned before)
+- Added support for multiple transport types. Server can handle multiple
+  transports transparently based on Content-Type HTTP header.
+- Implemented JSON-RPC transport. (application/json)
+- Implemented server side 'session' support, so that servlet instance can be
+  preserved across multiple connections. (for clients that do not support
+  persistent connections.)
+- Implemented Prototype based AJAX JSON-RPC client code generator.
+- Implemented simple cURL based PHP JSON-RPC proxy.
+- All g_assert() uses replaced with g_return_if_fail()
+- Fixed #line 123 "(null)" bug in xdl-compiler.
+
+There is still a possibility that libxr API will change slightly until 1.0.0 is
+released. 
+
 0.9.15 - 2007-10-29
 ~~~~~~~~~~~~~~~~~~~
 
