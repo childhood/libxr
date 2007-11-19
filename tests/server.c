@@ -29,6 +29,9 @@ int main(int ac, char* av[])
     NULL
   };
 
+  if (!g_thread_supported())
+    g_thread_init(NULL);
+
   xr_debug_enabled = XR_DEBUG_CALL;
 
   xr_server_simple("server.pem", 5, "*:4444", servlets, &err);

@@ -65,16 +65,22 @@ static unsigned long _ssl_thread_id_callback()
   return ret;
 }
 
+G_LOCK_DEFINE_STATIC(init);
+
 void xr_init()
 {
   int i;
 
-  if (_ssl_initialized)
-    return;
-  _ssl_initialized = 1;
-
   if (!g_thread_supported())
-    g_thread_init(NULL);
+    g_error("xr_init(): You must call g_thread_init() to allow libxr to work correctly.");
+
+  G_LOCK(init);
+
+  if (_ssl_initialized)
+  {
+    G_UNLOCK(init);
+    return;
+  }
 
   xr_http_init();
 
@@ -96,6 +102,10 @@ void xr_init()
     _ssl_mutexes[i] = g_mutex_new();
   CRYPTO_set_id_callback(_ssl_thread_id_callback);
   CRYPTO_set_locking_callback(_ssl_locking_callback);
+
+  _ssl_initialized = 1;
+
+  G_UNLOCK(init);
 }
 
 void xr_fini()

@@ -38,9 +38,6 @@ static gpointer _thread_func(gpointer data)
   char* uri = data;
   xr_debug_enabled = XR_DEBUG_ALL;
 
-  if (!g_thread_supported())
-    g_thread_init(NULL);
-
   xr_client_conn* conn = xr_client_new(&err);
   if (_check_err(err))
     return NULL;
