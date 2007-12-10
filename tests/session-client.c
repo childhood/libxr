@@ -59,7 +59,9 @@ gboolean connect_call_disconnect(int id)
   xr_client_set_http_header(conn, "X-Libxr-Session-ID", session_id);
   g_free(session_id);
 
+#ifdef XR_JSON_ENABLED
   xr_client_set_transport(conn, XR_CALL_JSON_RPC);
+#endif
 
   GSList* arr = TTest1_getBigArray(conn, &err);
   _check_err(err);
