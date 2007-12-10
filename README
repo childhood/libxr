@@ -1,14 +1,16 @@
 XML-RPC Library With XML-RPC Interface Compiler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is brand new XML-RPC library with support for:
+Libxr is a XML-RPC library with support for:
 
   - SSLv3/TLSv1 using OpenSSL.
   - IPV6 as soon as OpenSSL 0.9.9 is released.
   - Persistent connections over HTTP/1.1
+  - Servlet "session" support for non-persistent connections.
+  - Multiple RPC transports. (XML-RPC and JSON).
   - XML-RPC interface description language (XDL).
   - XML-RPC client stubs/servlet skels compiler.
   - Multiple servlets per server.
   - Servlet lifetime (init -- call -- call -- fini).
-  - Multiplatform (linux, mingw32 on windows).
+  - Multi-platform (linux, mingw32 on windows).
   - VALA language support for client interface.

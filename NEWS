@@ -1,5 +1,5 @@
-0.9.90 - 2007-11-15 (1.0.0-rc1)
-~~~~~~~~~~~~~~~~~~~
+0.9.90 - 2007-12-10 (1.0.0-rc1)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Note: This is source and binary incompatible release.
 
 This release reveals the significance of 'x' in libxr. It does not stand for
