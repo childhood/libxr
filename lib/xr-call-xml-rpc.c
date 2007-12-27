@@ -88,7 +88,12 @@ static void _xr_value_serialize_xmlrpc(xmlNode* node, xr_value* val)
 
 static xr_value* _xr_value_unserialize_xmlrpc(xmlNode* node)
 {
+  gboolean is_string_without_element = TRUE;
   for_each_node(node, tn)
+    /* check if node contains only text and entity reference nodes */
+    if (tn->type != XML_TEXT_NODE && tn->type != XML_ENTITY_REF_NODE)
+      is_string_without_element = FALSE;
+
     if (match_node(tn, "int") || match_node(tn, "i4"))
       return xr_value_int_new(xml_get_cont_int(tn));
     else if (match_node(tn, "string"))
@@ -182,6 +187,15 @@ static xr_value* _xr_value_unserialize_xmlrpc(xmlNode* node)
       return str;
     }
   for_each_node_end()
+
+  if (is_string_without_element)
+  {
+    xmlChar* str = xmlNodeGetContent(node);
+    xr_value* val = xr_value_string_new(str);
+    xmlFree(str);
+    return val;
+  }
+
   return NULL;
 }
 
