@@ -45,7 +45,7 @@ static void _xr_value_serialize_xmlrpc(xmlNode* node, xr_value* val)
     {
       char* str_val = NULL;
       xr_value_to_string(val, &str_val);
-      value = xmlNewChild(node, NULL, BAD_CAST "string", BAD_CAST str_val);
+      xmlAddChild(node, xmlNewText(BAD_CAST str_val));
       g_free(str_val);
       break;
     }
