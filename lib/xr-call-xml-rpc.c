@@ -38,7 +38,7 @@ static void _xr_value_serialize_xmlrpc(xmlNode* node, xr_value* val)
       int int_val = -1;
       xr_value_to_int(val, &int_val);
       snprintf(buf, sizeof(buf), "%d", int_val);
-      value = xmlNewChild(node, NULL, BAD_CAST "int", BAD_CAST buf);
+      xmlNewChild(node, NULL, BAD_CAST "int", BAD_CAST buf);
       break;
     }
     case XRV_STRING:
@@ -53,7 +53,7 @@ static void _xr_value_serialize_xmlrpc(xmlNode* node, xr_value* val)
     {
       int bool_val = -1;
       xr_value_to_bool(val, &bool_val);
-      value = xmlNewChild(node, NULL, BAD_CAST "boolean", BAD_CAST (bool_val ? "1" : "0"));
+      xmlNewChild(node, NULL, BAD_CAST "boolean", BAD_CAST (bool_val ? "1" : "0"));
       break;
     }
     case XRV_DOUBLE:
@@ -61,14 +61,14 @@ static void _xr_value_serialize_xmlrpc(xmlNode* node, xr_value* val)
       double dbl_val = -1;
       xr_value_to_double(val, &dbl_val);
       snprintf(buf, sizeof(buf), "%g", dbl_val);
-      value = xmlNewChild(node, NULL, BAD_CAST "double", NULL);
+      xmlNewChild(node, NULL, BAD_CAST "double", NULL);
       break;
     }
     case XRV_TIME:
     {
       char* str_val = NULL;
       xr_value_to_time(val, &str_val);
-      value = xmlNewChild(node, NULL, BAD_CAST "dateTime.iso8601", BAD_CAST str_val);
+      xmlNewChild(node, NULL, BAD_CAST "dateTime.iso8601", BAD_CAST str_val);
       g_free(str_val);
       break;
     }
@@ -79,7 +79,7 @@ static void _xr_value_serialize_xmlrpc(xmlNode* node, xr_value* val)
       xr_value_to_blob(val, &b);
       data = g_base64_encode(b->buf, b->len);
       xr_blob_unref(b);
-      value = xmlNewChild(node, NULL, BAD_CAST "base64", BAD_CAST data);
+      xmlNewChild(node, NULL, BAD_CAST "base64", BAD_CAST data);
       g_free(data);
       break;
     }
