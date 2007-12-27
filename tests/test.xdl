@@ -96,6 +96,7 @@ servlet Test1
     retval = TAllArrays_new();
     for (i = 0; i < 5; i++)
       ADD(a_string, g_strdup_printf("str%d", i));
+    ADD(a_string, g_strdup("&#10;test<\xc4\x8d\xc5\x99\xc5\xa1"));
     for (i = 1; i < 10; i++)
       ADD(a_time, g_strdup_printf("2006-04-%02d", i));
     for (i = 0; i < 2; i++)
