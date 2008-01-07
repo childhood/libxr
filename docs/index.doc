@@ -1,19 +1,9 @@
-/** @page index Main Page
+/** @page index Libxr
 
-This is documentation for @b libxr.
-
-This is brand new XML-RPC library with support for:
-
-@li SSLv3/TLSv1 using OpenSSL.
-@li IPV6 as soon as OpenSSL 0.9.9 is released.
-@li Persistent connections over HTTP/1.1
-@li XML-RPC interface description language (XDL).
-@li XML-RPC client stubs/servlet skels compiler.
-@li Multiple servlets per server.
-@li Servlet lifetime (init -- call -- call -- fini).
-@li Multiplatform (linux, mingw32 on windows).
+This is a documentation for @b libxr: multi-transport RPC client/server library.
 
 @section toc Table of Contents
+@li @ref intro
 @li @ref howto
 @li @ref xdl
 @li @ref xdlc
@@ -21,6 +11,49 @@ This is brand new XML-RPC library with support for:
 @li @ref xr-call.h "XR Call API"
 @li @ref xr-client.h "XR Client API"
 @li @ref xr-server.h "XR Server API"
+
+*/
+
+/** @page intro Libxr Overview
+
+Libxr is a library that allows for rapid implementation of RPC clients and
+servers in C.
+
+@section features Features
+
+  - Multiple RPC transports. (XML-RPC and JSON-RPC)
+  - RPC interface description language (XDL)
+  - Persistent connections over HTTP/1.1
+  - Server "session" support for non-persistent connections
+  - Multi-platform support (Linux, Windows, ...)
+  - SSLv3/TLSv1 using OpenSSL
+  - IPV6 as soon as OpenSSL 0.9.9 is released
+  - VALA language support for client interfaces
+  - Multiple interfaces per server
+
+@section description Description
+
+Libxr has two parts, library itself and RPC interface description language
+compiler (XDL compiler). Thanks to the XDL compiler, you can create and
+implement complex RPC interfaces in a very short time. Here is an obligatory
+"Hello world!" example XDL file:
+
+@code
+  namespace X;
+  servlet Test {
+    boolean sayHello()
+    <%
+      printf("Hello World!");
+      return TRUE;
+    %>
+  }
+@endcode
+
+Whenever you call XTest.sayHello() RPC method, "Hello World!" will be printed to
+the server's standard output.
+
+For more information see HOWTO tutorial, libxr API documentation or tests/
+directory.
 
 */
 

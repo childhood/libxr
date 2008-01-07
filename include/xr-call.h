@@ -33,6 +33,8 @@
 
 #include "xr-value.h"
 
+/** Transport type.
+ */
 typedef enum {
   XR_CALL_XML_RPC = 0,
 #ifdef XR_JSON_ENABLED
@@ -101,7 +103,7 @@ char* xr_call_get_servlet_name(xr_call* call);
  *
  * @param call Call obejct.
  * @param val Parameter value. Call object takes ownership of this
- *   value and @ref xr_value_free will be called from @ref xr_call_free.
+ *   value and @ref xr_value_unref will be called from @ref xr_call_free.
  */
 void xr_call_add_param(xr_call* call, xr_value* val);
 
@@ -120,7 +122,7 @@ xr_value* xr_call_get_param(xr_call* call, unsigned int pos);
  *
  * @param call Call obejct.
  * @param val Retuirn value node. Call object takes ownership of this
- *   value and @ref xr_value_free will be called from @ref xr_call_free.
+ *   value and @ref xr_value_unref will be called from @ref xr_call_free.
  */
 void xr_call_set_retval(xr_call* call, xr_value* val);
 

@@ -54,6 +54,8 @@ typedef struct _xr_client_conn xr_client_conn;
 
 /** Create new connection object.
  *
+ * @param err Error object.
+ *
  * @return New connection object.
  */
 xr_client_conn* xr_client_new(GError** err);
@@ -115,6 +117,7 @@ xr_http* xr_client_get_http(xr_client_conn* conn);
  *
  * @param conn Connection object.
  * @param uri URI of the cleint (http[s]://host[:port]/Servlet).
+ * @param err Error object.
  *
  * @return Function returns FALSE on failure and TRUE on success.
  */
@@ -130,6 +133,7 @@ void xr_client_close(xr_client_conn* conn);
  *
  * @param conn Connection object.
  * @param call Call object.
+ * @param err Error object.
  *
  * @return Function returns FALSE on failure (including XML-RPC exception) and
  *   TRUE on success. XML-RPC exception have err->domain == 0.

@@ -23,7 +23,9 @@
 #include <glib.h>
 #include <openssl/bio.h>
 
-/** @file xr_utils Header
+/** @file xr-http.h
+ *
+ * HTTP Transport
  *
  * xr_http object exists as long as HTTP connection exists. It is used to server
  * multiple requests/responses.
@@ -39,8 +41,12 @@
  * and xr_http_set_header() functions.
  */
 
+/** Opaque HTTP object.
+ */
 typedef struct _xr_http xr_http;
 
+/** Message type (request/response).
+ */
 typedef enum {
   XR_HTTP_NONE,
   XR_HTTP_REQUEST,
@@ -56,6 +62,8 @@ typedef enum
 
 G_BEGIN_DECLS
 
+/** Initialize HTTP transport. Called internally from xr_init().
+ */
 void xr_http_init();
 
 /** Create new HTTP transport object.

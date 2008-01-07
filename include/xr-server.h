@@ -173,7 +173,8 @@ xr_http* xr_servlet_get_http(xr_servlet* servlet);
 
 /** Use this function as a simple way to quickly start a server.
  *
- * @param cert Combined PEM file with server certificate and private
+ * @param cert Combined PEM file with server certificate and private.
+ * @param threads Number of threads in the pool.
  * @param bind Port and IP address to bind to.
  * @param servlets Servlet definition objects array (NULL termianted).
  * @param err Pointer to the variable to store error to on error.

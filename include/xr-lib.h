@@ -46,11 +46,25 @@ enum
   XR_DEBUG_ALL              = 0xffffffff
 };
 
+/** Global variable used to enable debugging messages.
+ */
 extern int xr_debug_enabled;
 
+/** Conditional debug message.
+ * 
+ * @param mask XR_DEBUG_* constant that enables this message.
+ * @param fmt Message format (printf like).
+ * @param args Variable arguments.
+ */
 #define xr_debug(mask, fmt, args...) \
   do { if (G_UNLIKELY(xr_debug_enabled & mask)) _xr_debug(G_STRFUNC, fmt ": ", ## args); } while(0)
 
+/** Conditional trace message.
+ * 
+ * @param mask XR_DEBUG_* constant that enables this message.
+ * @param fmt Message format (printf like).
+ * @param args Variable arguments.
+ */
 #define xr_trace(mask, fmt, args...) \
   do { if (G_UNLIKELY(xr_debug_enabled & mask)) _xr_debug(G_STRFUNC, fmt, ## args); } while(0)
 
@@ -58,7 +72,8 @@ G_BEGIN_DECLS
 
 /** Log message.
  *
- * @param call Call obejct.
+ * @param loc Location.
+ * @param fmt Message format (printf like).
  *
  * @return Method name or NULL if not set.
  */
