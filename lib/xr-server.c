@@ -454,10 +454,10 @@ static int _ctype_to_transport(const char* ctype)
 {
   if (ctype == NULL)
     return -1;
-  if (!g_ascii_strcasecmp(ctype, "text/xml"))
+  if (!g_ascii_strncasecmp(ctype, "text/xml", 8))
     return XR_CALL_XML_RPC;
 #ifdef XR_JSON_ENABLED
-  if (!g_ascii_strcasecmp(ctype, "text/json"))
+  if (!g_ascii_strncasecmp(ctype, "text/json", 9))
     return XR_CALL_JSON_RPC;
 #endif
   return -1;
