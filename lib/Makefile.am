@@ -32,4 +32,5 @@ libxr_la_SOURCES = \
   xr-client.c \
   xr-server.c \
   xr-http.c \
-  xr-utils.c
+  xr-utils.c \
+  xr-value-utils.c

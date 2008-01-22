@@ -6,4 +6,5 @@ libxrinclude_HEADERS = \
   xr-call.h \
   xr-http.h \
   xr-client.h \
-  xr-server.h
+  xr-server.h \
+  xr-value-utils.h

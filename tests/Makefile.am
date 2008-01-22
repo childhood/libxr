@@ -50,7 +50,8 @@ noinst_PROGRAMS = \
   tclient \
   client \
   session-client \
-  server
+  server \
+  value-utils-test
 
 client_SOURCES = \
   client.c \
@@ -67,6 +68,9 @@ tclient_SOURCES = \
 server_SOURCES = \
   server.c \
   $(BUILT_SOURCES)
+
+value_utlils_test_SOURCES = \
+  value-utils-test.c
 
 $(BUILT_SOURCES): $(srcdir)/test.xdl $(top_builddir)/xdl-compiler/xdl-compiler
 	$(top_builddir)/xdl-compiler/xdl-compiler -i $(srcdir)/test.xdl -o $(top_builddir)/tests/

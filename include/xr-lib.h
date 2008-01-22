@@ -42,7 +42,8 @@ enum
   XR_DEBUG_SERVLET_TRACE    = (1 << 7),  /**< Not implemented. */
   XR_DEBUG_CALL             = (1 << 8),  /**< Dump RPC calls. */
   XR_DEBUG_CALL_TRACE       = (1 << 9),  /**< Trace xr-call.c code. */
-  XR_DEBUG_LIB              = (1 << 10), /**< Not implemented. */
+  XR_DEBUG_VALUE            = (1 << 10),  /**< Debug xr_value parser/builder code. */
+  XR_DEBUG_LIB              = (1 << 11), /**< Not implemented. */
   XR_DEBUG_ALL              = 0xffffffff
 };
 
