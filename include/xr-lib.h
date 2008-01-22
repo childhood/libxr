@@ -58,7 +58,7 @@ extern int xr_debug_enabled;
  * @param args Variable arguments.
  */
 #define xr_debug(mask, fmt, args...) \
-  do { if (G_UNLIKELY(xr_debug_enabled & mask)) _xr_debug(G_STRFUNC, fmt ": ", ## args); } while(0)
+  do { if (G_UNLIKELY(xr_debug_enabled & mask)) _xr_debug(G_STRLOC ": ", fmt, ## args); } while(0)
 
 /** Conditional trace message.
  * 
