@@ -63,14 +63,13 @@ gboolean connect_call_disconnect(int id)
   xr_client_set_transport(conn, XR_CALL_JSON_RPC);
 #endif
 
-  GSList* arr = TTest1_getBigArray(conn, &err);
+  TTest2_auth(conn, "a", "b", &err);
   _check_err(err);
   err = NULL;
-  TTest1_putBigArray(conn, arr, &err);
+  TTest2_getUsername(conn, &err);
   _check_err(err);
   err = NULL;
   
-  Array_string_free(arr);
   xr_client_free(conn);
   
   return FALSE;
