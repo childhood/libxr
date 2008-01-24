@@ -96,19 +96,19 @@ const char* xr_call_get_method(xr_call* call)
   return call->method;
 }
 
-char* xr_call_get_servlet_name(xr_call* call)
+char* xr_call_get_servlet_name(xr_call* call, const char* fallback)
 {
+  char* servlet_name;
+
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
 
   g_return_val_if_fail(call != NULL, NULL);
 
-  if (call->method == NULL)
-    return NULL;
+  if (call->method == NULL || strchr(call->method, '.') == NULL)
+    return g_strdup(fallback);
 
-  char* tmp;
-  char* servlet_name = g_strdup(call->method);
-  if ((tmp = strchr(servlet_name, '.')) && tmp != servlet_name)
-    *tmp = '\0';
+  servlet_name = g_strdup(call->method);
+  *strchr(servlet_name, '.') = '\0';
 
   return servlet_name;
 }

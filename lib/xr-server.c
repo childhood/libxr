@@ -276,10 +276,10 @@ again:
     if (servlet == NULL)
     {
       xr_servlet_def* def;
-      servlet_name = xr_call_get_servlet_name(call);
+      servlet_name = xr_call_get_servlet_name(call, xr_http_get_resource(conn->http) + 1);
       if (servlet_name == NULL)
       {
-        xr_call_set_error(call, -1, "Unknown servlet.");
+        xr_call_set_error(call, -1, "Undefined servlet name.");
         return FALSE;
       }
 
@@ -328,10 +328,10 @@ again:
   /* persistent mode */
 
   /* get xr_servlet object for current connection and given servlet name */
-  servlet_name = xr_call_get_servlet_name(call);
+  servlet_name = xr_call_get_servlet_name(call, xr_http_get_resource(conn->http) + 1);
   if (servlet_name == NULL)
   {
-    xr_call_set_error(call, -1, "Unknown servlet.");
+    xr_call_set_error(call, -1, "Undefined servlet name.");
     return FALSE;
   }
 
