@@ -466,6 +466,7 @@ static int _ctype_to_transport(const char* ctype)
 static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn)
 {
   const char* method;
+  int version;
 
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, conn=%p)", server, conn);
 
@@ -484,8 +485,10 @@ static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn
   if (method == NULL)
     return FALSE;
 
+  version = xr_http_get_version(conn->http);
+
   if (!strcmp(method, "GET"))
-    return _xr_server_serve_download(server, conn);
+    return _xr_server_serve_download(server, conn) && (version == 1);
   else if (!strcmp(method, "POST"))
   {
     int transport = _ctype_to_transport(xr_http_get_header(conn->http, "Content-Type"));
@@ -527,10 +530,10 @@ static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn
       xr_call_free_buffer(call, buffer);
       xr_call_free(call);
 
-      return rs;
+      return rs && (version == 1);
     }
     else
-      return _xr_server_serve_upload(server, conn);
+      return _xr_server_serve_upload(server, conn) && (version == 1);
   }
   else
     return FALSE;

@@ -116,6 +116,14 @@ const char* xr_http_get_method(xr_http* http);
  */
 const char* xr_http_get_resource(xr_http* http);
 
+/** Get HTTP request version.
+ * 
+ * @param http HTTP transport object.
+ * 
+ * @return 0 if '1.0', 1 if '1.1'.
+ */
+int xr_http_get_version(xr_http* http);
+
 /** Get message type.
  * 
  * @param http HTTP transport object.

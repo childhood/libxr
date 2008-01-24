@@ -50,7 +50,7 @@ struct _xr_http
   int msg_type;
   char* req_method;
   char* req_resource;
-  char* req_host;
+  char* req_version;
   int res_code;
   char* res_reason;
   GHashTable* headers;
@@ -85,6 +85,8 @@ static gboolean _xr_http_header_parse_first_line(xr_http* http, const char* line
     http->req_method = g_strndup(line+m[1].rm_so, m[1].rm_eo-m[1].rm_so);
     g_free(http->req_resource);
     http->req_resource = g_strndup(line+m[2].rm_so, m[2].rm_eo-m[2].rm_so);
+    g_free(http->req_version);
+    http->req_version = g_strndup(line+m[3].rm_so, m[3].rm_eo-m[3].rm_so);
     http->msg_type = XR_HTTP_REQUEST;
     return TRUE;
   }
@@ -137,8 +139,10 @@ static gboolean _xr_http_header_parse_first_line(xr_http* http, const char* line
   {
     g_free(http->req_method);
     g_free(http->req_resource);
+    g_free(http->req_version);
     http->req_method = g_match_info_fetch(match_info, 1);
     http->req_resource = g_match_info_fetch(match_info, 2);
+    http->req_version = g_match_info_fetch(match_info, 3);
     http->msg_type = XR_HTTP_REQUEST;
   }
   else
@@ -226,7 +230,6 @@ void xr_http_free(xr_http* http)
   g_hash_table_destroy(http->headers);
   g_free(http->req_method);
   g_free(http->req_resource);
-  g_free(http->req_host);
   g_free(http->res_reason);
   memset(http, 0, sizeof(*http));
   g_free(http);
@@ -348,6 +351,19 @@ const char* xr_http_get_method(xr_http* http)
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
 
   return http->req_method;
+}
+
+int xr_http_get_version(xr_http* http)
+{
+  g_return_val_if_fail(http != NULL, NULL);
+
+  xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
+
+  if (http->req_version == NULL)
+    return 0;
+  if (!strcmp(http->req_version, "1.1"))
+    return 1;
+  return 0;
 }
 
 xr_http_message_type xr_http_get_message_type(xr_http* http)
@@ -508,7 +524,8 @@ void xr_http_setup_response(xr_http* http, int code)
   http->msg_type = XR_HTTP_RESPONSE;
 
   g_hash_table_remove_all(http->headers);
-  xr_http_set_header(http, "Connection", "keep-alive");
+  if (xr_http_get_version(http) == 1)
+    xr_http_set_header(http, "Connection", "keep-alive");
   xr_http_set_header(http, "Content-Type", "text/xml");
 
   http->res_code = code;
@@ -545,7 +562,7 @@ gboolean xr_http_write_header(xr_http* http, GError** err)
   if (http->msg_type == XR_HTTP_REQUEST)
     g_string_append_printf(header, "%s %s HTTP/1.1\r\n", http->req_method, http->req_resource);
   else if (http->msg_type == XR_HTTP_RESPONSE)
-    g_string_append_printf(header, "HTTP/1.1 %d %s\r\n", http->res_code, http->res_reason);
+    g_string_append_printf(header, "HTTP/1.%d %d %s\r\n", xr_http_get_version(http), http->res_code, http->res_reason);
   else
   {
     g_string_free(header, TRUE);
