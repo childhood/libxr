@@ -192,10 +192,12 @@ static xr_value* xr_value_build_va(const char* fmt, va_list args)
 {
   const char* ch = NULL;
   xr_value* value = NULL;
+  va_list args_copy;
 
   g_return_val_if_fail(fmt != NULL && fmt[0] != '\0', NULL);
 
-  value = xr_value_fmt_build_value(&fmt, &args, &ch);
+  va_copy(args_copy, args);
+  value = xr_value_fmt_build_value(&fmt, &args_copy, &ch);
   if (!ch || *ch != '\0')
   {
     if (ch)
@@ -439,12 +441,14 @@ static gboolean xr_value_fmt_parse_value(xr_value* value, const char** const fmt
 static gboolean xr_value_parse_va(xr_value* value, const char* fmt, va_list args)
 {
   const char *ch = NULL;
+  va_list args_copy;
   gboolean rc;
 
   g_return_val_if_fail(value != NULL, FALSE);
   g_return_val_if_fail(fmt != NULL && fmt[0] != '\0', FALSE);
 
-  rc = xr_value_fmt_parse_value(value, &fmt, &args, &ch);
+  va_copy(args_copy, args);
+  rc = xr_value_fmt_parse_value(value, &fmt, &args_copy, &ch);
   if (!ch || *ch != '\0' || rc == FALSE)
   {
     if (ch)
