@@ -1,3 +1,11 @@
+0.9.92 - 2008-01-24 (1.0.0-rc3)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Format string based xr_value builder and parser (thanks to David Lee).
+  See tests/value-utils-test.c for exmaples.
+- Fix transport detection if content-type contains charset.
+- Added python xmlrpclib client test and bug fixes to make it work.
+- Re-add support for HTTP resource based servlet identification.
+
 0.9.91 - 2008-01-07 (1.0.0-rc2)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Again, this release is backward incompatible with previous libxr releases,
