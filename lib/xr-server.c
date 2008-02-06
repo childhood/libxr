@@ -255,8 +255,8 @@ static gboolean _xr_server_servlet_method_call(xr_server* server, xr_server_conn
   g_return_val_if_fail(call != NULL, FALSE);
 
   /* session mode */
-  const char* session_id = xr_http_get_header(conn->http, "X-Libxr-Session-ID");
-  if (session_id)
+  const char* session_id = xr_http_get_header(conn->http, "X-SESSION-ID");
+  if (session_id && xr_http_get_header(conn->http, "X-SESSION-USE"))
   {
     /* lookup servlet in session and try to lock it for call, if call is in
        progress try again later (1ms) */

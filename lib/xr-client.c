@@ -35,6 +35,7 @@ struct _xr_client_conn
 
   char* resource;
   char* host;
+  char* session_id;
   int secure;
 
   int is_open;
@@ -212,7 +213,11 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
   }
 
   conn->http = xr_http_new(conn->bio);
+  g_free(conn->session_id);
+  conn->session_id = g_strdup_printf("%08x%08x%08x%08x", g_random_int(), g_random_int(), g_random_int(), g_random_int());
   conn->is_open = 1;
+
+  xr_client_set_http_header(conn, "X-SESSION-ID", conn->session_id);
 
   return TRUE;
 }
@@ -372,6 +377,7 @@ void xr_client_free(xr_client_conn* conn)
   xr_client_close(conn);
   g_free(conn->host);
   g_free(conn->resource);
+  g_free(conn->session_id);
   SSL_CTX_free(conn->ctx);
   g_hash_table_destroy(conn->headers);
   g_free(conn);
