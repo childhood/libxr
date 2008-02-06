@@ -355,7 +355,7 @@ const char* xr_http_get_method(xr_http* http)
 
 int xr_http_get_version(xr_http* http)
 {
-  g_return_val_if_fail(http != NULL, NULL);
+  g_return_val_if_fail(http != NULL, 0);
 
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
 
