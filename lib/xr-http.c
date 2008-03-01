@@ -392,9 +392,12 @@ gssize xr_http_read(xr_http* http, char* buffer, gsize length, GError** err)
   g_return_val_if_fail(err == NULL || *err == NULL, -1);
   g_return_val_if_fail(buffer != NULL, -1);
   g_return_val_if_fail(length > 0, -1);
-  g_return_val_if_fail(http->state == STATE_HEADER_READ || http->state == STATE_READING_BODY, -1);
+  g_return_val_if_fail(http->state == STATE_HEADER_READ || http->state == STATE_READING_BODY || http->state == STATE_INIT, -1);
 
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
+
+  if (http->state == STATE_INIT)
+    return 0;
 
   if (http->state == STATE_HEADER_READ)
   {
