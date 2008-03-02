@@ -570,6 +570,7 @@ gboolean xr_http_write_header(xr_http* http, GError** err)
     g_string_append_printf(header, "HTTP/1.%d %d %s\r\n", xr_http_get_version(http), http->res_code, http->res_reason);
   else
   {
+    g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "Undefined message type: %d.", http->msg_type);
     g_string_free(header, TRUE);
     http->state = STATE_ERROR;
     return FALSE;
