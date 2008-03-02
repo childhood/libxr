@@ -387,6 +387,7 @@ gssize xr_http_get_message_length(xr_http* http)
 gssize xr_http_read(xr_http* http, char* buffer, gsize length, GError** err)
 {
   int bytes_read;
+  int bytes_remaining;
 
   g_return_val_if_fail(http != NULL, -1);
   g_return_val_if_fail(err == NULL || *err == NULL, -1);
@@ -405,7 +406,8 @@ gssize xr_http_read(xr_http* http, char* buffer, gsize length, GError** err)
     http->bytes_read = 0;
   }
 
-  bytes_read = BIO_xread(http->bio, buffer, length);
+  bytes_remaining = http->content_length - http->bytes_read;
+  bytes_read = BIO_xread(http->bio, buffer, MIN(length, bytes_remaining));
   if (bytes_read < 0)
   {
     g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP read failed: %s.", xr_get_bio_error_string());
