@@ -108,6 +108,14 @@ const char* xr_http_get_header(xr_http* http, const char* name);
  */
 const char* xr_http_get_method(xr_http* http);
 
+/** Get HTTP response code.
+ * 
+ * @param http HTTP transport object.
+ * 
+ * @return 200 on success.
+ */
+int xr_http_get_code(xr_http* http);
+
 /** Get resource (only if xr_http_get_message_type() == XR_HTTP_REQUEST).
  * 
  * @param http HTTP transport object.

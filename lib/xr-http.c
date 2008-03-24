@@ -366,6 +366,15 @@ int xr_http_get_version(xr_http* http)
   return 0;
 }
 
+int xr_http_get_code(xr_http* http)
+{
+  g_return_val_if_fail(http != NULL, -1);
+
+  xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
+
+  return http->res_code;
+}
+
 xr_http_message_type xr_http_get_message_type(xr_http* http)
 {
   g_return_val_if_fail(http != NULL, XR_HTTP_NONE);
