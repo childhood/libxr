@@ -206,22 +206,28 @@ servlet Test1
   __download__
   <%
     const char* path = xr_http_get_resource(_http);
-    //const char* username = xr_http_get_auth_username(_http);
-    //const char* password = xr_http_get_auth_password(_http);
+    char* username;
+    char* password;
 
-    if (!strcmp(path, "/test.file"))
+    if (!xr_http_get_basic_auth(_http, &username, &password))
     {
-      //if (username && password && !strcmp(username, "bob") && !strcmp(password, "qwe"))
-      if (1)
-      {
-        xr_http_setup_response(_http, 200);
-        xr_http_set_header(_http, "Content-Type", "text/plain");
-        xr_http_write_all(_http, "crap", 4, NULL);
-        return TRUE;
-      }
+      xr_http_setup_response(_http, 401);
+      xr_http_set_header(_http, "Content-Type", "text/plain");
+      xr_http_set_header(_http, "WWW-Authenticate", "Basic realm=\"Libxr Testsuite\"");
+      xr_http_write_all(_http, "Authentication Required", -1, NULL);
+      return TRUE;
     }
-    else if (!strcmp(path, "/test.file.2"))
+
+    g_print("Authorized: '%s' '%s'\n", username, password);
+    g_free(username);
+    g_free(password);
+
+    if (1)
     {
+      xr_http_setup_response(_http, 200);
+      xr_http_set_header(_http, "Content-Type", "text/plain");
+      xr_http_write_all(_http, "Crap\n", -1, NULL);
+      return TRUE;
     }
     else
     {
@@ -239,6 +245,35 @@ servlet Test1
 
   __upload__
   <%
+    char buf[4096];
+    gssize read_bytes;
+    const char* path = xr_http_get_resource(_http);
+    char* username;
+    char* password;
+
+    if (!xr_http_get_basic_auth(_http, &username, &password))
+    {
+      xr_http_setup_response(_http, 401);
+      xr_http_set_header(_http, "Content-Type", "text/plain");
+      xr_http_set_header(_http, "WWW-Authenticate", "Basic realm=\"Libxr Testsuite\"");
+      xr_http_write_all(_http, "Authentication Required", -1, NULL);
+      return TRUE;
+    }
+
+    g_print("Authorized: '%s' '%s'\n", username, password);
+    g_free(username);
+    g_free(password);
+
+    //GString* data = xr_http_read_all(_http, NULL);
+    while ((read_bytes = xr_http_read(_http, buf, 4096, NULL)) > 0)
+    {
+      //g_print("\n\nup: read = %d\n\n\n", read_bytes);
+    }
+
+    xr_http_setup_response(_http, 200);
+    xr_http_set_header(_http, "Content-Type", "text/plain");
+    xr_http_write_all(_http, "Crap\n", -1, NULL);
+    return TRUE;
   %>
 }
 
