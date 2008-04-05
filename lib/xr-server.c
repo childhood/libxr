@@ -394,12 +394,9 @@ static gboolean _xr_server_serve_download(xr_server* server, xr_server_conn* con
     }
   }
 
-  /* emit 404 */
-  const char* page = "Page not found!";
-  xr_http_setup_response(conn->http, 404);
-  xr_http_set_message_length(conn->http, strlen(page));
+  xr_http_setup_response(conn->http, 501);
   xr_http_set_header(conn->http, "Content-Type", "text/plain");
-  if (!xr_http_write_all(conn->http, page, strlen(page), NULL))
+  if (!xr_http_write_all(conn->http, "Download hook is not implemented.", -1, NULL))
     return FALSE;
 
   return TRUE;
@@ -439,12 +436,11 @@ static gboolean _xr_server_serve_upload(xr_server* server, xr_server_conn* conn)
     }
   }
 
-  /* emit 404 */
-  const char* page = "Upload failure!";
-  xr_http_setup_response(conn->http, 500);
-  xr_http_set_message_length(conn->http, strlen(page));
+  char buf[4096];
+  while (xr_http_read(conn->http, buf, sizeof(buf), NULL) > 0);
+  xr_http_setup_response(conn->http, 501);
   xr_http_set_header(conn->http, "Content-Type", "text/plain");
-  if (!xr_http_write_all(conn->http, page, strlen(page), NULL))
+  if (!xr_http_write_all(conn->http, "Upload hook is not implemented.", -1, NULL))
     return FALSE;
 
   return TRUE;
