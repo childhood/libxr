@@ -549,10 +549,48 @@ void xr_http_setup_response(xr_http* http, int code)
 
   switch (code)
   {
-    //XXX: add 401
+    // HTTP 1.1 Status Codes
+    case 100: http->res_reason = g_strdup("Continue"); break;
+    case 101: http->res_reason = g_strdup("Switching Protocols"); break;
     case 200: http->res_reason = g_strdup("OK"); break;
+    case 201: http->res_reason = g_strdup("Created"); break;
+    case 202: http->res_reason = g_strdup("Accepted"); break;
+    case 203: http->res_reason = g_strdup("Non-Authoritative Information"); break;
+    case 204: http->res_reason = g_strdup("No Content"); break;
+    case 205: http->res_reason = g_strdup("Reset Content"); break;
+    case 206: http->res_reason = g_strdup("Partial Content"); break;
+    case 300: http->res_reason = g_strdup("Multiple Choices"); break;
+    case 301: http->res_reason = g_strdup("Moved Permanently"); break;
+    case 302: http->res_reason = g_strdup("Found"); break;
+    case 303: http->res_reason = g_strdup("See Other"); break;
+    case 304: http->res_reason = g_strdup("Not Modified"); break;
+    case 305: http->res_reason = g_strdup("Use Proxy"); break;
+    case 306: http->res_reason = g_strdup("(Unused)"); break;
+    case 307: http->res_reason = g_strdup("Temporary Redirect"); break;
+    case 400: http->res_reason = g_strdup("Bad Request"); break;
+    case 401: http->res_reason = g_strdup("Unauthorized"); break;
+    case 402: http->res_reason = g_strdup("Payment Required"); break;
+    case 403: http->res_reason = g_strdup("Forbidden"); break;
+    case 404: http->res_reason = g_strdup("Not Found"); break;
+    case 405: http->res_reason = g_strdup("Method Not Allowed"); break;
+    case 406: http->res_reason = g_strdup("Not Acceptable"); break;
+    case 407: http->res_reason = g_strdup("Proxy Authentication Required"); break;
+    case 408: http->res_reason = g_strdup("Request Timeout"); break;
+    case 409: http->res_reason = g_strdup("Conflict"); break;
+    case 410: http->res_reason = g_strdup("Gone"); break;
+    case 411: http->res_reason = g_strdup("Length Required"); break;
+    case 412: http->res_reason = g_strdup("Precondition Failed"); break;
+    case 413: http->res_reason = g_strdup("Request Entity Too Large"); break;
+    case 414: http->res_reason = g_strdup("Request-URI Too Long"); break;
+    case 415: http->res_reason = g_strdup("Unsupported Media Type"); break;
+    case 416: http->res_reason = g_strdup("Requested Range Not Satisfiable"); break;
+    case 417: http->res_reason = g_strdup("Expectation Failed"); break;
+    case 500: http->res_reason = g_strdup("Internal Server Error"); break;
     case 501: http->res_reason = g_strdup("Not Implemented"); break;
-    case 500: http->res_reason = g_strdup("Internal Error"); break;
+    case 502: http->res_reason = g_strdup("Bad Gateway"); break;
+    case 503: http->res_reason = g_strdup("Service Unavailable"); break;
+    case 504: http->res_reason = g_strdup("Gateway Timeout"); break;
+    case 505: http->res_reason = g_strdup("HTTP Version Not Supported"); break;
     default:  http->res_reason = g_strdup("Unknown Status"); break;
   }
 }
