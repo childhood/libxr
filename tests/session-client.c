@@ -56,7 +56,8 @@ gboolean connect_call_disconnect(int id)
   }
 
   char* session_id = g_strdup_printf("%d", id);
-  xr_client_set_http_header(conn, "X-Libxr-Session-ID", session_id);
+  xr_client_set_http_header(conn, "X-SESSION-ID", session_id);
+  xr_client_set_http_header(conn, "X-SESSION-USE", "1");
   g_free(session_id);
 
 #ifdef XR_JSON_ENABLED
