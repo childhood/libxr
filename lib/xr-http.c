@@ -425,7 +425,7 @@ gssize xr_http_read(xr_http* http, char* buffer, gsize length, GError** err)
   }
 
   if (xr_debug_enabled & XR_DEBUG_HTTP)
-    g_print("%*s", bytes_read, buffer);
+    g_print("%.*s", bytes_read, buffer);
 
   http->bytes_read += bytes_read;
 
@@ -628,7 +628,7 @@ gboolean xr_http_write(xr_http* http, const char* buffer, gsize length, GError**
   }
 
   if (xr_debug_enabled & XR_DEBUG_HTTP)
-    g_print("%*s", length, buffer);
+    g_print("%.*s", length, buffer);
 
   return TRUE;
 }
