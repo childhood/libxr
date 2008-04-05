@@ -583,7 +583,6 @@ void xr_http_setup_request(xr_http* http, const char* method, const char* resour
 void xr_http_setup_response(xr_http* http, int code)
 {
   g_return_if_fail(http != NULL);
-  g_return_if_fail(code >= 200 && code <= 500);
   g_return_if_fail(http->state == STATE_INIT);
 
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
