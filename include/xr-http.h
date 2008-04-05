@@ -255,12 +255,12 @@ gboolean xr_http_write_complete(xr_http* http, GError** err);
  * 
  * @param http HTTP transport object. 
  * @param buffer Source buffer.
- * @param length Data length.
+ * @param length Data length. (It may be -1 if buffer contains zero-terminated string.)
  * @param err Error object.
  * 
  * @return TRUE on success, FALSE on error.
  */
-gboolean xr_http_write_all(xr_http* http, const char* buffer, gsize length, GError** err);
+gboolean xr_http_write_all(xr_http* http, const char* buffer, gssize length, GError** err);
 
 /** Check if object is ready to receive or send message.
  * 

@@ -656,15 +656,17 @@ gboolean xr_http_write_complete(xr_http* http, GError** err)
   return TRUE;
 }
 
-gboolean xr_http_write_all(xr_http* http, const char* buffer, gsize length, GError** err)
+gboolean xr_http_write_all(xr_http* http, const char* buffer, gssize length, GError** err)
 {
   g_return_val_if_fail(http != NULL, FALSE);
   g_return_val_if_fail(buffer != NULL, FALSE);
-  g_return_val_if_fail(length > 0, FALSE);
   g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
   g_return_val_if_fail(http->state == STATE_INIT, FALSE);
 
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
+
+  if (length < 0)
+    length = strlen(buffer);
 
   xr_http_set_message_length(http, length);
 
