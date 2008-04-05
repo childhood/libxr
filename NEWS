@@ -1,3 +1,23 @@
+0.9.93 - 2008-04-05 (1.0.0-rc4)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Session handling was changed:
+  - "X-Libxr-Session-ID" HTTP header was renamed to "X-SESSION-ID". 
+  - Introduced new "X-SESSION-USE" header, that can be used to enable
+    session support.
+- Fixed some compiler warnings.
+- HTTP API was improved:
+  - xr_http_read() does not read beyond the end of the message, and returns
+    0 when the message was read sucessfully.
+  - Added xr_http_get_code()
+  - Fixed bugs in XR_DEBUG_HTTP debug mode.
+  - xr_http_write_all() automatically calculate buffer length if length
+    parameter is negative.
+  - xr_http_setup_response() now supports all HTTP 1.0 status codes.
+  - Added xr_http_set_basic_auth() and xr_http_get_basic_auth().
+  - Implemented sample upload/download hooks.
+  - If upload/download hooks are not defined, return 501 "Not Implemented"
+    HTTP status code.
+
 0.9.92 - 2008-01-24 (1.0.0-rc3)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - Format string based xr_value builder and parser (thanks to David Lee).
