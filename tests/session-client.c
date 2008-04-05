@@ -87,7 +87,7 @@ int main(int ac, char* av[])
     g_thread_init(NULL);
 
   for (i = 0; i < 100; i++)
-    t[i] = g_thread_create(connect_call_disconnect, i % 1, TRUE, NULL);
+    t[i] = g_thread_create((GThreadFunc)connect_call_disconnect, i % 1, TRUE, NULL);
 
   for (i = 0; i < 100; i++)
     g_thread_join(t[i]);
