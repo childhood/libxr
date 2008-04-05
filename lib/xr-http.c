@@ -335,6 +335,59 @@ const char* xr_http_get_header(xr_http* http, const char* name)
   return value;
 }
 
+void xr_http_set_basic_auth(xr_http* http, const char* username, const char* password)
+{
+  g_return_if_fail(http != NULL);
+  g_return_if_fail(username != NULL);
+  g_return_if_fail(password != NULL);
+
+  char* auth_str = g_strdup_printf("%s:%s", username, password);
+  char* enc_auth_str = g_base64_encode(auth_str, strlen(auth_str));
+  char* auth_value = g_strdup_printf("Basic %s", enc_auth_str);
+  xr_http_set_header(http, "Authorization", auth_value);
+  g_free(auth_str);
+  g_free(enc_auth_str);
+  g_free(auth_value);
+}
+
+gboolean xr_http_get_basic_auth(xr_http* http, char** username, char** password)
+{
+  gsize auth_str_len, i;
+
+  g_return_val_if_fail(http != NULL, FALSE);
+  g_return_val_if_fail(username != NULL, FALSE);
+  g_return_val_if_fail(password != NULL, FALSE);
+
+  *username = NULL;
+  *password = NULL;
+
+  const char* auth_header = xr_http_get_header(http, "Authorization");
+  if (auth_header == NULL || !g_str_has_prefix(auth_header, "Basic "))
+    return FALSE;
+
+  char* enc_auth_str = g_strstrip(g_strdup(auth_header + 6));
+  guchar* auth_str = g_base64_decode(enc_auth_str, &auth_str_len);
+  g_free(enc_auth_str);
+
+  if (auth_str == NULL || auth_str_len < 1)
+    return FALSE;
+
+  for (i = 0; i < auth_str_len; i++)
+    if (auth_str[i] == ':')
+      break;
+
+  if (i == auth_str_len)
+  {
+    g_free(auth_str);
+    return FALSE;
+  }
+
+  *username = g_strndup(auth_str, i);
+  *password = g_strndup(auth_str + i + 1, auth_str_len - i - 1);
+
+  return TRUE;
+}
+
 const char* xr_http_get_resource(xr_http* http)
 {
   g_return_val_if_fail(http != NULL, NULL);

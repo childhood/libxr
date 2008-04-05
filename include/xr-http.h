@@ -100,6 +100,26 @@ gboolean xr_http_read_header(xr_http* http, GError** err);
  */
 const char* xr_http_get_header(xr_http* http, const char* name);
 
+/** Set Authorization: Basic header.
+ * 
+ * @param http HTTP transport object.
+ * @param username Username.
+ * @param password Password.
+ */
+void xr_http_set_basic_auth(xr_http* http, const char* username, const char* password);
+
+/** Decode Authorization header.
+ * 
+ * @param http HTTP transport object.
+ * @param username Username will be stored there.
+ * @param password Password will be stored there.
+ * 
+ * @return TRUE if Authorization header was set and valid and username/password
+ * was decoded, FALSE otherwise. Caller must free username and password if TRUE
+ * was returned.
+ */
+gboolean xr_http_get_basic_auth(xr_http* http, char** username, char** password);
+
 /** Get HTTP method.
  * 
  * @param http HTTP transport object.
