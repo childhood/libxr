@@ -128,11 +128,11 @@ static gboolean _xr_http_header_parse_first_line(xr_http* http, const char* line
   {
     char* code;
 
-    code = g_match_info_fetch(match_info, 1);
+    code = g_match_info_fetch(match_info, 2);
     http->res_code = atoi(code);
     g_free(code);
     g_free(http->res_reason);
-    http->res_reason = g_match_info_fetch(match_info, 2);
+    http->res_reason = g_match_info_fetch(match_info, 3);
     http->msg_type = XR_HTTP_RESPONSE;
   }
   else if (g_regex_match(regex_req, line, 0, &match_info))
