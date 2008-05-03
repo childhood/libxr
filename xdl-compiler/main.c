@@ -1118,16 +1118,16 @@ int main(int ac, char* av[])
   EL(1, "[CCode (cheader_filename = \"xr-call.h\", free_function = \"xr_call_free\", cname = \"xr_call\", cprefix = \"xr_call_\")]");
   EL(1, "public class Call");
   EL(1, "{");
-  EL(2, "public Call(string! method);");
-  EL(2, "public weak string! get_method();");
-  EL(2, "public weak string! get_method_full();");
+  EL(2, "public Call(string method);");
+  EL(2, "public weak string get_method();");
+  EL(2, "public weak string get_method_full();");
   EL(2, "public void add_param(Value# val);");
-  EL(2, "public weak Value! get_param(uint pos);");
+  EL(2, "public weak Value get_param(uint pos);");
   EL(2, "public void set_retval(Value# val);");
-  EL(2, "public weak Value! get_retval();");
+  EL(2, "public weak Value get_retval();");
   EL(2, "public void set_error(int code, string msg);");
   EL(2, "public int get_error_code();");
-  EL(2, "public weak string! get_error_message();");
+  EL(2, "public weak string get_error_message();");
   EL(2, "public string dump_string(int indent);");
   EL(2, "public void dump(int indent);");
   EL(1, "}");
@@ -1177,11 +1177,11 @@ int main(int ac, char* av[])
     EL(2, "[CCode (cname = \"xr_client_close\")]");
     EL(2, "public void close();");
     EL(2, "[CCode (cname = \"xr_client_set_http_header\")]");
-    EL(2, "public void set_http_header(string! name, string value);");
+    EL(2, "public void set_http_header(string name, string? value);");
     EL(2, "[CCode (cname = \"xr_client_reset_http_headers\")]");
     EL(2, "public void reset_http_headers();");
     EL(2, "[CCode (cname = \"xr_client_basic_auth\")]");
-    EL(2, "public void basic_auth(string! username, string! password);");
+    EL(2, "public void basic_auth(string username, string password);");
     for (j=s->methods; j; j=j->next)
     {
       xdl_method* m = j->data;
