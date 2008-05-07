@@ -555,7 +555,7 @@ void xr_http_set_message_length(xr_http* http, gsize length)
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
 
   http->content_length = length;
-  g_hash_table_replace(http->headers, g_strdup("Content-Length"), g_strdup_printf("%u", length));
+  g_hash_table_replace(http->headers, g_strdup("Content-Length"), g_strdup_printf("%" G_GSIZE_FORMAT, length));
 }
 
 void xr_http_setup_request(xr_http* http, const char* method, const char* resource, const char* host)
@@ -718,7 +718,7 @@ gboolean xr_http_write(xr_http* http, const char* buffer, gsize length, GError**
   }
 
   if (xr_debug_enabled & XR_DEBUG_HTTP)
-    g_print("%.*s", length, buffer);
+    g_print("%.*s", (int)length, buffer);
 
   return TRUE;
 }

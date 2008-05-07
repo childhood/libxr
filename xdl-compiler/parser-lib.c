@@ -36,7 +36,7 @@ stream* stream_new_from_file(const char* path)
   if (path == NULL)
     return NULL;
   stream* s = g_new0(stream, 1);
-  if (g_file_get_contents(path, &s->buffer, &s->length, NULL))
+  if (g_file_get_contents(path, &s->buffer, (gsize*)&s->length, NULL))
   {
     s->path = g_strdup(path);
     return s;
