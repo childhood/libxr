@@ -52,7 +52,7 @@ xr_client_conn* xr_client_new(GError** err)
   xr_init();
 
   xr_client_conn* conn = g_new0(xr_client_conn, 1);
-  conn->ctx = SSL_CTX_new(SSLv3_client_method());
+  conn->ctx = SSL_CTX_new(TLSv1_client_method());
   //XXX: setup certificates?
   if (conn->ctx == NULL)
   {
