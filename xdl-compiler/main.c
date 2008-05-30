@@ -1112,9 +1112,10 @@ int main(int ac, char* av[])
   EL(2, "public weak string get_member_name();");
   EL(2, "public weak Value get_member_value();");
   EL(2, "public bool is_error_retval(ref int code, ref string msg);");
-  EL(2, "public void dump(GLib.String str, int indent);");
+  EL(2, "public void dump(GLib.StringBuilder str, int indent);");
   EL(1, "}");
   NL;
+  EL(1, "[Compact]");
   EL(1, "[CCode (cheader_filename = \"xr-call.h\", free_function = \"xr_call_free\", cname = \"xr_call\", cprefix = \"xr_call_\")]");
   EL(1, "public class Call");
   EL(1, "{");
@@ -1151,6 +1152,7 @@ int main(int ac, char* av[])
     if (t->type == TD_STRUCT)
     {
       NL;
+      EL(1, "[Compact]");
       EL(1, "[CCode (free_function = \"%s\", copy_function = \"%s\")]", t->free_func, t->copy_func);
       EL(1, "public class %s", t->name);
       EL(1, "{");
@@ -1167,6 +1169,7 @@ int main(int ac, char* av[])
   {
     xdl_servlet* s = i->data;
     NL;
+    EL(1, "[Compact]");
     EL(1, "[CCode (cheader_filename = \"%s%s.xrc.h\", free_function = \"xr_client_free\", cname = \"xr_client_conn\", cprefix = \"%s%s_\")]", xdl->name, s->name, xdl->name, s->name);
     EL(1, "public class %s", s->name);
     EL(1, "{");
