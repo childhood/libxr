@@ -58,7 +58,7 @@ servlet Server
   // if you want to inhibit actual RPC call.
   __pre_call__
   <%
-    char* method = xr_call_get_method(_call);
+    const char* method = xr_call_get_method(_call);
     if (strcmp(method, "auth"))
     {
       if (!_priv->auth_ok)

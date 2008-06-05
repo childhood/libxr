@@ -15,7 +15,10 @@ int main(int ac, char* av[])
 {
   GError* err = NULL;
   char* uri = ac == 2 ? av[1] : "https://localhost:1234/ZMServer";
-//  xr_debug_enabled = XR_DEBUG_ALL;
+
+  xr_debug_enabled = XR_DEBUG_ALL;
+
+  g_thread_init(NULL);
 
   // create object for performing client connections
   xr_client_conn* conn = xr_client_new(&err);
