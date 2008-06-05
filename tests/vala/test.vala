@@ -51,12 +51,10 @@ namespace T
       test1();
       test2();
       test3();
-      return 0;
     } 
     catch(GLib.Error e)
     {
       stderr.printf("ERROR: %d: %s\n", e.code, e.message);
-      return 1;
     }
     
     XR.fini();

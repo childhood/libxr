@@ -3,8 +3,7 @@
 XDLC=../../xdl-compiler/xdl-compiler
 VALAC=/workspace/external/vala/compiler/valac
 VALAC=valac
-VALAFLAGS=--disable-memory-management
-#VALAFLAGS=
+VALAFLAGS=--thread
 
 $XDLC -m vapi -i test.xdl -o .
 $XDLC -m pub-headers -i test.xdl -o .
