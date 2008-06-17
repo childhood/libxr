@@ -21,6 +21,8 @@
   #include <winsock2.h>
 #else
   #include <arpa/inet.h>
+  #include <netinet/in.h>
+  #include <sys/types.h>
   #include <netinet/tcp.h>
 #endif
 
