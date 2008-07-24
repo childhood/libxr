@@ -29,6 +29,7 @@
 
 #include "xr-call.h"
 #include "xr-http.h"
+#include "xr-value-utils.h"
 
 /** Opaque data structrure that represents XML-RPC server.
  */

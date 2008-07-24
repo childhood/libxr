@@ -34,6 +34,7 @@
 
 #include "xr-call.h"
 #include "xr-http.h"
+#include "xr-value-utils.h"
 
 #define XR_CLIENT_ERROR xr_client_error_quark()
 
