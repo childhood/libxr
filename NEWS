@@ -8,6 +8,7 @@ compatibility fixes.
 - Fix compilation problems on 64bit platforms.
 - FreeBSD compilation fix. (by Thijs Eilander)
 - Use TLSv1 for communication if possible.
+- Added binary compatibility padding to the public structs.
 
 0.9.94 - 2008-04-08 (1.0.0-rc5)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -74,6 +74,7 @@ struct _xr_servlet_method_def
 {
   char* name;                 /**< Method name. */
   servlet_method_t cb;        /**< Method callback. */
+  void* padding1[4];
 };
 
 /** Servlet description structure.
@@ -91,6 +92,7 @@ struct _xr_servlet_def
   int methods_count;                /**< Count of the methods implemented by the server. */
   xr_servlet_method_def* methods;   /**< Methods descriptions. */
   servlet_method_t fallback;        /**< Fallback (undefined method) hook. */
+  void* padding1[10];
 };
 
 #define XR_SERVER_ERROR xr_server_error_quark()
