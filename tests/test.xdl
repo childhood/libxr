@@ -202,6 +202,13 @@ servlet Test1
     //printf("Post-call!\n");
   %>
 
+  __fallback__
+  <%
+    printf("Unknown method called %s!\n", xr_call_get_method(_call));
+    xr_call_set_retval(_call, xr_value_bool_new(TRUE));
+    return TRUE;
+  %>
+
   /* serve GET request, if serverd return TRUE, otherwise return FALSE */
   __download__
   <%

@@ -102,6 +102,14 @@ int main(int ac, char* av[])
   err = NULL;
   TAllTypes_free(t1);
   
+  /* call undefined servlet methods */
+  
+  xr_call* call = xr_call_new("TTest1.unDefined");
+  xr_call_add_param(call, xr_value_build("{s:i,*}", "test", 100));
+  xr_client_call(conn, call, &err);
+  _check_err(err);
+  err = NULL;
+  
   /* free connections object */
   xr_client_free(conn);
 

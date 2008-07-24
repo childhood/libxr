@@ -65,6 +65,7 @@ main:
   "__attrs__"        { RET(TK_ATTRS); }
   "__pre_call__"     { RET(TK_PRECALL); }
   "__post_call__"    { RET(TK_POSTCALL); }
+  "__fallback__"     { RET(TK_FALLBACK); }
   "__download__"     { RET(TK_DOWNLOAD); }
   "__upload__"       { RET(TK_UPLOAD); }
   "error"            { RET(TK_ERROR); }
@@ -252,6 +253,11 @@ servlet_body_decl ::= PRECALL CODE(C). {
 servlet_body_decl ::= POSTCALL CODE(C). {
   MODEL->cur_servlet->stub_post_call = g_strndup(C->text+2, strlen(C->text)-4);
   MODEL->cur_servlet->stub_post_call_line = C->sline;
+  token_free(C);
+}
+servlet_body_decl ::= FALLBACK CODE(C). {
+  MODEL->cur_servlet->stub_fallback = g_strndup(C->text+2, strlen(C->text)-4);
+  MODEL->cur_servlet->stub_fallback_line = C->sline;
   token_free(C);
 }
 servlet_body_decl ::= DOWNLOAD CODE(C). {

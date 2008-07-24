@@ -747,6 +747,16 @@ int main(int ac, char* av[])
     EL(0, "gboolean %s%sServlet_post_call(xr_servlet* _servlet, xr_call* _call);", xdl->name, s->name);
     NL;
 
+    EL(0, "/** Fallback hook. (for undefined methods)");
+    EL(0, " * ");
+    EL(0, " * @param _servlet Servlet object.");
+    EL(0, " * @param _call Call object.");
+    EL(0, " * ");
+    EL(0, " * @return TRUE if you handled the call.");
+    EL(0, " */ ");
+    EL(0, "gboolean %s%sServlet_fallback(xr_servlet* _servlet, xr_call* _call);", xdl->name, s->name);
+    NL;
+
     EL(0, "/** Download hook.");
     EL(0, " * ");
     EL(0, " * @param _servlet Servlet object.");
@@ -854,6 +864,14 @@ int main(int ac, char* av[])
     EL(0, "{");
     EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
     STUB(s->stub_post_call);
+    EL(1, "return TRUE;");
+    EL(0, "}");
+    NL;
+
+    EL(0, "gboolean %s%sServlet_fallback(xr_servlet* _servlet, xr_call* _call)", xdl->name, s->name);
+    EL(0, "{");
+    EL(1, "%s%sServlet* _priv = xr_servlet_get_priv(_servlet);", xdl->name, s->name);
+    STUB(s->stub_fallback);
     EL(1, "return TRUE;");
     EL(0, "}");
     NL;
@@ -1032,6 +1050,7 @@ int main(int ac, char* av[])
     SET_STUB(fini);
     SET_STUB(pre_call);
     SET_STUB(post_call);
+    SET_STUB(fallback);
     SET_STUB(download);
     SET_STUB(upload);
     EL(1, ".methods_count = %d,", g_slist_length(s->methods));

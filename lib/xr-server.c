@@ -206,6 +206,17 @@ static gboolean _xr_servlet_do_call(xr_servlet* servlet, xr_call* call)
     if (servlet->def->post_call)
       servlet->def->post_call(servlet, call);
   }
+  else if (servlet->def->fallback)
+  {
+    if (servlet->def->fallback(servlet, call))
+    {
+      // call should be handled
+      if (xr_call_get_retval(call) == NULL && !xr_call_get_error_code(call))
+        xr_call_set_error(call, -1, "Fallback did not returned value or set error.");
+    }
+    else
+      xr_call_set_error(call, -1, "Method %s not found in %s servlet.", xr_call_get_method(call), servlet->def->name);
+  }
   else
     xr_call_set_error(call, -1, "Method %s not found in %s servlet.", xr_call_get_method(call), servlet->def->name);
 

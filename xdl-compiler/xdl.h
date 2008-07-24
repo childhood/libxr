@@ -104,6 +104,7 @@ struct _xdl_servlet
   char* stub_attrs;
   char* stub_pre_call;
   char* stub_post_call;
+  char* stub_fallback;
   char* stub_download;
   char* stub_upload;
   int stub_header_line;
@@ -112,6 +113,7 @@ struct _xdl_servlet
   int stub_attrs_line;
   int stub_pre_call_line;
   int stub_post_call_line;
+  int stub_fallback_line;
   int stub_download_line;
   int stub_upload_line;
 

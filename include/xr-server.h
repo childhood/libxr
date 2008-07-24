@@ -90,6 +90,7 @@ struct _xr_servlet_def
   servlet_upload_t upload;          /**< Upload hook. */
   int methods_count;                /**< Count of the methods implemented by the server. */
   xr_servlet_method_def* methods;   /**< Methods descriptions. */
+  servlet_method_t fallback;        /**< Fallback (undefined method) hook. */
 };
 
 #define XR_SERVER_ERROR xr_server_error_quark()
