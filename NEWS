@@ -1,3 +1,14 @@
+0.9.95 - 2008-07-24 (1.0.0-rc6)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+New __fallback__ hook for handling undefined servlet methods. Lots of
+compatibility fixes.
+
+- New __fallback__ hook for handling undefined servlet methods.
+- Port VALA support to vala-0.3.3
+- Fix compilation problems on 64bit platforms.
+- FreeBSD compilation fix. (by Thijs Eilander)
+- Use TLSv1 for communication if possible.
+
 0.9.94 - 2008-04-08 (1.0.0-rc5)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugfix release.
