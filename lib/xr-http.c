@@ -230,6 +230,7 @@ void xr_http_free(xr_http* http)
   g_hash_table_destroy(http->headers);
   g_free(http->req_method);
   g_free(http->req_resource);
+  g_free(http->req_version);
   g_free(http->res_reason);
   memset(http, 0, sizeof(*http));
   g_free(http);
