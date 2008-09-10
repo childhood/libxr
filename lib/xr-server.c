@@ -21,6 +21,7 @@
   #include <winsock2.h>
 #else
   #include <sys/select.h>
+  #include <arpa/inet.h>
   #include <signal.h>
 #endif
 #include <stdlib.h>
@@ -149,6 +150,40 @@ xr_http* xr_servlet_get_http(xr_servlet* servlet)
   g_return_val_if_fail(servlet->conn->http != NULL, NULL);
 
   return servlet->conn->http;
+}
+
+char* xr_servlet_get_client_ip(xr_servlet* servlet)
+{
+#ifdef WIN32
+  /* I don't have time for this crap, right now :D */
+  return NULL;
+#else
+  char buf[INET_ADDRSTRLEN];
+  int socket = -1;
+
+  g_return_val_if_fail(servlet != NULL, NULL);
+  g_return_val_if_fail(servlet->conn != NULL, NULL);
+
+  BIO_get_fd(servlet->conn->bio, &socket);
+  if (socket > 0)
+  {
+    socklen_t clnt_length;
+    struct sockaddr_in clnt_addr;
+
+    memset(&clnt_addr, 0, sizeof(clnt_addr));
+    clnt_length = sizeof(clnt_addr);
+
+    if (getpeername(socket, (struct sockaddr*)&clnt_addr, &clnt_length) == 0)
+    {
+      if (inet_ntop(AF_INET, &clnt_addr.sin_addr, buf, sizeof(buf)) == NULL)
+        return NULL;
+      else
+        return g_strdup(buf);
+    }
+  }
+
+  return NULL;
+#endif
 }
 
 static xr_servlet_def* _find_servlet_def(xr_server* server, char* name)

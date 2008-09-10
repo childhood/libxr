@@ -175,6 +175,14 @@ void* xr_servlet_get_priv(xr_servlet* servlet);
  */
 xr_http* xr_servlet_get_http(xr_servlet* servlet);
 
+/** Get client IP address.
+ * 
+ * @param servlet Servlet object.
+ * 
+ * @return IP address string in the xxx.xxx.xxx.xxx format or NULL.
+ */
+char* xr_servlet_get_client_ip(xr_servlet* servlet);
+
 /** Use this function as a simple way to quickly start a server.
  *
  * @param cert Combined PEM file with server certificate and private.

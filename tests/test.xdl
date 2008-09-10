@@ -300,6 +300,7 @@ servlet Test2
   __init__
   <%
     printf("Init AUTH Servlet!\n");
+    printf("Accepted connection from: %s\n", xr_servlet_get_client_ip(_servlet));
   %>
 
   __fini__
