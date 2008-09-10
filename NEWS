@@ -1,3 +1,8 @@
+0.9.96 - 2008-09-10 (1.0.0-rc7)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Allow servlet to retrieve client's IP address
+- Fix some small harmless bugs
+
 0.9.95 - 2008-07-24 (1.0.0-rc6)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 New __fallback__ hook for handling undefined servlet methods. Lots of
