@@ -781,6 +781,15 @@ err1:
   return NULL;
 }
 
+SSL_CTX* xr_server_get_ssl_context(xr_server* server)
+{
+  g_return_val_if_fail(server != NULL, FALSE);
+
+  if (server->secure)
+    return server->ctx;
+  return NULL;
+}
+
 gboolean xr_server_bind(xr_server* server, const char* port, GError** err)
 {
   BIO* bio_buffer;

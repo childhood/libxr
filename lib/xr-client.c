@@ -53,7 +53,6 @@ xr_client_conn* xr_client_new(GError** err)
 
   xr_client_conn* conn = g_new0(xr_client_conn, 1);
   conn->ctx = SSL_CTX_new(TLSv1_client_method());
-  //XXX: setup certificates?
   if (conn->ctx == NULL)
   {
     g_free(conn);
@@ -65,6 +64,14 @@ xr_client_conn* xr_client_new(GError** err)
   conn->transport = XR_CALL_XML_RPC;
 
   return conn;
+}
+
+SSL_CTX* xr_client_get_ssl_context(xr_client_conn* conn)
+{
+  g_return_val_if_fail(conn != NULL, NULL);
+  g_return_val_if_fail(!conn->is_open, NULL);
+
+  return conn->ctx;
 }
 
 #ifndef HAVE_GLIB_REGEXP

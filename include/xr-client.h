@@ -32,6 +32,7 @@
 #ifndef __XR_CLIENT_H__
 #define __XR_CLIENT_H__
 
+#include <openssl/ssl.h>
 #include "xr-call.h"
 #include "xr-http.h"
 #include "xr-value-utils.h"
@@ -60,6 +61,16 @@ typedef struct _xr_client_conn xr_client_conn;
  * @return New connection object.
  */
 xr_client_conn* xr_client_new(GError** err);
+
+/** Get SSL context used by the client.
+ *
+ * This can be used for custom SSL setup.
+ * 
+ * @param server Server object.
+ * 
+ * @return SSL_CTX pointer owned by the xr_server.
+ */
+SSL_CTX* xr_client_get_ssl_context(xr_client_conn* conn);
 
 /** Free connection object. This function calls @ref xr_client_close if
  * necessary.
