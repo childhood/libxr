@@ -34,8 +34,6 @@ AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
-AC_SUBST(JSON_CFLAGS)
-AC_SUBST(JSON_LIBS)
 
 # use g_regexp_*() on modern glib
 if pkg-config 'glib-2.0 >= 2.14.0' ; then
@@ -65,6 +63,14 @@ if test "x$enable_json" = "xyes" ; then
     enable_json=no
   fi
 fi
+
+if test "x$enable_json" = "xno" ; then
+  JSON_CFLAGS=
+  JSON_LIBS=
+fi
+
+AC_SUBST(JSON_CFLAGS)
+AC_SUBST(JSON_LIBS)
 
 export enable_json
 dnl #AM_CONDITIONAL(ENABLE_JSON, $enable_json)
