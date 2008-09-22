@@ -72,5 +72,8 @@ server_SOURCES = \
 value_utils_test_SOURCES = \
   value-utils-test.c
 
-$(BUILT_SOURCES): $(srcdir)/test.xdl $(top_builddir)/xdl-compiler/xdl-compiler
+$(BUILT_SOURCES): .sources-ts
+
+.sources-ts: $(srcdir)/test.xdl $(top_builddir)/xdl-compiler/xdl-compiler
 	$(top_builddir)/xdl-compiler/xdl-compiler -i $(srcdir)/test.xdl -o $(top_builddir)/tests/
+	touch .sources-ts
