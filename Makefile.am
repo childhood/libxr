@@ -1,11 +1,22 @@
 AUTOMAKE_OPTIONS = foreign
 
-SUBDIRS = include lib xdl-compiler tests docs misc
+SUBDIRS = lib xdl-compiler tests docs
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libxr.pc
 
-EXTRA_DIST = libxr.pc.in
+EXTRA_DIST = \
+  misc/README \
+  misc/xdl.vim
+
+pkginclude_HEADERS = \
+  include/xr-lib.h \
+  include/xr-value.h \
+  include/xr-call.h \
+  include/xr-http.h \
+  include/xr-client.h \
+  include/xr-server.h \
+  include/xr-value-utils.h
 
 libxrincludedir = $(includedir)/libxr
 #libxrinclude_HEADERS = xr-config.h

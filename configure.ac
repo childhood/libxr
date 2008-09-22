@@ -114,16 +114,12 @@ _______EOF
 # write output
 AC_OUTPUT([
   Makefile
-  include/Makefile
   lib/Makefile
   xdl-compiler/Makefile
   docs/Makefile
-  misc/Makefile
   libxr.pc
   tests/Makefile
   tests/unit/Makefile
-  tests/zblok/Makefile
-  tests/vala/Makefile
 ])
 
 echo 

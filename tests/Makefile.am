@@ -1,4 +1,4 @@
-SUBDIRS = unit zblok vala
+SUBDIRS = unit
 
 BUILT_SOURCES = \
   TCommon.h \
@@ -25,7 +25,15 @@ EXTRA_DIST = \
   bench.sh \
   test.xdl \
   server.pem \
-  $(BUILT_SOURCES)
+  $(BUILT_SOURCES) \
+  zblok/build.sh \
+  zblok/client.c \
+  zblok/server.c \
+  zblok/server.pem \
+  zblok/zblok.xdl \
+  vala/test-vala.sh \
+  vala/test.vala \
+  vala/test.xdl
 
 AM_CFLAGS= \
   $(GLIB_CFLAGS) \
