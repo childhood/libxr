@@ -46,7 +46,7 @@ LDADD = \
   $(JSON_LIBS) \
   $(top_builddir)/lib/libxr.la
 
-noinst_PROGRAMS = \
+check_PROGRAMS = \
   tclient \
   client \
   session-client \

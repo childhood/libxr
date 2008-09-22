@@ -21,7 +21,7 @@ LDADD = \
 TESTS = \
   t001-call
 
-noinst_PROGRAMS = \
+check_PROGRAMS = \
   $(TESTS)
 
 # t001
