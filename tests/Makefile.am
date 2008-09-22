@@ -69,7 +69,7 @@ server_SOURCES = \
   server.c \
   $(BUILT_SOURCES)
 
-value_utlils_test_SOURCES = \
+value_utils_test_SOURCES = \
   value-utils-test.c
 
 $(BUILT_SOURCES): $(srcdir)/test.xdl $(top_builddir)/xdl-compiler/xdl-compiler
