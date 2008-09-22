@@ -48,7 +48,7 @@
   current_line = 1
 
 static int current_line;
-char* current_file = NULL;
+static char* current_file = NULL;
 
 static void line_fprintf(FILE* f, int indent, const char* fmt, ...)
 {
@@ -85,7 +85,7 @@ static void line_fprintf(FILE* f, int indent, const char* fmt, ...)
     } \
   } while(0)
 
-void gen_type_marchalizers(FILE* f, xdl_typedef* t)
+static void gen_type_marchalizers(FILE* f, xdl_typedef* t)
 {
   GSList *i, *j, *k;
     if (t->type == TD_STRUCT)
@@ -208,7 +208,7 @@ void gen_type_marchalizers(FILE* f, xdl_typedef* t)
     }
 }
 
-void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
+static void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
 {
   GSList *i, *j, *k;
 
@@ -302,7 +302,7 @@ void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
   }
 }
 
-void gen_type_defs(FILE* f, GSList* types)
+static void gen_type_defs(FILE* f, GSList* types)
 {
   GSList *i, *j, *k;
 
@@ -341,7 +341,7 @@ void gen_type_defs(FILE* f, GSList* types)
   }
 }
 
-void gen_marchalizers(FILE* f, xdl_model* xdl, xdl_servlet* s)
+static void gen_marchalizers(FILE* f, xdl_model* xdl, xdl_servlet* s)
 {
   GSList *j;
 
@@ -361,7 +361,7 @@ void gen_marchalizers(FILE* f, xdl_model* xdl, xdl_servlet* s)
   }
 }
 
-void gen_errors_header(FILE* f, xdl_model* xdl, xdl_servlet* s)
+static void gen_errors_header(FILE* f, xdl_model* xdl, xdl_servlet* s)
 {
   GSList* j;
   GSList* errs = s ? s->errors : xdl->errors;
@@ -381,7 +381,7 @@ void gen_errors_header(FILE* f, xdl_model* xdl, xdl_servlet* s)
   NL;
 }
 
-void gen_errors_impl(FILE* f, xdl_model* xdl, xdl_servlet* s)
+static void gen_errors_impl(FILE* f, xdl_model* xdl, xdl_servlet* s)
 {
   GSList* j;
   GSList* errs = s ? s->errors : xdl->errors;

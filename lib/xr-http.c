@@ -648,7 +648,7 @@ void xr_http_setup_response(xr_http* http, int code)
   }
 }
 
-void add_header(const char* key, const char* value, GString* header)
+static void add_header(const char* key, const char* value, GString* header)
 {
   g_string_append_printf(header, "%s: %s\r\n", key, value);
 }

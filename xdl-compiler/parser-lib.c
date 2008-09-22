@@ -104,7 +104,7 @@ void token_free(token * t)
 
 /* parser api */
 
-int __parse(parser_context* ctx, 
+static int __parse(parser_context* ctx, 
             parser parser_cb, 
             parser_alloc parser_alloc_cb, 
             parser_free parser_free_cb,
