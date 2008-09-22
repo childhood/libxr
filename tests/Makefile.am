@@ -46,7 +46,7 @@ AM_CFLAGS= \
 
 AM_LDFLAGS = -static
 
-CLEANFILES = $(BUILT_SOURCES)
+CLEANFILES = $(BUILT_SOURCES) .sources-ts
 
 LDADD = \
   $(GLIB_LIBS) \
