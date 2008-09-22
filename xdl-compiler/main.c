@@ -406,7 +406,7 @@ void gen_errors_impl(FILE* f, xdl_model* xdl, xdl_servlet* s)
 static gchar* out_dir = NULL;
 static gchar* xdl_file = NULL;
 static gchar* mode = "all";
-static GOptionEntry entries[] = 
+static const GOptionEntry entries[] = 
 {
   { "xdl", 'i', 0, G_OPTION_ARG_STRING, &xdl_file, "Interface description file.", "FILE" },
   { "out", 'o', 0, G_OPTION_ARG_STRING, &out_dir, "Output directory.", "DIR" },

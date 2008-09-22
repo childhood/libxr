@@ -209,7 +209,7 @@ struct transport_module
   gboolean (*unserialize_response)(xr_call* call, const char* buf, int len);
 };
 
-struct transport_module transports[XR_CALL_TRANSPORT_COUNT] = {
+const struct transport_module transports[XR_CALL_TRANSPORT_COUNT] = {
   { /* XR_CALL_XML_RPC */
     .serialize_request = xr_call_serialize_request_xmlrpc,
     .serialize_response = xr_call_serialize_response_xmlrpc,
