@@ -112,8 +112,6 @@ typedef void (*parser)(void*, int, token*, parser_context* ctx);
 typedef token* (*lexer)(stream*);
 
 stream* stream_new_from_string(const char* str);
-stream* stream_new_from_file(const char* path);
-void stream_free(stream* s);
 void stream_advance(stream* s, int length);
 
 token *token_new(stream* s, int type, int length);

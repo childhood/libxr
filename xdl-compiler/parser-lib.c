@@ -31,29 +31,6 @@ stream* stream_new_from_string(const char* str)
   return s;
 }
 
-stream* stream_new_from_file(const char* path)
-{
-  if (path == NULL)
-    return NULL;
-  stream* s = g_new0(stream, 1);
-  if (g_file_get_contents(path, &s->buffer, (gsize*)&s->length, NULL))
-  {
-    s->path = g_strdup(path);
-    return s;
-  }
-  g_free(s);
-  return NULL;
-}
-
-void stream_free(stream* s)
-{
-  if (s == NULL)
-    return;
-  g_free(s->path);
-  g_free(s->buffer);
-  g_free(s);
-}
-
 void stream_advance(stream* s, int length)
 {
   int i;
