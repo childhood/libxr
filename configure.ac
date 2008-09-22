@@ -45,7 +45,7 @@ fi
 
 # on win32 we must link in wsock32
 WIN32LIBS=
-if [[ "$version_type" = windows ]] ; then
+if test "x$version_type" = xwindows; then
   WIN32LIBS="-lwsock32"
 fi
 AC_SUBST(WIN32LIBS)
