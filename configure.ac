@@ -27,17 +27,26 @@ AC_SUBST(LIB_XR_VERSION)
 # check for dependencies
 AC_CHECK_PROG(RE2C, re2c, re2c)
 
-PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.12.0 gthread-2.0 >= 2.12.0])
-PKG_CHECK_MODULES(XML, [libxml-2.0 >= 2.6.20])
-PKG_CHECK_MODULES(SSL, [libssl libcrypto])
-PKG_CHECK_MODULES(JSON, [json >= 0.3], have_json=yes, have_json=no)
+GLIB_REQUIRES="glib-2.0 >= 2.12.0 gthread-2.0 >= 2.12.0"
+XML_REQUIRES="libxml-2.0 >= 2.6.20"
+SSL_REQUIRES="libssl libcrypto"
+JSON_REQUIRES="json >= 0.3"
 
+PKG_CHECK_MODULES(GLIB, [$GLIB_REQUIRES])
+PKG_CHECK_MODULES(XML, [$XML_REQUIRES])
+PKG_CHECK_MODULES(SSL, [$SSL_REQUIRES])
+PKG_CHECK_MODULES(JSON, [$JSON_REQUIRES], have_json=yes, have_json=no)
+
+AC_SUBST(GLIB_REQUIRES)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
+AC_SUBST(XML_REQUIRES)
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
+AC_SUBST(SSL_REQUIRES)
 AC_SUBST(SSL_CFLAGS)
 AC_SUBST(SSL_LIBS)
+AC_SUBST(JSON_REQUIRES)
 AC_SUBST(JSON_CFLAGS)
 AC_SUBST(JSON_LIBS)
 
@@ -68,6 +77,10 @@ if test "x$enable_json" = "xyes" ; then
   if test "x$have_json" = "xno" ; then
     enable_json=no
   fi
+fi
+
+if test "x$enable_json" != "xyes"; then
+  JSON_REQUIRES=""
 fi
 
 export enable_json
