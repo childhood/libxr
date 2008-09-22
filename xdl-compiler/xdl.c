@@ -22,7 +22,7 @@
 
 #include "xdl.h"
 
-xdl_typedef* xdl_typedef_new(int type, char* name, char* cname, char* ctype, char* cnull, char* dem_name, char* mar_name, char* free_func)
+static xdl_typedef* xdl_typedef_new(int type, char* name, char* cname, char* ctype, char* cnull, char* dem_name, char* mar_name, char* free_func)
 {
   xdl_typedef* t = g_new0(xdl_typedef, 1);
   t->type = type;

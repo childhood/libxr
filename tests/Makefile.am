@@ -1,4 +1,4 @@
-SUBDIRS = unit zblok vala
+SUBDIRS = unit
 
 BUILT_SOURCES = \
   TCommon.h \
@@ -25,7 +25,15 @@ EXTRA_DIST = \
   bench.sh \
   test.xdl \
   server.pem \
-  $(BUILT_SOURCES)
+  $(BUILT_SOURCES) \
+  zblok/build.sh \
+  zblok/client.c \
+  zblok/server.c \
+  zblok/server.pem \
+  zblok/zblok.xdl \
+  vala/test-vala.sh \
+  vala/test.vala \
+  vala/test.xdl
 
 AM_CFLAGS= \
   $(GLIB_CFLAGS) \
@@ -46,7 +54,7 @@ LDADD = \
   $(JSON_LIBS) \
   $(top_builddir)/lib/libxr.la
 
-noinst_PROGRAMS = \
+check_PROGRAMS = \
   tclient \
   client \
   session-client \
@@ -69,8 +77,11 @@ server_SOURCES = \
   server.c \
   $(BUILT_SOURCES)
 
-value_utlils_test_SOURCES = \
+value_utils_test_SOURCES = \
   value-utils-test.c
 
-$(BUILT_SOURCES): $(srcdir)/test.xdl $(top_builddir)/xdl-compiler/xdl-compiler
+$(BUILT_SOURCES): .sources-ts
+
+.sources-ts: $(srcdir)/test.xdl $(top_builddir)/xdl-compiler/xdl-compiler
 	$(top_builddir)/xdl-compiler/xdl-compiler -i $(srcdir)/test.xdl -o $(top_builddir)/tests/
+	touch .sources-ts

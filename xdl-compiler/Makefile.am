@@ -30,7 +30,8 @@ xdl_compiler_SOURCES = \
 
 # parser
 
-xdl-parser.h xdl-parser.c: xdl-parser.yre
+xdl-parser.h: xdl-parser.c
+xdl-parser.c: xdl-parser.yre
 	test -r $(builddir)/lempar.c || test x$(srcdir) = x$(builddir) || cat $(srcdir)/lempar.c > $(builddir)/lempar.c
 	gcc -o lemon $(srcdir)/lemon.c
 	re2c -s -i -o tmp.y $<

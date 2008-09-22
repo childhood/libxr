@@ -8,6 +8,7 @@ AM_INIT_AUTOMAKE([dist-bzip2])
 AM_MAINTAINER_MODE
 
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
 AC_HEADER_STDC
@@ -26,14 +27,28 @@ AC_SUBST(LIB_XR_VERSION)
 # check for dependencies
 AC_CHECK_PROG(RE2C, re2c, re2c)
 
-PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.12.0 gthread-2.0 >= 2.12.0])
-PKG_CHECK_MODULES(XML, [libxml-2.0 >= 2.6.20])
-PKG_CHECK_MODULES(JSON, [json >= 0.3], have_json=yes, have_json=no)
+GLIB_REQUIRES="glib-2.0 >= 2.12.0 gthread-2.0 >= 2.12.0"
+XML_REQUIRES="libxml-2.0 >= 2.6.20"
+SSL_REQUIRES="libssl libcrypto"
+JSON_REQUIRES="json >= 0.3"
 
+PKG_CHECK_MODULES(GLIB, [$GLIB_REQUIRES])
+PKG_CHECK_MODULES(XML, [$XML_REQUIRES])
+PKG_CHECK_MODULES(SSL, [$SSL_REQUIRES])
+PKG_CHECK_MODULES(JSON, [$JSON_REQUIRES], have_json=yes, have_json=no)
+
+AC_SUBST(GLIB_REQUIRES)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
+AC_SUBST(XML_REQUIRES)
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
+AC_SUBST(SSL_REQUIRES)
+AC_SUBST(SSL_CFLAGS)
+AC_SUBST(SSL_LIBS)
+AC_SUBST(JSON_REQUIRES)
+AC_SUBST(JSON_CFLAGS)
+AC_SUBST(JSON_LIBS)
 
 # use g_regexp_*() on modern glib
 if pkg-config 'glib-2.0 >= 2.14.0' ; then
@@ -42,7 +57,7 @@ fi
 
 # on win32 we must link in wsock32
 WIN32LIBS=
-if [[ "$version_type" = windows ]] ; then
+if test "x$version_type" = xwindows; then
   WIN32LIBS="-lwsock32"
 fi
 AC_SUBST(WIN32LIBS)
@@ -64,13 +79,11 @@ if test "x$enable_json" = "xyes" ; then
   fi
 fi
 
-if test "x$enable_json" = "xno" ; then
-  JSON_CFLAGS=
-  JSON_LIBS=
+if test "x$enable_json" != "xyes"; then
+  JSON_CFLAGS=""
+  JSON_LIBS=""
+  JSON_REQUIRES=""
 fi
-
-AC_SUBST(JSON_CFLAGS)
-AC_SUBST(JSON_LIBS)
 
 export enable_json
 dnl #AM_CONDITIONAL(ENABLE_JSON, $enable_json)
@@ -103,16 +116,12 @@ _______EOF
 # write output
 AC_OUTPUT([
   Makefile
-  include/Makefile
   lib/Makefile
   xdl-compiler/Makefile
   docs/Makefile
-  misc/Makefile
   libxr.pc
   tests/Makefile
   tests/unit/Makefile
-  tests/zblok/Makefile
-  tests/vala/Makefile
 ])
 
 echo 
