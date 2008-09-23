@@ -1,6 +1,7 @@
 AC_PREREQ(2.57)
 AC_INIT([libxr], 0.9.96, [3e@zonio.net], libxr)
 AC_CONFIG_SRCDIR([Makefile.am])
+AC_CONFIG_MACRO_DIR([m4])
 AM_CONFIG_HEADER([config.h])
 AC_CANONICAL_SYSTEM
 AC_CANONICAL_BUILD
@@ -35,7 +36,7 @@ JSON_REQUIRES="json >= 0.3"
 PKG_CHECK_MODULES(GLIB, [$GLIB_REQUIRES])
 PKG_CHECK_MODULES(XML, [$XML_REQUIRES])
 PKG_CHECK_MODULES(SSL, [$SSL_REQUIRES])
-PKG_CHECK_MODULES(JSON, [$JSON_REQUIRES], have_json=yes, have_json=no)
+PKG_WITH_MODULES(JSON, [$JSON_REQUIRES], [have_json=yes], [have_json=no], [build JSON transport], [yes])
 
 AC_SUBST(GLIB_REQUIRES)
 AC_SUBST(GLIB_CFLAGS)
@@ -68,25 +69,9 @@ if $CC --version | head -n1 | grep '(GCC) 4\.' &>/dev/null ; then
   CFLAGS="$CFLAGS -Wno-pointer-sign"
 fi
 
-AC_ARG_ENABLE(json,
-              [AC_HELP_STRING([--disable-json],
-              [disable json transport])],,
-              [enable_json=yes])
-
-if test "x$enable_json" = "xyes" ; then
-  if test "x$have_json" = "xno" ; then
-    enable_json=no
-  fi
-fi
-
-if test "x$enable_json" != "xyes"; then
-  JSON_CFLAGS=""
-  JSON_LIBS=""
+if test "x$have_json" != "xyes"; then
   JSON_REQUIRES=""
 fi
-
-export enable_json
-dnl #AM_CONDITIONAL(ENABLE_JSON, $enable_json)
 
 # generate xr-config.h
 AC_CONFIG_COMMANDS([xr-config.h],
@@ -103,7 +88,7 @@ AC_CONFIG_COMMANDS([xr-config.h],
 
 _______EOF
 
-if test "x$enable_json" = "xyes" ; then
+if test "x$have_json" = "xyes" ; then
   echo '#define XR_JSON_ENABLED 1' >> $outfile
 fi
 
@@ -128,5 +113,5 @@ echo
 echo "libxr is now configured"
 echo
 echo "  xml-rpc transport: yes"
-echo "  json transport:    $enable_json"
+echo "  json transport:    $have_json"
 echo
