@@ -1,8 +1,8 @@
 AC_PREREQ(2.62)
-AC_INIT([libxr], 0.9.96, [3e@zonio.net], libxr)
+AC_INIT([libxr],[0.9.96],[3e@zonio.net],[libxr])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([dist-bzip2])
 AM_MAINTAINER_MODE
 
@@ -91,7 +91,7 @@ _______EOF
 ])
 
 # write output
-AC_OUTPUT([
+AC_CONFIG_FILES([
   Makefile
   lib/Makefile
   xdl-compiler/Makefile
@@ -100,6 +100,7 @@ AC_OUTPUT([
   tests/Makefile
   tests/unit/Makefile
 ])
+AC_OUTPUT
 
 echo 
 echo "libxr is now configured"
