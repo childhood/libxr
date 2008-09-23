@@ -100,7 +100,8 @@ static xr_value* _xr_value_unserialize_json(struct json_object* obj)
     {
       int i;
       xr_value* arr = xr_value_array_new();
-      for (i = 0; i < json_object_array_length(obj); i++) 
+      const int arr_len = json_object_array_length(obj);
+      for (i = 0; i < arr_len; i++) 
         xr_value_array_append(arr, _xr_value_unserialize_json(json_object_array_get_idx(obj, i)));
       return arr;
     }
@@ -193,7 +194,8 @@ static gboolean xr_call_unserialize_request_json(xr_call* call, const char* buf,
     return FALSE;
   }
 
-  for (i = 0; i < json_object_array_length(params); i++) 
+  const int params_count = json_object_array_length(params);
+  for (i = 0; i < params_count; i++) 
   {
     xr_value* v = _xr_value_unserialize_json(json_object_array_get_idx(params, i));
     if (v == NULL)
