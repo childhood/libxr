@@ -1,4 +1,4 @@
-AC_PREREQ(2.57)
+AC_PREREQ(2.62)
 AC_INIT([libxr], 0.9.96, [3e@zonio.net], libxr)
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
@@ -52,26 +52,20 @@ AC_SUBST(JSON_CFLAGS)
 AC_SUBST(JSON_LIBS)
 
 # use g_regexp_*() on modern glib
-if pkg-config 'glib-2.0 >= 2.14.0' ; then
+AS_IF([pkg-config 'glib-2.0 >= 2.14.0'], [
   AC_DEFINE(HAVE_GLIB_REGEXP, 1, [whether glib supports regexps])
-fi
+])
 
 # on win32 we must link in wsock32
-WIN32LIBS=
-if test "x$version_type" = xwindows; then
-  WIN32LIBS="-lwsock32"
-fi
+AS_IF([test "x$version_type" = xwindows], [WIN32LIBS="-lwsock32"], [WIN32LIBS=])
 AC_SUBST(WIN32LIBS)
 
 # enable compiler warnings
 CFLAGS="$CFLAGS -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare"
-if $CC --version | head -n1 | grep '(GCC) 4\.' &>/dev/null ; then
-  CFLAGS="$CFLAGS -Wno-pointer-sign"
-fi
+AS_IF([$CC --version | head -n1 | grep '(GCC) 4\.' &>/dev/null],
+  [CFLAGS="$CFLAGS -Wno-pointer-sign"])
 
-if test "x$have_json" != "xyes"; then
-  JSON_REQUIRES=""
-fi
+AS_IF([test "x$have_json" != "xyes"], [JSON_REQUIRES=""])
 
 # generate xr-config.h
 AC_CONFIG_COMMANDS([xr-config.h],
@@ -88,9 +82,9 @@ AC_CONFIG_COMMANDS([xr-config.h],
 
 _______EOF
 
-if test "x$have_json" = "xyes" ; then
+AS_IF([test "x$have_json" = "xyes"], [
   echo '#define XR_JSON_ENABLED 1' >> $outfile
-fi
+])
 
   cat >> $outfile <<\_______EOF
 
