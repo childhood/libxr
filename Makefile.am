@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = lib xdl-compiler tests docs
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libxr.pc
+pkgconfig_DATA = pkgconfig/libxr.pc
 
 EXTRA_DIST = \
   misc/README \

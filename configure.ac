@@ -96,7 +96,8 @@ AC_CONFIG_FILES([
   lib/Makefile
   xdl-compiler/Makefile
   docs/Makefile
-  libxr.pc
+  pkgconfig/libxr.pc
+  pkgconfig/libxr-uninstalled.pc
   tests/Makefile
   tests/unit/Makefile
 ])

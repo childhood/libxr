@@ -1,0 +1,10 @@
+libdir=@abs_top_builddir@/lib/.libs
+includedir=@abs_top_srcdir@/include
+
+Name: libxr
+Description: XR library
+Version: @VERSION@
+Requires: @GLIB_REQUIRES@
+Requires.private: @XML_REQUIRES@ @SSL_REQUIRES@ @JSON_REQUIRES@
+Libs: -L${libdir} -lxr
+Cflags: -I${includedir}
