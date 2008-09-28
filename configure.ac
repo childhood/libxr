@@ -1,4 +1,4 @@
-AC_PREREQ(2.62)
+AC_PREREQ(2.60)
 AC_INIT([libxr],[0.9.96],[3e@zonio.net],[libxr])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
