@@ -1,3 +1,8 @@
+0.9.97 - 2008-10-16 (1.0.0-rc8)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Updated support contact. Ondrej Jirman is no longer the maintainer.
+- Many improvements to the build system by Diego Pettenò
+
 0.9.96 - 2008-09-10 (1.0.0-rc7)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - Allow servlet to retrieve client's IP address
