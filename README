@@ -10,10 +10,7 @@ Libxr features:
   - Persistent connections over HTTP/1.1
   - Server "session" support for non-persistent connections
   - Multi-platform support (Linux, Windows, ...)
-  - SSLv3/TLSv1 using OpenSSL
-  - IPV6 as soon as OpenSSL 0.9.9 is released
-  - VALA language support for client interfaces
-  - Multiple interfaces per server
+  - TLSv1 using GNUTLS
 
 Libxr has two parts, library itself and RPC interface description language
 compiler (XDL compiler). Thanks to the XDL compiler, you can create and
@@ -31,6 +28,3 @@ implement complex RPC interfaces in a very short time. Here is an obligatory
 
 Whenever you call XTest.sayHello() RPC method, "Hello World!" will be printed to
 the server's standard output.
-
-For more information see HOWTO tutorial, libxr API documentation or tests/
-directory.
