@@ -21,7 +21,7 @@
 #define __XR_HTTP_H__
 
 #include <glib.h>
-#include <openssl/bio.h>
+#include <gio/gio.h>
 
 /** @file xr-http.h
  *
@@ -68,11 +68,11 @@ void xr_http_init();
 
 /** Create new HTTP transport object.
  * 
- * @param bio OpenSSL BIO object used as underlaying transport.
+ * @param stream GIOStream object used for HTTP connection.
  * 
  * @return New HTTP transport object.
  */
-xr_http* xr_http_new(BIO* bio);
+xr_http* xr_http_new(GIOStream* stream);
 
 /** Destroy HTTP transport object.
  * 

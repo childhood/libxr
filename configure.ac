@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT([libxr],[0.9.97],[libxr@zhost.zonio.net],[libxr])
+AC_INIT([libxr],[2.0.0],[megous@megous.com],[libxr])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER([config.h])
@@ -20,20 +20,18 @@ AC_HEADER_STDC
 #   change to C+1:0:0
 # - If the interface is the same as the previous version, change to C:R+1:A
 
-LIB_XR_VERSION=1:0:0
+LIB_XR_VERSION=2:0:0
 AC_SUBST(LIB_XR_VERSION)
 
 # check for dependencies
 AC_CHECK_PROG(RE2C, re2c, re2c)
 
-GLIB_REQUIRES="glib-2.0 >= 2.12.0 gthread-2.0 >= 2.12.0"
+GLIB_REQUIRES="glib-2.0 >= 2.30.0 gthread-2.0 >= 2.30.0 gio-2.0 >= 2.30.0"
 XML_REQUIRES="libxml-2.0 >= 2.6.20"
-SSL_REQUIRES="libssl libcrypto"
 JSON_REQUIRES="json >= 0.3"
 
 PKG_CHECK_MODULES(GLIB, [$GLIB_REQUIRES])
 PKG_CHECK_MODULES(XML, [$XML_REQUIRES])
-PKG_CHECK_MODULES(SSL, [$SSL_REQUIRES])
 PKG_WITH_MODULES(JSON, [$JSON_REQUIRES], [have_json=yes], [have_json=no], [build JSON transport], [yes])
 
 AC_SUBST(GLIB_REQUIRES)
@@ -42,17 +40,9 @@ AC_SUBST(GLIB_LIBS)
 AC_SUBST(XML_REQUIRES)
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
-AC_SUBST(SSL_REQUIRES)
-AC_SUBST(SSL_CFLAGS)
-AC_SUBST(SSL_LIBS)
 AC_SUBST(JSON_REQUIRES)
 AC_SUBST(JSON_CFLAGS)
 AC_SUBST(JSON_LIBS)
-
-# use g_regexp_*() on modern glib
-AS_IF([pkg-config 'glib-2.0 >= 2.14.0'], [
-  AC_DEFINE(HAVE_GLIB_REGEXP, 1, [whether glib supports regexps])
-])
 
 # on win32 we must link in wsock32
 AS_IF([test "x$version_type" = xwindows], [WIN32LIBS="-lwsock32"], [WIN32LIBS=])

@@ -35,7 +35,7 @@ EXTRA_DIST = \
   vala/test.vala \
   vala/test.xdl
 
-AM_CFLAGS= \
+AM_CFLAGS = \
   $(GLIB_CFLAGS) \
   $(XML_CFLAGS) \
   $(JSON_CFLAGS) \

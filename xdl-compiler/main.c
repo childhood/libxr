@@ -159,12 +159,12 @@ static void gen_type_marchalizers(FILE* f, xdl_typedef* t)
     {
       EL(0, "G_GNUC_UNUSED static xr_value* %s(%s _narray)", t->march_name, t->ctype);
       EL(0, "{");
-      EL(1, "GSList* _item;");
+      EL(1, "gint _i;");
       EL(1, "xr_value* _array = xr_value_array_new();");
       NL;
-      EL(1, "for (_item = _narray; _item; _item = _item->next)");
+      EL(1, "for (_i = 0; _i < (_narray ? _narray->len : 0); _i++)");
       EL(1, "{");
-      EL(2, "xr_value* _item_value = %s((%s)_item->data);", t->item_type->march_name, t->item_type->ctype);
+      EL(2, "xr_value* _item_value = %s(g_array_index(_narray, %s, _i));", t->item_type->march_name, t->item_type->ctype);
       NL;
       EL(2, "if (_item_value == NULL)");
       EL(2, "{");
@@ -181,13 +181,15 @@ static void gen_type_marchalizers(FILE* f, xdl_typedef* t)
 
       EL(0, "G_GNUC_UNUSED static gboolean %s(xr_value* _array, %s* _narray)", t->demarch_name, t->ctype);
       EL(0, "{");
-      EL(1, "GSList *_tmp_narray = NULL, *_item;");
+      EL(1, "GArray *_tmp_narray = NULL;");
+      EL(1, "GSList *_item;");
       NL;
       EL(1, "g_return_val_if_fail(_narray != NULL, FALSE);");
       NL;
       EL(1, "if (_array == NULL || xr_value_get_type(_array) != XRV_ARRAY)");
       EL(2, "return FALSE;");
       NL;
+      EL(1, "_tmp_narray = g_array_sized_new(FALSE, FALSE, sizeof(%s), g_slist_length(xr_value_get_items(_array)));", t->item_type->ctype);
       EL(1, "for (_item = xr_value_get_items(_array); _item; _item = _item->next)");
       EL(1, "{");
       EL(2, "%s _item_value = %s;", t->item_type->ctype, t->item_type->cnull);
@@ -198,7 +200,7 @@ static void gen_type_marchalizers(FILE* f, xdl_typedef* t)
       EL(3, "return FALSE;");
       EL(2, "}");
       NL;
-      EL(2, "_tmp_narray = g_slist_append(_tmp_narray, (void*)_item_value);");
+      EL(2, "g_array_append_val(_tmp_narray, _item_value);");
       EL(1, "}");
       NL;
       EL(1, "*_narray = _tmp_narray;");
@@ -214,13 +216,21 @@ static void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
 
   if (def)
   {
-    if (t->type == TD_STRUCT)
-      EL(0, "%s %s_new();", t->ctype, t->cname);
     if (t->type == TD_STRUCT || t->type == TD_ARRAY)
     {
-      EL(0, "void %s(%s val);", t->free_func, t->ctype);
+      EL(0, "%s %s_new();", t->ctype, t->cname);
       EL(0, "%s %s(%s orig);", t->ctype, t->copy_func, t->ctype);
+
+      if (t->type == TD_ARRAY)
+      {
+        EL(0, "void %s_add(%s array, %s item);", t->cname, t->ctype, t->item_type->ctype);
+        EL(0, "%s %s_get(%s array, gint n);", t->item_type->ctype, t->cname, t->ctype);
+      }
+
+      EL(0, "void %s(%s val);", t->free_func, t->ctype);
+      NL;
     }
+
     return;
   }
 
@@ -273,12 +283,42 @@ static void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
   }
   else if (t->type == TD_ARRAY)
   {
+    /* new */
+    EL(0, "%s %s_new()", t->ctype, t->cname);
+    EL(0, "{");
+    EL(1, "return g_array_new(FALSE, FALSE, sizeof(%s));", t->item_type->ctype);
+    EL(0, "}");
+    NL;
+
+    /* add */
+    EL(0, "void %s_add(%s array, %s item)", t->cname, t->ctype, t->item_type->ctype);
+    EL(0, "{");
+    EL(1, "g_array_append_val(array, item);");
+    EL(0, "}");
+    NL;
+
+    /* get */
+    EL(0, "%s %s_get(%s array, gint n)", t->item_type->ctype, t->cname, t->ctype);
+    EL(0, "{");
+    EL(1, "return g_array_index(array, %s, n);", t->item_type->ctype);
+    EL(0, "}");
+    NL;
+
     /* free */
     EL(0, "void %s(%s val)", t->free_func, t->ctype);
     EL(0, "{");
+    EL(1, "if (val)");
+    EL(1, "{");
     if (t->item_type->free_func)
-      EL(1, "g_slist_foreach(val, (GFunc)%s, NULL);", t->item_type->free_func);
-    EL(1, "g_slist_free(val);");
+    {
+      EL(2, "gint i;");
+      NL;
+      EL(2, "for (i = 0; i < val->len; i++)");
+      EL(3, "%s(g_array_index(val, %s, i));", t->item_type->free_func, t->item_type->ctype);
+      NL;
+    }
+    EL(2, "g_array_free(val, TRUE);");
+    EL(1, "}");
     EL(0, "}");
     NL;
 
@@ -287,16 +327,25 @@ static void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
     EL(0, "{");
     EL(1, "%s copy = NULL;", t->ctype);
     NL;
-    EL(1, "while (orig)");
+    EL(1, "if (orig)");
     EL(1, "{");
+    EL(2, "gint i;");
+    EL(2, "copy = g_array_sized_new(FALSE, FALSE, sizeof(%s), orig->len);", t->item_type->ctype);
+    NL;
+    EL(2, "for (i = 0; i < orig->len; i++)");
+    EL(2, "{");
+    EL(3, "%s v = g_array_index(orig, %s, i);", t->item_type->ctype, t->item_type->ctype);
     if (t->item_type->copy_func)
-      EL(2, "copy = g_slist_prepend(copy, (gpointer)%s((%s)orig->data));", t->item_type->copy_func, t->item_type->ctype);
+    {
+      EL(3, "%s vcopy = %s(v);", t->item_type->ctype, t->item_type->copy_func);
+      EL(3, "g_array_append_val(copy, vcopy);");
+    }
     else
-      EL(2, "copy = g_slist_prepend(copy, orig->data);");
-    EL(2, "orig = orig->next;");
+      EL(3, "g_array_append_val(copy, v);");
+    EL(2, "}");
     EL(1, "}");
     NL;
-    EL(1, "return g_slist_reverse(copy);");
+    EL(1, "return copy;");
     EL(0, "}");
     NL;
   }

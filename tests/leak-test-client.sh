@@ -8,7 +8,7 @@ valgrind \
   --leak-check=full \
   --leak-resolution=high \
   --show-reachable=yes \
-  --log-file-exactly=leak-client.log \
+  --log-file=leak-client.log \
   --suppressions=leak.supp \
   $FLAGS \
   ./client

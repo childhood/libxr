@@ -17,15 +17,9 @@
  * along with libxr.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef WIN32
-  #include <winsock2.h>
-#else
-  #include <sys/select.h>
-  #include <arpa/inet.h>
-  #include <signal.h>
-#endif
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 #include "xr-server.h"
 #include "xr-http.h"
@@ -35,16 +29,14 @@
 
 struct _xr_server
 {
-  SSL_CTX* ctx;
-  BIO* bio_accept;
-  int sock;
-  GThreadPool* pool;
+  GSocketService* service;
   gboolean secure;
-  gboolean running;
+  GTlsCertificate *cert;
   GSList* servlet_types;
   GHashTable* sessions;
   GStaticRWLock sessions_lock;
   GThread* sessions_cleaner;
+  GMainLoop* loop;
   time_t current_time;
 };
 
@@ -53,7 +45,8 @@ struct _xr_server
 typedef struct _xr_server_conn xr_server_conn;
 struct _xr_server_conn
 {
-  BIO* bio;
+  GSocketConnection* conn;
+  GIOStream* tls_conn;
   xr_http* http;
   GPtrArray* servlets;
   gboolean running;
@@ -69,16 +62,23 @@ struct _xr_servlet
   GMutex* call_mutex; /* held during call */
 };
 
-static void xr_servlet_free(xr_servlet* servlet, gboolean fini)
+static void xr_servlet_free(xr_servlet* servlet)
 {
   if (servlet == NULL)
     return;
-  if (fini && servlet->def && servlet->def->fini)
-    servlet->def->fini(servlet);
+
   g_free(servlet->priv);
   g_mutex_free(servlet->call_mutex);
   memset(servlet, 0, sizeof(*servlet));
   g_free(servlet);
+}
+
+static void xr_servlet_free_fini(xr_servlet* servlet)
+{
+  if (servlet && servlet->def && servlet->def->fini)
+    servlet->def->fini(servlet);
+
+  xr_servlet_free(servlet);
 }
 
 static xr_servlet* xr_servlet_new(xr_servlet_def* def, xr_server_conn* conn)
@@ -92,34 +92,11 @@ static xr_servlet* xr_servlet_new(xr_servlet_def* def, xr_server_conn* conn)
 
   if (s->def->init && !s->def->init(s))
   {
-    xr_servlet_free(s, FALSE);
+    xr_servlet_free(s);
     return NULL;
   }
 
   return s;
-}
-
-static xr_server_conn* xr_server_conn_new(BIO* bio)
-{
-  xr_server_conn* c = g_new0(xr_server_conn, 1);
-  c->servlets = g_ptr_array_sized_new(3);
-  c->http = xr_http_new(bio);
-  c->bio = bio;
-  c->running = TRUE;
-  return c;
-}
-
-static void xr_server_conn_free(xr_server_conn* conn)
-{
-  if (conn == NULL)
-    return;
-  xr_http_free(conn->http);
-  BIO_reset(conn->bio);
-  BIO_free_all(conn->bio);
-  g_ptr_array_foreach(conn->servlets, (GFunc)xr_servlet_free, (gpointer)TRUE);
-  g_ptr_array_free(conn->servlets, TRUE);
-  memset(conn, 0, sizeof(*conn));
-  g_free(conn);
 }
 
 static xr_servlet* xr_server_conn_find_servlet(xr_server_conn* conn, const char* name)
@@ -154,36 +131,22 @@ xr_http* xr_servlet_get_http(xr_servlet* servlet)
 
 char* xr_servlet_get_client_ip(xr_servlet* servlet)
 {
-#ifdef WIN32
-  /* I don't have time for this crap, right now :D */
-  return NULL;
-#else
-  char buf[INET_ADDRSTRLEN];
-  int socket = -1;
-
   g_return_val_if_fail(servlet != NULL, NULL);
   g_return_val_if_fail(servlet->conn != NULL, NULL);
 
-  BIO_get_fd(servlet->conn->bio, &socket);
-  if (socket > 0)
+  GSocketAddress* addr = g_socket_connection_get_remote_address(servlet->conn->conn, NULL);
+  if (addr)
   {
-    socklen_t clnt_length;
-    struct sockaddr_in clnt_addr;
+    GInetAddress* inet_addr = g_inet_socket_address_get_address(G_INET_SOCKET_ADDRESS(addr));
 
-    memset(&clnt_addr, 0, sizeof(clnt_addr));
-    clnt_length = sizeof(clnt_addr);
+    char* str = g_inet_address_to_string(inet_addr);
 
-    if (getpeername(socket, (struct sockaddr*)&clnt_addr, &clnt_length) == 0)
-    {
-      if (inet_ntop(AF_INET, &clnt_addr.sin_addr, buf, sizeof(buf)) == NULL)
-        return NULL;
-      else
-        return g_strdup(buf);
-    }
+    g_object_unref(addr);
+
+    return str;
   }
 
-  return NULL;
-#endif
+  return  NULL;
 }
 
 static xr_servlet_def* _find_servlet_def(xr_server* server, char* name)
@@ -260,7 +223,7 @@ out:
   return retval;
 }
 
-static gboolean maybe_remove_servlet(gpointer key, gpointer value, gpointer user_data)
+static gboolean _maybe_remove_servlet(gpointer key, gpointer value, gpointer user_data)
 {
   xr_servlet* servlet = value;
   xr_server* server = user_data;
@@ -268,7 +231,8 @@ static gboolean maybe_remove_servlet(gpointer key, gpointer value, gpointer user
   if (g_mutex_trylock(servlet->call_mutex))
   {
     g_mutex_unlock(servlet->call_mutex); /* this is ok, as nobody else is going to take this lock during remove */
-    return (servlet->last_used + 60 < server->current_time || servlet->last_used > server->current_time);
+    gboolean remove = (servlet->last_used + 60 < server->current_time || servlet->last_used > server->current_time);
+    return remove;
   }
 
   /* servlet is locked, can't remove */
@@ -277,14 +241,14 @@ static gboolean maybe_remove_servlet(gpointer key, gpointer value, gpointer user
 
 static gpointer sessions_cleaner_func(xr_server* server)
 {
-  while (server->running)
+  while (g_socket_service_is_active(G_SOCKET_SERVICE(server->service)))
   {
-    g_usleep(1000000);
-
     server->current_time = time(NULL);
     g_static_rw_lock_writer_lock(&server->sessions_lock);
-    g_hash_table_foreach_remove(server->sessions, maybe_remove_servlet, server);
+    g_hash_table_foreach_remove(server->sessions, _maybe_remove_servlet, server);
     g_static_rw_lock_writer_unlock(&server->sessions_lock);
+
+    g_usleep(1000000);
   }
 
   return NULL;
@@ -310,12 +274,14 @@ again:
     g_static_rw_lock_reader_lock(&server->sessions_lock);
     servlet = g_hash_table_lookup(server->sessions, session_id);
     if (servlet)
+    {
       if (!g_mutex_trylock(servlet->call_mutex))
       {
         g_static_rw_lock_reader_unlock(&server->sessions_lock);
-        g_usleep(1000);
+        g_usleep(10000);
         goto again;
       }
+    }
     g_static_rw_lock_reader_unlock(&server->sessions_lock);
 
     /* if servlet does not exist */
@@ -352,22 +318,32 @@ again:
       cur_servlet = g_hash_table_lookup(server->sessions, session_id); 
       if (cur_servlet)
       {
-        xr_servlet_free(servlet, TRUE);
+        xr_servlet_free_fini(servlet);
         servlet = cur_servlet;
       }
       else
+      {
         g_hash_table_replace(server->sessions, g_strdup(session_id), servlet);
+      }
 
       /* this will block sessions ht access until servlet call completes, if
          servlet was found in other thread, which should be rare occurrance */
-      g_mutex_lock(servlet->call_mutex);
+      if (!g_mutex_trylock(servlet->call_mutex))
+      {
+        g_static_rw_lock_writer_unlock(&server->sessions_lock);
+        g_usleep(10000);
+        goto again;
+      }
+
       g_static_rw_lock_writer_unlock(&server->sessions_lock);
     }
 
     servlet->conn = conn;
     servlet->last_used = time(NULL);
     gboolean rs = _xr_servlet_do_call(servlet, call);
+
     g_mutex_unlock(servlet->call_mutex);
+
     return rs;
   }
 
@@ -391,17 +367,19 @@ again:
       g_free(servlet_name);
       return FALSE;
     }
-    g_free(servlet_name);
 
     servlet = xr_servlet_new(def, conn);
     if (servlet == NULL)
     {
       xr_call_set_error(call, -1, "Servlet initialization failed.");
+      g_free(servlet_name);
       return FALSE;
     }
 
     g_ptr_array_add(conn->servlets, servlet);
   }
+
+  g_free(servlet_name);
   
   return _xr_servlet_do_call(servlet, call);
 }
@@ -583,126 +561,84 @@ static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn
   return TRUE;
 }
 
-static void _xr_server_connection_thread(xr_server_conn* conn, xr_server* server)
-{
-  xr_trace(XR_DEBUG_SERVER_TRACE, "(conn=%p, server=%p)", conn, server);
-
-  g_return_if_fail(conn != NULL);
-  g_return_if_fail(server != NULL);
-
-  if (server->secure)
-    if (BIO_do_handshake(conn->bio) <= 0)
-      goto done;
-
-  while (conn->running)
-    if (!_xr_server_serve_request(server, conn))
-      break;
-
- done:
-  xr_server_conn_free(conn);
-}
-
 void xr_server_stop(xr_server* server)
 {
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p)", server);
+
   g_return_if_fail(server != NULL);
-  server->running = FALSE;
+
+  g_socket_service_stop(G_SOCKET_SERVICE(server->service));
+  g_main_loop_quit(server->loop);
 }
 
-/* wait for a connection and accept it, return FALSE on fatal error, TRUE on
-   temprary error or success */
-static gboolean _xr_server_accept_connection(xr_server* server, GError** err)
+gboolean _xr_server_service_run(GThreadedSocketService *service, GSocketConnection *connection, GObject *source_object, gpointer user_data)
 {
   GError* local_err = NULL;
+  xr_server* server = user_data;
   xr_server_conn* conn;
 
-  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, err=%p)", server, err);
+  //xr_trace(XR_DEBUG_SERVER_TRACE, "(conn=%p, server=%p)", conn, server);
 
-  g_return_val_if_fail(server != NULL, FALSE);
-  g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
-
-  if (BIO_do_accept(server->bio_accept) <= 0)
-  {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept failed: %s", xr_get_bio_error_string());
-    return FALSE;
-  }
+  xr_set_nodelay(g_socket_connection_get_socket(connection));
 
   // new connection accepted
-  conn = xr_server_conn_new(BIO_pop(server->bio_accept));
+  conn = g_new0(xr_server_conn, 1);
+  conn->servlets = g_ptr_array_sized_new(3);
+  conn->running = TRUE;
 
-  // if we have too many clients in the queue, pause accepting new ones
-  // and leave some time to process existing ones, this ensures that
-  // server does not get overloaded and improves latency for clients that are in
-  // the queue or being processed right now
-  if (g_thread_pool_unprocessed(server->pool) > 50)
-    g_usleep(500000);
-
-  // push client into the queue
-  g_thread_pool_push(server->pool, conn, &local_err);
-  if (local_err)
+  // setup TLS
+  if (server->secure)
   {
-    xr_server_conn_free(conn);
-
-    // check if this is only temporary error
-    if (!g_error_matches(local_err, G_THREAD_ERROR, G_THREAD_ERROR_AGAIN))
+    conn->tls_conn = g_tls_server_connection_new(G_IO_STREAM(connection), server->cert, &local_err);
+    if (local_err)
     {
-      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "thread push failed: %s", local_err->message);
-      g_clear_error(&local_err);
-      return FALSE;
+      g_error_free(local_err);
+      goto out;
     }
 
-    g_clear_error(&local_err);
+    //g_object_set(conn->conn, "authentication-mode", test->auth_mode, NULL);
+    //g_signal_connect(conn->conn, "accept-certificate", G_CALLBACK(on_accept_certificate), server);
+
+    conn->http = xr_http_new(conn->tls_conn);
+  }
+  else
+  {
+    conn->http = xr_http_new(G_IO_STREAM(connection));
   }
 
-  return TRUE;
+  conn->conn = connection;
+
+  while (conn->running)
+  {
+    if (!_xr_server_serve_request(server, conn))
+      break;
+  }
+
+out:
+  xr_http_free(conn->http);
+  if (conn->tls_conn)
+    g_object_unref(conn->tls_conn);
+  g_ptr_array_foreach(conn->servlets, (GFunc)xr_servlet_free_fini, NULL);
+  g_ptr_array_free(conn->servlets, TRUE);
+  memset(conn, 0, sizeof(*conn));
+  g_free(conn);
+
+  return FALSE;
 }
 
 gboolean xr_server_run(xr_server* server, GError** err)
 {
   GError* local_err = NULL;
-  fd_set set, setcopy;
-  struct timeval tv, tvcopy;
-  int maxfd;
 
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, err=%p)", server, err);
 
   g_return_val_if_fail(server != NULL, FALSE);
   g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
 
-  FD_ZERO(&setcopy);
-  FD_SET(server->sock, &setcopy);
-  maxfd = server->sock + 1;
-  tvcopy.tv_sec = 0;
-  tvcopy.tv_usec = 500000;
-  
-  server->running = TRUE;
-  while (server->running)
-  {
-    set = setcopy;
-    tv = tvcopy;
+  g_socket_service_start(G_SOCKET_SERVICE(server->service));
 
-    int rs = select(maxfd, &set, NULL, NULL, &tv);
-    if (rs < 0)
-    {
-#ifdef WIN32
-      if (WSAGetLastError() == WSAEINTR)
-        continue;
-#else
-      if (errno == EINTR)
-        return TRUE;
-#endif
-      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "select failed: %s", g_strerror(errno));
-      return FALSE;
-    }
-    else if (rs == 0)
-      continue;
-
-    if (!_xr_server_accept_connection(server, &local_err))
-    {
-      g_propagate_error(err, local_err);
-      return FALSE;
-    }
-  }
+  server->loop = g_main_loop_new(NULL, TRUE);
+  g_main_loop_run(server->loop);
 
   return TRUE;
 }
@@ -733,109 +669,100 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
 
   xr_server* server = g_new0(xr_server, 1);
   server->secure = !!cert;
+  server->service = g_threaded_socket_service_new(threads);
+  g_signal_connect(server->service, "run", (GCallback)_xr_server_service_run, server);
 
-  server->ctx = SSL_CTX_new(SSLv23_server_method());
-  if (server->ctx == NULL)
+  if (cert)
   {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "ssl context creation failed: %s", ERR_reason_error_string(ERR_get_error()));
-    goto err1;
-  }
-
-  if (server->secure)
-  {
-    if (!SSL_CTX_use_certificate_file(server->ctx, cert, SSL_FILETYPE_PEM) ||
-        !SSL_CTX_use_PrivateKey_file(server->ctx, cert, SSL_FILETYPE_PEM) ||
-        !SSL_CTX_check_private_key(server->ctx))
+    server->cert = g_tls_certificate_new_from_file(cert, &local_err);
+    if (local_err)
     {
-      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "ssl cert load failed: %s", ERR_reason_error_string(ERR_get_error()));
-      goto err2;
+      g_propagate_prefixed_error(err, local_err, "Certificate load failed: ");
+      goto err0;
     }
   }
 
-  server->pool = g_thread_pool_new((GFunc)_xr_server_connection_thread, server, threads, TRUE, &local_err);
-  if (local_err)
-  {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "thread pool creation failed: %s", local_err->message);
-    g_clear_error(&local_err);
-    goto err2;
-  }
-
-  server->running = TRUE;
-
-  server->sessions = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)xr_servlet_free);
+  server->sessions = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)xr_servlet_free_fini);
   g_static_rw_lock_init(&server->sessions_lock);
   server->sessions_cleaner = g_thread_create((GThreadFunc)sessions_cleaner_func, server, TRUE, NULL);
   if (server->sessions_cleaner == NULL)
-    goto err3;
+    goto err1;
 
   return server;
 
-err3:
+err1:
   g_hash_table_destroy(server->sessions);
   g_static_rw_lock_free(&server->sessions_lock);
-err2:
-  SSL_CTX_free(server->ctx);
-  server->ctx = NULL;
-err1:
+  if (server->cert)
+    g_object_unref(server->cert);
+err0:
+  g_object_unref(server->service);
   g_free(server);
   return NULL;
 }
 
-SSL_CTX* xr_server_get_ssl_context(xr_server* server)
+static gboolean _parse_addr(const char* str, char** addr, int* port)
 {
-  g_return_val_if_fail(server != NULL, FALSE);
+  gboolean retval = FALSE;
+  GMatchInfo *match_info = NULL;
+  GRegex* re = g_regex_new("^((?:\\*)|(?:\\d+\\.\\d+\\.\\d+\\.\\d+)):(\\d+)$", 0, 0, NULL);
 
-  if (server->secure)
-    return server->ctx;
-  return NULL;
+  if (g_regex_match(re, str, 0, &match_info))
+  {
+    *addr = g_match_info_fetch(match_info, 1);
+    char* port_str = g_match_info_fetch(match_info, 2);
+    *port = atoi(port_str);
+    g_free(port_str);
+    retval = TRUE;
+  }
+
+  if (match_info)
+    g_match_info_free(match_info);
+
+  g_regex_unref(re);
+
+  return retval;
 }
 
-gboolean xr_server_bind(xr_server* server, const char* port, GError** err)
+gboolean xr_server_bind(xr_server* server, const char* bind_addr, GError** err)
 {
-  BIO* bio_buffer;
+  GError* local_err = NULL;
+  char* addr = NULL;
+  int port = 0;
 
-  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, port=%s, err=%p)", server, port, err);
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, bind_addr=%s, err=%p)", server, bind_addr, err);
 
   g_return_val_if_fail(server != NULL, FALSE);
-  g_return_val_if_fail(port != NULL, FALSE);
+  g_return_val_if_fail(bind_addr != NULL, FALSE);
   g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
+  g_return_val_if_fail(_parse_addr(bind_addr, &addr, &port), FALSE);
 
-  server->bio_accept = BIO_new_accept((char*)port);
-  if (server->bio_accept == NULL)
+  if (addr[0] == '*')
   {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept bio creation failed: %s", xr_get_bio_error_string());
+    g_socket_listener_add_inet_port(G_SOCKET_LISTENER(server->service), (guint16)port, NULL, &local_err);
+  }
+  else
+  {
+    // build address
+    GInetAddress* iaddr = g_inet_address_new_from_string(addr);
+    if (!iaddr)
+    {
+      g_error_new(XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "Invalid address: %s", bind_addr);
+      g_free(addr);
+      return FALSE;
+    }
+      
+    GSocketAddress* isaddr = g_inet_socket_address_new(iaddr, (guint16)port);
+    g_socket_listener_add_address(G_SOCKET_LISTENER(server->service), isaddr, G_SOCKET_TYPE_STREAM, G_SOCKET_PROTOCOL_TCP, NULL, NULL, &local_err);
+  }
+
+  g_free(addr);
+
+  if (local_err)
+  {
+    g_propagate_prefixed_error(err, local_err, "Port listen failed: ");
     return FALSE;
   }
-
-  BIO_set_bind_mode(server->bio_accept, BIO_BIND_REUSEADDR);
-
-  bio_buffer = BIO_new(BIO_f_buffer());
-  BIO_set_buffer_size(bio_buffer, 2048);
-
-  if (server->secure)
-  {
-    BIO* bio_ssl;
-    SSL* ssl;
-
-    bio_ssl = BIO_new_ssl(server->ctx, 0);
-    BIO_get_ssl(bio_ssl, &ssl);
-    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
-    BIO_push(bio_buffer, bio_ssl);
-  }
-
-  BIO_set_accept_bios(server->bio_accept, bio_buffer);
-
-  if (BIO_do_accept(server->bio_accept) <= 0)
-  {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "%s", xr_get_bio_error_string());
-    BIO_free_all(server->bio_accept);
-    server->bio_accept = NULL;
-    return FALSE;
-  }
-
-  server->sock = -1;
-  BIO_get_fd(server->bio_accept, &server->sock);
-  xr_set_nodelay(server->bio_accept);
 
   return TRUE;
 }
@@ -847,13 +774,14 @@ void xr_server_free(xr_server* server)
   if (server == NULL)
     return;
 
-  g_thread_pool_free(server->pool, TRUE, TRUE);
-  BIO_free_all(server->bio_accept);
-  SSL_CTX_free(server->ctx);
+  if (server->cert)
+    g_object_unref(server->cert);
+  g_object_unref(server->service);
   g_slist_free(server->servlet_types);
   g_thread_join(server->sessions_cleaner);
   g_hash_table_destroy(server->sessions);
   g_static_rw_lock_free(&server->sessions_lock);
+  g_main_loop_unref(server->loop);
   g_free(server);
 }
 

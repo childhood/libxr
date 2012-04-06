@@ -20,15 +20,10 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef HAVE_GLIB_REGEXP
-#include <regex.h>
-#endif
 
 #include "xr-http.h"
 #include "xr-lib.h"
 #include "xr-utils.h"
-
-#define MAX_HEADER_SIZE 2048
 
 enum state
 {
@@ -42,7 +37,8 @@ enum state
 
 struct _xr_http
 {
-  BIO* bio;
+  GDataInputStream* in;
+  GOutputStream* out;
 
   gsize bytes_read;
   int state;
@@ -59,53 +55,6 @@ struct _xr_http
 
 /* private methods */
 
-#ifndef HAVE_GLIB_REGEXP
-
-static gboolean http_initialized;
-static regex_t regex_res;
-static regex_t regex_req;
-
-void xr_http_init()
-{
-  if (!http_initialized)
-  {
-    http_initialized = TRUE;
-    regcomp(&regex_res, "^HTTP/([0-9]+\\.[0-9]+) ([0-9]+) (.+)$", REG_EXTENDED);
-    regcomp(&regex_req, "^([A-Z]+) ([^ ]+) HTTP/([0-9]+\\.[0-9]+)$", REG_EXTENDED);
-  }
-}
-
-static gboolean _xr_http_header_parse_first_line(xr_http* http, const char* line)
-{
-  regmatch_t m[4];
-  
-  if (regexec(&regex_req, line, 4, m, 0) == 0)
-  {
-    g_free(http->req_method);
-    http->req_method = g_strndup(line+m[1].rm_so, m[1].rm_eo-m[1].rm_so);
-    g_free(http->req_resource);
-    http->req_resource = g_strndup(line+m[2].rm_so, m[2].rm_eo-m[2].rm_so);
-    g_free(http->req_version);
-    http->req_version = g_strndup(line+m[3].rm_so, m[3].rm_eo-m[3].rm_so);
-    http->msg_type = XR_HTTP_REQUEST;
-    return TRUE;
-  }
-  else if (regexec(&regex_res, line, 4, m, 0) == 0)
-  {
-    gchar* code = g_strndup(line+m[2].rm_so, m[2].rm_eo-m[2].rm_so);
-    http->res_code = atoi(code);
-    g_free(code);
-    g_free(http->res_reason);
-    http->res_reason = g_strndup(line+m[3].rm_so, m[3].rm_eo-m[3].rm_so);
-    http->msg_type = XR_HTTP_RESPONSE;
-    return TRUE;
-  }
-
-  return FALSE;
-}
-
-#else
-
 static GRegex* regex_res = NULL;
 static GRegex* regex_req = NULL;
 
@@ -120,7 +69,6 @@ void xr_http_init()
 static gboolean _xr_http_header_parse_first_line(xr_http* http, const char* line)
 {
   GMatchInfo *match_info = NULL;
-  gboolean retval = TRUE;
 
   xr_http_init();
   
@@ -134,8 +82,14 @@ static gboolean _xr_http_header_parse_first_line(xr_http* http, const char* line
     g_free(http->res_reason);
     http->res_reason = g_match_info_fetch(match_info, 3);
     http->msg_type = XR_HTTP_RESPONSE;
+
+    g_match_info_free(match_info);
+    return TRUE;
   }
-  else if (g_regex_match(regex_req, line, 0, &match_info))
+
+  g_match_info_free(match_info);
+  
+  if (g_regex_match(regex_req, line, 0, &match_info))
   {
     g_free(http->req_method);
     g_free(http->req_resource);
@@ -144,75 +98,26 @@ static gboolean _xr_http_header_parse_first_line(xr_http* http, const char* line
     http->req_resource = g_match_info_fetch(match_info, 2);
     http->req_version = g_match_info_fetch(match_info, 3);
     http->msg_type = XR_HTTP_REQUEST;
+
+    g_match_info_free(match_info);
+    return TRUE;
   }
-  else
-    retval = FALSE;
 
   g_match_info_free(match_info);
 
-  return retval;
-}
-
-#endif
-
-static int BIO_xread(BIO* bio, void* buf, int len)
-{
-  int bytes_read = 0;
-  while (bytes_read < len)
-  {
-    int rs = BIO_read(bio, buf + bytes_read, len - bytes_read);
-    if (rs < 0)
-      return -1;
-    if (rs == 0)
-      return bytes_read;
-    bytes_read += rs;
-  }
-  return len;
-}
-
-/* return -1 on error, 0 on success, 1 if line was longer than buffer */
-static int BIO_xgets(BIO* bio, char* buffer, int length)
-{
-  char *cp, tmp;
-
-  memset(buffer, 0, length);
-  switch (BIO_gets(bio, buffer, length - 1)) 
-  {
-    case -2:
-      return -1;
-
-    case 0:
-    case -1:
-      return 1;
-
-    default:
-      for (cp = buffer; *cp; cp++)
-      {
-        if (*cp == '\n' || *cp == '\r') 
-        {
-          *cp = '\0';
-          return 0;
-        }
-      }
-      /* skip rest of "line" */
-      tmp = '\0';
-      while (tmp != '\n')
-        if (BIO_read(bio, &tmp, 1) != 1)
-          return 1;
-      break;
-  }
-
-  return 0;
+  return FALSE;
 }
 
 /* public methods */
 
-xr_http* xr_http_new(BIO* bio)
+xr_http* xr_http_new(GIOStream* stream)
 {
-  g_return_val_if_fail(bio != NULL, NULL);
+  g_return_val_if_fail(stream != NULL, NULL);
 
   xr_http* http = g_new0(xr_http, 1);
-  http->bio = bio;
+  http->in = g_data_input_stream_new(g_io_stream_get_input_stream(stream));
+  g_data_input_stream_set_newline_type(http->in, G_DATA_STREAM_NEWLINE_TYPE_ANY);
+  http->out = g_buffered_output_stream_new_sized(g_io_stream_get_output_stream(stream), 16*1024);
   http->headers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
@@ -227,6 +132,8 @@ void xr_http_free(xr_http* http)
   if (http == NULL)
     return;
 
+  g_object_unref(http->in);
+  g_object_unref(http->out);
   g_hash_table_destroy(http->headers);
   g_free(http->req_method);
   g_free(http->req_resource);
@@ -238,7 +145,8 @@ void xr_http_free(xr_http* http)
 
 gboolean xr_http_read_header(xr_http* http, GError** err)
 {
-  char header[MAX_HEADER_SIZE + 1];
+  GError* local_err = NULL;
+  char* header;
   gboolean first_line = TRUE;
   const char* clen;
 
@@ -253,68 +161,77 @@ gboolean xr_http_read_header(xr_http* http, GError** err)
   if (xr_debug_enabled & XR_DEBUG_HTTP)
     g_print("<<<<< HTTP RECEIVE START <<<<<\n");
 
-  while (1)
+  /* read first line */
+  header = g_data_input_stream_read_line(http->in, NULL, NULL, &local_err);
+  if (local_err)
   {
-    int rs = BIO_xgets(http->bio, header, MAX_HEADER_SIZE);
-    switch (rs)
+    g_propagate_prefixed_error(err, local_err, "HTTP read_line failed: ");
+    goto err;
+  }
+
+  if (header == NULL)
+    return FALSE;
+
+  if (xr_debug_enabled & XR_DEBUG_HTTP)
+    g_print("%s\n", header);
+
+  if (!_xr_http_header_parse_first_line(http, header))
+  {
+    g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "Invalid HTTP first line.");
+    goto err;
+  }
+
+  g_free(header);
+
+  while (TRUE)
+  {
+    header = g_data_input_stream_read_line(http->in, NULL, NULL, &local_err);
+    if (local_err)
     {
-      case -1:
-        g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP xgets failed: %s.", xr_get_bio_error_string());
-        goto err;
-
-      case 1:
-        g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP header too long, limit is %d bytes.", MAX_HEADER_SIZE);
-        goto err;
-
-      default:
-        if (xr_debug_enabled & XR_DEBUG_HTTP)
-          g_print("%s\n", header);
-
-        if (first_line)
-        {
-          if (!_xr_http_header_parse_first_line(http, header))
-          {
-            g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "Invalid HTTP message.");
-            goto err;
-          }
-          first_line = FALSE;
-        }
-        else
-        {
-          if (*header == '\0')
-            goto done;
-
-          char* colon = strchr(header, ':');
-
-          if (colon)
-          {
-            *colon = '\0';
-            char* key = g_ascii_strdown(g_strstrip(header), -1);
-            char* value = g_strdup(g_strstrip(colon + 1));
-            g_hash_table_replace(http->headers, key, value);
-          }
-        }
+      g_propagate_prefixed_error(err, local_err, "HTTP read_line failed: ");
+      goto err;
     }
-  }
 
-done:
-  clen = g_hash_table_lookup(http->headers, "content-length");
-  http->content_length = clen ? atoi(clen) : -1;
-
-  if (http->msg_type == XR_HTTP_REQUEST && !strcmp(http->req_method, "GET"))
-  {
-    http->state = STATE_INIT;
     if (xr_debug_enabled & XR_DEBUG_HTTP)
-      g_print(">>>>> HTTP RECEIVE END >>>>>>>\n");
-  }
-  else
-    http->state = STATE_HEADER_READ;
+      g_print("%s\n", header);
 
-  return TRUE;
+    /* end of header */
+    if (!header || *header == '\0')
+    {
+      g_free(header);
+
+      clen = g_hash_table_lookup(http->headers, "content-length");
+      http->content_length = clen ? atoi(clen) : -1;
+
+      if (http->msg_type == XR_HTTP_REQUEST && !strcmp(http->req_method, "GET"))
+      {
+        http->state = STATE_INIT;
+        if (xr_debug_enabled & XR_DEBUG_HTTP)
+          g_print(">>>>> HTTP RECEIVE END >>>>>>>\n");
+      }
+      else
+        http->state = STATE_HEADER_READ;
+
+      return TRUE;
+    }
+
+    char* colon = strchr(header, ':');
+
+    if (colon)
+    {
+      *colon = '\0';
+      char* key = g_ascii_strdown(g_strstrip(header), -1);
+      char* value = g_strdup(g_strstrip(colon + 1));
+      g_hash_table_replace(http->headers, key, value);
+    }
+
+    g_free(header);
+  }
 
 err:
   if (xr_debug_enabled & XR_DEBUG_HTTP)
     g_print(">>>>> HTTP RECEIVE ERROR >>>>>\n");
+
   http->state = STATE_ERROR;
   return FALSE;
 }
@@ -449,8 +366,9 @@ gssize xr_http_get_message_length(xr_http* http)
 
 gssize xr_http_read(xr_http* http, char* buffer, gsize length, GError** err)
 {
-  int bytes_read;
-  int bytes_remaining;
+  GError* local_err = NULL;
+  gsize bytes_read;
+  gssize bytes_remaining;
 
   g_return_val_if_fail(http != NULL, -1);
   g_return_val_if_fail(err == NULL || *err == NULL, -1);
@@ -470,16 +388,16 @@ gssize xr_http_read(xr_http* http, char* buffer, gsize length, GError** err)
   }
 
   bytes_remaining = http->content_length - http->bytes_read;
-  bytes_read = BIO_xread(http->bio, buffer, MIN(length, bytes_remaining));
-  if (bytes_read < 0)
+  g_input_stream_read_all(G_INPUT_STREAM(http->in), buffer, MIN(length, bytes_remaining), &bytes_read, NULL, &local_err);
+  if (local_err)
   {
-    g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP read failed: %s.", xr_get_bio_error_string());
+    g_propagate_prefixed_error(err, local_err, "HTTP read failed: ");
     http->state = STATE_ERROR;
     return -1;
   }
 
   if (xr_debug_enabled & XR_DEBUG_HTTP)
-    g_print("%.*s", bytes_read, buffer);
+    g_print("%.*s", (int)bytes_read, buffer);
 
   http->bytes_read += bytes_read;
 
@@ -655,6 +573,7 @@ static void add_header(const char* key, const char* value, GString* header)
 
 gboolean xr_http_write_header(xr_http* http, GError** err)
 {
+  GError* local_err = NULL;
   GString* header;
 
   g_return_val_if_fail(http != NULL, FALSE);
@@ -685,9 +604,9 @@ gboolean xr_http_write_header(xr_http* http, GError** err)
     g_print("%s", header->str);
   }
 
-  if (BIO_write(http->bio, header->str, header->len) != header->len)
+  if (!g_output_stream_write_all(http->out, header->str, header->len, NULL, NULL, &local_err))
   {
-    g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP write failed: %s.", xr_get_bio_error_string());
+    g_propagate_prefixed_error(err, local_err, "HTTP write failed: ");
     http->state = STATE_ERROR;
     g_string_free(header, TRUE);
     return FALSE;
@@ -701,6 +620,8 @@ gboolean xr_http_write_header(xr_http* http, GError** err)
 
 gboolean xr_http_write(xr_http* http, const char* buffer, gsize length, GError** err)
 {
+  GError* local_err = NULL;
+
   g_return_val_if_fail(http != NULL, FALSE);
   g_return_val_if_fail(buffer != NULL, FALSE);
   g_return_val_if_fail(length > 0, FALSE);
@@ -711,9 +632,9 @@ gboolean xr_http_write(xr_http* http, const char* buffer, gsize length, GError**
 
   http->state = STATE_WRITING_BODY;
 
-  if (BIO_write(http->bio, buffer, length) != length)
+  if (!g_output_stream_write_all(http->out, buffer, length, NULL, NULL, &local_err))
   {
-    g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP write failed: %s.", xr_get_bio_error_string());
+    g_propagate_prefixed_error(err, local_err, "HTTP write failed: ");
     http->state = STATE_ERROR;
     return FALSE;
   }
@@ -726,15 +647,17 @@ gboolean xr_http_write(xr_http* http, const char* buffer, gsize length, GError**
 
 gboolean xr_http_write_complete(xr_http* http, GError** err)
 {
+  GError* local_err = NULL;
+
   g_return_val_if_fail(http != NULL, FALSE);
   g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
   g_return_val_if_fail(http->state == STATE_WRITING_BODY || http->state == STATE_HEADER_WRITTEN, FALSE);
 
   xr_trace(XR_DEBUG_HTTP_TRACE, "(http=%p)", http);
 
-  if (BIO_flush(http->bio) != 1)
+  if (!g_output_stream_flush(http->out, NULL, &local_err))
   {
-    g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP flush failed: %s.", xr_get_bio_error_string());
+    g_propagate_prefixed_error(err, local_err, "HTTP flush failed: ");
     http->state = STATE_ERROR;
     return FALSE;
   }
@@ -782,6 +705,6 @@ gboolean xr_http_is_ready(xr_http* http)
 
 GQuark xr_http_error_quark()
 {
-  static GQuark quark;
+  static GQuark quark = 0;
   return quark ? quark : (quark = g_quark_from_static_string("xr_http_error"));
 }

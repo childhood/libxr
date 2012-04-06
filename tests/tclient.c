@@ -36,7 +36,6 @@ static gpointer _thread_func(gpointer data)
 {
   GError *err = NULL;
   char* uri = data;
-  xr_debug_enabled = XR_DEBUG_ALL;
 
   xr_client_conn* conn = xr_client_new(&err);
   if (_check_err(err))
@@ -73,11 +72,13 @@ int main(int ac, char* av[])
 {
   GError* err = NULL;
   GThread* t[1024];
-  int count = 100, i;
+  int count = 20, i;
   char* uri = ac == 2 ? av[1] : "https://localhost:4444/TTest1";
 
   if (!g_thread_supported())
     g_thread_init(NULL);
+
+  xr_debug_enabled = XR_DEBUG_ALL;
 
   for (i=0; i<count; i++)
   {

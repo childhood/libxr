@@ -27,7 +27,6 @@
 #ifndef __XR_SERVER_H__
 #define __XR_SERVER_H__
 
-#include <openssl/ssl.h>
 #include "xr-call.h"
 #include "xr-http.h"
 #include "xr-value-utils.h"
@@ -116,20 +115,10 @@ G_BEGIN_DECLS
  */
 xr_server* xr_server_new(const char* cert, int threads, GError** err);
 
-/** Get SSL context used by the server.
- *
- * This can be used for custom SSL setup.
- * 
- * @param server Server object.
- * 
- * @return SSL_CTX pointer owned by the xr_server.
- */
-SSL_CTX* xr_server_get_ssl_context(xr_server* server);
-
 /** Bind to the specified host/port.
  *
  * @param server Server object.
- * @param port Port and IP address to bind to.
+ * @param port Port and IP address to bind to. (*:1234, 127.0.0.1:1234)
  * @param err Pointer to the variable to store error to on error.
  *
  * @return Function returns FALSE on error, TRUE on success.

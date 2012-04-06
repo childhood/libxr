@@ -8,7 +8,7 @@ valgrind \
   --leak-check=full \
   --leak-resolution=high \
   --show-reachable=yes \
-  --log-file-exactly=leak-server.log \
+  --log-file=leak-server.log \
   --suppressions=leak.supp \
   $FLAGS \
   ./server

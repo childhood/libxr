@@ -34,7 +34,7 @@ struct AllArrays
     array<blob>        a_blob;
     array<int>         a_int;
     array<boolean>     a_boolean;
-//    array<double>      a_double;
+    array<double>      a_double;
     array<any>         a_any;
     array<Struct>      a_struct;
     array<array<string>> aa_string;
@@ -94,61 +94,81 @@ servlet Test1
     printf("getAllArrays()\n");
 
     retval = TAllArrays_new();
+
+    retval->a_string = Array_string_new();
     for (i = 0; i < 5; i++)
-      ADD(a_string, g_strdup_printf("str%d", i));
-    ADD(a_string, g_strdup("&#10;test<\xc4\x8d\xc5\x99\xc5\xa1"));
+      Array_string_add(retval->a_string, g_strdup_printf("str%d", i));
+    Array_string_add(retval->a_string, g_strdup("&#10;test<\xc4\x8d\xc5\x99\xc5\xa1"));
+
+    retval->a_time = Array_time_new();
     for (i = 1; i < 10; i++)
-      ADD(a_time, g_strdup_printf("2006-04-%02d", i));
+      Array_time_add(retval->a_time, g_strdup_printf("2006-04-%02d", i));
+
+    retval->a_blob = Array_blob_new();
     for (i = 0; i < 2; i++)
-      ADD(a_blob, xr_blob_new(g_strdup_printf("BBBBBBBBBBBBBBBBBLOOOOOB%d", i), -1));
+      Array_blob_add(retval->a_blob, xr_blob_new(g_strdup_printf("BBBBBBBBBBBBBBBBBLOOOOOB%d", i), -1));
+
+    retval->a_int = Array_int_new();
     for (i = 0; i < 10; i++)
-      ADD(a_int, (gpointer)i);
+      Array_int_add(retval->a_int, i);
+
+    retval->a_boolean = Array_boolean_new();
     for (i = 0; i < 10; i++)
-      ADD(a_boolean, (gpointer)g_random_boolean());
-//    for (i = 0; i < 5; i++)
-//      ADD(a_double, (gpointer)(double)(i * 1.11e-3));
+      Array_boolean_add(retval->a_boolean, g_random_boolean());
+
+    retval->a_double = Array_double_new();
+    for (i = 0; i < 5; i++)
+      Array_double_add(retval->a_double, i * 1.11e-3);
+
+    retval->a_any = Array_any_new();
     for (i = 0; i < 10; i++)
       if (g_random_boolean())
       {
         char* val = g_strdup_printf("%d", i);
-        ADD(a_any, xr_value_string_new(val));
+        Array_any_add(retval->a_any, xr_value_string_new(val));
         g_free(val);
       }
       else
-        ADD(a_any, xr_value_int_new(i));
+        Array_any_add(retval->a_any, xr_value_int_new(i));
+
+    retval->a_struct = Array_TStruct_new();
     for (i = 0; i < 2; i++)
     {
       TStruct* s = TStruct_new();
       s->v_string = g_strdup_printf("struct val %d", i);
-      ADD(a_struct, s);
+      Array_TStruct_add(retval->a_struct, s);
     }
+
+    retval->aa_string = Array_Array_string_new();
     for (i = 0; i < 2; i++)
     {
-      GSList* a = NULL;
+      GArray* a = Array_string_new();
       int j;
 
       for (j = 0; j < 10; j++)
-        a = g_slist_append(a, g_strdup_printf("[%d %d]", i, j));
+        Array_string_add(a, g_strdup_printf("[%d %d]", i, j));
 
-      ADD(aa_string, a);
+      Array_Array_string_add(retval->aa_string, a);
     }
+
+    retval->aaa_string = Array_Array_Array_string_new();
     for (i = 0; i < 2; i++)
     {
-      GSList* a = NULL;
+      GArray* a = Array_Array_string_new();
       int j;
 
       for (j = 0; j < 10; j++)
       {
-        GSList* b = NULL;
+        GArray* b = Array_string_new();
         int k;
 
         for (k = 0; k < 3; k++)
-          b = g_slist_append(b, g_strdup_printf("[%d %d %d]", i, j, k));
+          Array_string_add(b, g_strdup_printf("[%d %d %d]", i, j, k));
 
-        a = g_slist_append(a, b);
+        Array_Array_string_add(a, b);
       }
 
-      ADD(aaa_string, a);
+      Array_Array_Array_string_add(retval->aaa_string, a);
     }
 
 #undef ADD
@@ -167,14 +187,20 @@ servlet Test1
   array<string> getBigArray()
   <%
     int i;
-    for (i=0; i<5000; i++)
-      retval = g_slist_append(retval, g_strdup_printf("user.bob%d@zonio.net", i));
+
+    retval = Array_string_new();
+    for (i = 0; i < 5000; i++)
+      Array_string_add(retval, g_strdup_printf("user.bob%d@zonio.net", i));
   %>
 
   boolean putBigArray(take array<string> arr)
   <%
-    g_slist_foreach(arr, (GFunc)g_free, NULL);
-    g_slist_free(arr);
+    int i;
+
+//    for (i = 0; i < arr->len; i++)
+//      g_print("n: %s\n", Array_string_get(arr, i));
+
+    Array_string_free(arr);
   %>
 
   __attrs__

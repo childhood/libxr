@@ -41,7 +41,7 @@ int main(int ac, char* av[])
   GError* err = NULL;
   char* uri = ac == 2 ? av[1] : "https://localhost:4444/RPC2";
 
-  xr_debug_enabled = XR_DEBUG_CALL | XR_DEBUG_HTTP;
+  xr_debug_enabled = XR_DEBUG_CALL | XR_DEBUG_HTTP | XR_DEBUG_ALL;
 
   if (!g_thread_supported())
     g_thread_init(NULL);
@@ -66,15 +66,15 @@ int main(int ac, char* av[])
   xr_client_set_transport(conn, XR_CALL_JSON_RPC);
 #endif 
 
-  GSList* arr = TTest1_getBigArray(conn, &err);
+  GArray* arr = TTest1_getBigArray(conn, &err);
   _check_err(err);
   err = NULL;
   Array_string_free(arr);
 
   int i;
-  arr = NULL;
+  arr = Array_string_new();
   for (i=0; i<5000; i++)
-    arr = g_slist_append(arr, g_strdup_printf("user.bob%d@zonio.net", i));
+    Array_string_add(arr, g_strdup_printf("user.bob%d@zonio.net", i));
   TTest1_putBigArray(conn, arr, &err);
   _check_err(err);
   err = NULL;

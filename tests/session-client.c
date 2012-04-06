@@ -38,9 +38,15 @@ static int _check_err(GError* err)
   return 0;
 }
 
-gboolean connect_call_disconnect(int id)
+struct _client_data
+{
+  int id;
+};
+
+gboolean connect_call_disconnect(gpointer data)
 {
   GError* err = NULL;
+  struct _client_data* c = data;
 
   /* create object for performing client connections */
   xr_client_conn* conn = xr_client_new(&err);
@@ -55,7 +61,7 @@ gboolean connect_call_disconnect(int id)
     return TRUE;
   }
 
-  char* session_id = g_strdup_printf("%d", id);
+  char* session_id = g_strdup_printf("%d", c->id);
   xr_client_set_http_header(conn, "X-SESSION-ID", session_id);
   xr_client_set_http_header(conn, "X-SESSION-USE", "1");
   g_free(session_id);
@@ -87,10 +93,15 @@ int main(int ac, char* av[])
   if (!g_thread_supported())
     g_thread_init(NULL);
 
-  for (i = 0; i < 100; i++)
-    t[i] = g_thread_create((GThreadFunc)connect_call_disconnect, i % 1, TRUE, NULL);
+  for (i = 0; i < 20; i++)
+  {
+    struct _client_data* c = g_new0(struct _client_data, 1);
+    c->id = i % 5;
 
-  for (i = 0; i < 100; i++)
+    t[i] = g_thread_create((GThreadFunc)connect_call_disconnect, c, TRUE, NULL);
+  }
+
+  for (i = 0; i < 20; i++)
     g_thread_join(t[i]);
 
   xr_fini();

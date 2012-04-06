@@ -24,9 +24,9 @@ Makefile.in
 /libtool
 /ltmain.sh
 /compile
-/libxr.pc
 /tags
-/.test
+/xr-config.h
+/.misc
 /.vimrc
 
 /tests/client
@@ -41,6 +41,15 @@ Makefile.in
 /tests/TTest*.c
 /tests/TTest*.h
 /tests/leak*.log
+/tests/.sources-ts
+/tests/client.log
+/tests/server.log
+/tests/session-client
+/tests/test.get
+/tests/test.post
+/tests/unit/t001-call
+/tests/value-utils-test
+
 /tests/vala/T*
 /tests/vala/test
 /tests/vala/test.c
@@ -64,3 +73,7 @@ Makefile.in
 /m4/ltsugar.m4
 /m4/ltversion.m4
 /m4/lt~obsolete.m4
+
+
+/pkgconfig/libxr-uninstalled.pc
+/pkgconfig/libxr.pc

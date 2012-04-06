@@ -51,17 +51,17 @@ static void _xr_value_serialize_xmlrpc(xmlNode* node, xr_value* val)
     }
     case XRV_BOOLEAN:
     {
-      int bool_val = -1;
+      int bool_val = 0;
       xr_value_to_bool(val, &bool_val);
       xmlNewChild(node, NULL, BAD_CAST "boolean", BAD_CAST (bool_val ? "1" : "0"));
       break;
     }
     case XRV_DOUBLE:
     {
-      double dbl_val = -1;
+      double dbl_val = 0.0;
       xr_value_to_double(val, &dbl_val);
-      snprintf(buf, sizeof(buf), "%g", dbl_val);
-      xmlNewChild(node, NULL, BAD_CAST "double", NULL);
+      snprintf(buf, sizeof(buf), "%lf", dbl_val);
+      xmlNewChild(node, NULL, BAD_CAST "double", BAD_CAST buf);
       break;
     }
     case XRV_TIME:

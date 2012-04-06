@@ -19,9 +19,7 @@
 
 #include <config.h>
 #include <stdlib.h>
-#ifndef HAVE_GLIB_REGEXP
-#include <regex.h>
-#endif
+#include <string.h>
 
 #include "xr-client.h"
 #include "xr-http.h"
@@ -29,16 +27,16 @@
 
 struct _xr_client_conn
 {
-  SSL_CTX* ctx;
-  BIO* bio;
+  GSocketClient* client;
+  GSocketConnection* conn;
   xr_http* http;
 
   char* resource;
   char* host;
   char* session_id;
-  int secure;
+  gboolean secure;
 
-  int is_open;
+  gboolean is_open;
   GHashTable* headers;
   xr_call_transport transport;
 };
@@ -52,13 +50,7 @@ xr_client_conn* xr_client_new(GError** err)
   xr_init();
 
   xr_client_conn* conn = g_new0(xr_client_conn, 1);
-  conn->ctx = SSL_CTX_new(TLSv1_client_method());
-  if (conn->ctx == NULL)
-  {
-    g_free(conn);
-    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "ssl context creation failed: %s", ERR_reason_error_string(ERR_get_error()));
-    return NULL;
-  }
+  conn->client = g_socket_client_new();
 
   conn->headers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
   conn->transport = XR_CALL_XML_RPC;
@@ -66,60 +58,9 @@ xr_client_conn* xr_client_new(GError** err)
   return conn;
 }
 
-SSL_CTX* xr_client_get_ssl_context(xr_client_conn* conn)
-{
-  g_return_val_if_fail(conn != NULL, NULL);
-  g_return_val_if_fail(!conn->is_open, NULL);
-
-  return conn->ctx;
-}
-
-#ifndef HAVE_GLIB_REGEXP
-
-static gboolean _parse_uri(const char* uri, int* secure, char** host, char** resource)
-{
-  regex_t r;
-  regmatch_t m[7];
-  gint rs;
-
-  g_return_val_if_fail(uri != NULL, FALSE);
-  g_return_val_if_fail(secure != NULL, FALSE);
-  g_return_val_if_fail(host != NULL, FALSE);
-  g_return_val_if_fail(resource != NULL, FALSE);
-
-  if ((rs = regcomp(&r, "^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", REG_EXTENDED | REG_ICASE)))
-    return FALSE;
-  rs = regexec(&r, uri, 7, m, 0);
-  regfree(&r);
-  if (rs != 0)
-    return FALSE;
-  
-  char* schema = g_strndup(uri + m[1].rm_so, m[1].rm_eo - m[1].rm_so);
-  if (!g_ascii_strcasecmp("http", schema))
-    *secure = 0;
-  else if (!g_ascii_strcasecmp("https", schema))
-    *secure = 1;
-  else
-  {
-    g_free(schema);
-    return FALSE;
-  }
-  g_free(schema);
-  
-  *host = g_strndup(uri + m[2].rm_so, m[2].rm_eo - m[2].rm_so);
-  if (m[5].rm_eo - m[5].rm_so == 0)
-    *resource = g_strdup("/RPC2");
-  else
-    *resource = g_strndup(uri + m[5].rm_so, m[5].rm_eo - m[5].rm_so);
-  
-  return TRUE;
-}
-
-#else
-
 G_LOCK_DEFINE_STATIC(regex);
 
-static gboolean _parse_uri(const char* uri, int* secure, char** host, char** resource)
+static gboolean _parse_uri(const char* uri, gboolean* secure, char** host, char** resource)
 {
   static GRegex* regex = NULL;
   GMatchInfo *match_info = NULL;
@@ -161,10 +102,10 @@ static gboolean _parse_uri(const char* uri, int* secure, char** host, char** res
   return TRUE;
 }
 
-#endif
-
 gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 {
+  GError* local_err = NULL;
+
   g_return_val_if_fail(conn != NULL, FALSE);
   g_return_val_if_fail(uri != NULL, FALSE);
   g_return_val_if_fail(!conn->is_open, FALSE);
@@ -183,43 +124,27 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     return FALSE;
   }
 
+  // enable/disable TLS
   if (conn->secure)
   {
-    SSL* ssl;
-
-    conn->bio = BIO_new_buffer_ssl_connect(conn->ctx);
-    BIO_get_ssl(conn->bio, &ssl);
-    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
-    BIO_set_conn_hostname(conn->bio, conn->host);
-    BIO_set_buffer_size(conn->bio, 2048);
+    g_socket_client_set_tls(conn->client, TRUE);
+    g_socket_client_set_tls_validation_flags(conn->client, G_TLS_CERTIFICATE_VALIDATE_ALL & ~G_TLS_CERTIFICATE_UNKNOWN_CA & ~G_TLS_CERTIFICATE_BAD_IDENTITY);
   }
   else
   {
-    conn->bio = BIO_new(BIO_f_buffer());
-    BIO_push(conn->bio, BIO_new_connect(conn->host));
-    BIO_set_buffer_size(conn->bio, 2048);
+    g_socket_client_set_tls(conn->client, FALSE);
   }
 
-  if (BIO_do_connect(conn->bio) <= 0)
+  conn->conn = g_socket_client_connect_to_host(conn->client, conn->host, 80, NULL, &local_err);
+  if (local_err)
   {
-    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_connect failed: %s", xr_get_bio_error_string());
-    BIO_free_all(conn->bio);
+    g_propagate_prefixed_error(err, local_err, "Connection failed: ");
     return FALSE;
   }
 
-  xr_set_nodelay(conn->bio);
+  xr_set_nodelay(g_socket_connection_get_socket(conn->conn));
 
-  if (conn->secure)
-  {
-    if (BIO_do_handshake(conn->bio) <= 0)
-    {
-      g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_handshake failed: %s", xr_get_bio_error_string());
-      BIO_free_all(conn->bio);
-      return FALSE;
-    }
-  }
-
-  conn->http = xr_http_new(conn->bio);
+  conn->http = xr_http_new(G_IO_STREAM(conn->conn));
   g_free(conn->session_id);
   conn->session_id = g_strdup_printf("%08x%08x%08x%08x", g_random_int(), g_random_int(), g_random_int(), g_random_int());
   conn->is_open = 1;
@@ -278,13 +203,14 @@ void xr_client_close(xr_client_conn* conn)
   if (!conn->is_open)
     return;
 
-  if (conn->secure)
-    BIO_ssl_shutdown(conn->bio);
-
   xr_http_free(conn->http);
   conn->http = NULL;
-  BIO_free_all(conn->bio);
-  conn->bio = NULL;
+  if (conn->client)
+    g_object_unref(conn->client);
+  if (conn->conn)
+    g_object_unref(conn->conn);
+  conn->client = NULL;
+  conn->conn = NULL;
   conn->is_open = FALSE;
 }
 
@@ -354,8 +280,6 @@ gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   response = xr_http_read_all(conn->http, err);
   if (response == NULL)
   {
-    g_clear_error(err);
-    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_IO, "HTTP receive failed.");
     xr_client_close(conn);
     return FALSE;
   }
@@ -389,7 +313,6 @@ void xr_client_free(xr_client_conn* conn)
   g_free(conn->host);
   g_free(conn->resource);
   g_free(conn->session_id);
-  SSL_CTX_free(conn->ctx);
   g_hash_table_destroy(conn->headers);
   g_free(conn);
 }

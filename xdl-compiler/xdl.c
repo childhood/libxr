@@ -109,7 +109,7 @@ xdl_typedef* xdl_typedef_new_array(xdl_model *xdl, xdl_servlet *servlet, xdl_typ
   }
   xdl_typedef* a = xdl_typedef_new(TD_ARRAY,
     NULL, g_strdup_printf("Array_%s", item->cname),
-    "GSList*", "NULL", NULL, NULL,
+    "GArray*", "NULL", NULL, NULL,
     g_strdup_printf("Array_%s_free", item->cname));
   a->item_type = item;
   if (servlet != NULL && item->type == TD_STRUCT)

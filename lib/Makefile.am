@@ -7,7 +7,6 @@ EXTRA_DIST = \
 AM_CFLAGS= \
   $(GLIB_CFLAGS) \
   $(XML_CFLAGS) \
-  $(SSL_CFLAGS) \
   $(JSON_CFLAGS) \
   -I$(top_srcdir) \
   -I$(top_srcdir)/include \
@@ -20,7 +19,6 @@ lib_LTLIBRARIES = \
 libxr_la_LIBADD = \
   $(GLIB_LIBS) \
   $(XML_LIBS) \
-  $(SSL_LIBS) \
   $(JSON_LIBS) \
   $(WIN32LIBS)
 
