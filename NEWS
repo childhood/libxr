@@ -1,3 +1,14 @@
+2.0.0 - 2012-04-06
+~~~~~~~~~~~~~~~~~~
+
+NOTE: This release is incompatible with libxr version 1.0
+
+- Ported to Gio/GSocket
+- Support array<double>, array<int> (on 64bit platform)
+  - Use GArray instead of GSList for array<> type
+  - Generate array<> manipukation helper methods
+- Fixed: Session cleaner not calling fini() servlet method
+
 0.9.97 - 2008-10-16 (1.0.0-rc8)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - Updated support contact. Ondrej Jirman is no longer the maintainer.
